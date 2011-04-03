@@ -1,6 +1,6 @@
 chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
   if (request.action === "login") {
-    Simplenote.onLogin = function() { 
+    Simplenote.onLogin = function() {
       sendResponse(true);
     };
     Simplenote.onLoginError = function() {
@@ -16,12 +16,14 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
   } else if (request.action === "note") {
     if (request.key === undefined) {
       sendResponse({text:""});
-    } else {
+    } else {
       Simplenote.note(request.key, function(data) { sendResponse({key: request.key, text: data}) });
     }
   } else if (request.action === "destroy") {
     Simplenote.destroy(request.key, sendResponse);
   } else if (request.action === "update") {
     Simplenote.update(request.key, request.data, sendResponse);
+  } else if (request.action === "create") {
+    Simplenote.create(request.data, sendResponse);    
   }
 });

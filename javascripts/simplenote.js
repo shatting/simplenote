@@ -8,6 +8,7 @@ var Simplenote = {
       data: Base64.encode("email=" + email + "&password=" + password),
       dataType: "text",
       success: function (response) {
+        //console.log("login response:\n" + response);
         if (typeof Simplenote.onLogin === "function") {
           Simplenote.onLogin();
         }
@@ -24,6 +25,8 @@ var Simplenote = {
       url: Simplenote.root + "index",
       dataType: "json",
       success: function(data) {
+        //console.log("::index retrieved");
+        //console.log(data);
         callback(data);
       }
     });
@@ -33,6 +36,8 @@ var Simplenote = {
       url: Simplenote.root + "search?query=" + escape(query),
       dataType: "json",
       success: function(data) {
+        //console.log("::search retrieved");
+        //console.log(data);
         callback(data['Response']['Results']);
       }
     });
@@ -42,14 +47,25 @@ var Simplenote = {
       url: Simplenote.root + "note?key=" + key,
       dataType: "text",
       success: function(data) {
+        //console.log(key+"::note retrieved");
+        //console.log(data);
         callback(data);
+      },
+      complete: function(jqXHR, textStatus) {
+        //console.log("::note complete");
+        //console.log(jqXHR);
+        //console.log(jqXHR.getAllResponseHeaders());
+        //console.log(textStatus);
       }
     });
   },
   destroy: function(key, callback) {
     jQuery.ajax({
       url: Simplenote.root + "delete?key=" + key,
-      success: callback
+      success: function () {
+        //console.log(key+"::note destroyed");
+        callback();
+      }
     });
   },
   update: function(key, data, callback) {
@@ -59,7 +75,25 @@ var Simplenote = {
       type: "POST",
       url: url,
       data: Base64.encode(data),
-      success: callback
+      success: function(newkey) {
+        //console.log(key+"::note updated");
+        //console.log(newkey);
+        //if (newkey!=key)
+        //    console.error("new and old keys dont match!");
+        callback(newkey);
+      }
+    });
+  },
+  create: function(data, callback) {
+    var url = Simplenote.root + "note";
+    jQuery.ajax({
+      type: "POST",
+      url: url,
+      data: Base64.encode(data),
+      success: function(newkey) {
+        //console.log(newkey+"::note created");
+        callback(newkey);
+      }
     });
   }
 };

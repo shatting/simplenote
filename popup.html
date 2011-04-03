@@ -4,6 +4,7 @@
     <meta http-equiv='Content-type' content='text/html; charset=utf-8' />
     <link rel="stylesheet" href="stylesheets/popup.css" type="text/css" media="all" />
     <script type="text/javascript" src="javascripts/jquery.js"></script>
+    <script type="text/javascript" src="javascripts/typewatch.js"></script>
     <script type="text/javascript" src="javascripts/popup.js"></script>
   </head>
   <body>
@@ -16,18 +17,24 @@
           <input type="button" id="new" value="New"></input>
         </div>
       </form>
-      <ul id="notes"></ul>
+      <div id="nav">
+        <form>
+            <input type="button" id="prev" value="&nbsp;&nbsp;<-&nbsp;&nbsp;"></input>
+            <input type="button" id="next" value="&nbsp;&nbsp;->&nbsp;&nbsp;"></input>
+        </form>
+      </div>  
+      <table id="notes"></table>
+      <div id="count"></div>        
     </div>
     <div id="note" class="hidden">
       <form>
         <div id="toolbar">
-          <input type="submit" id="save" value="Save"></input>
+          <input type="submit" id="save" value="Back"></input>
           <input type="submit" id="destroy" value="Delete"></input>
         </div>
         <textarea class="hidden"></textarea>
-        </div>
       </form>
-    </div>
+    </div>     
     <div id="loader"></div>
     <div id="status"></div>
   </body>

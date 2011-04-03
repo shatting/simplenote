@@ -1,4 +1,10 @@
-* { margin: 0; padding: 0 }
+td.time {
+    padding-right : 10px;
+    color: #aaa;  
+    text-align : right ;
+}
+
+* {}
 
 body {
   font-family: Verdana, Helvetica, Arial;
@@ -6,13 +12,27 @@ body {
   margin: 0;
   height: 500px;
   width: 400px;
-  padding: 10px;
+}
+
+table#notes {
+    padding-bottom: 20px;
 }
 
 div#toolbar {
   padding: 8px;
   background: #eee;
   border: solid 1px #ccc;
+}
+
+div#count {
+  padding-right: 8px;
+  background: #eee;
+  border: solid 1px #ccc;
+  left:0; 
+  position:fixed; 
+  text-align:center; 
+  bottom:0; 
+  width:100%;
 }
 
 div#note div#toolbar input {
@@ -23,6 +43,14 @@ div#note div#toolbar input#destroy {
   float: right;
 }
 
+div#nav input#next {
+  float: right;
+}
+
+div#count {
+   text-align : right ;
+}
+
 div#index div#toolbar input#q {
   width: 60%; 
 }
@@ -30,25 +58,29 @@ div#index div#toolbar input#q {
 div#note textarea {
   margin-top: 8px;
   height: 452px;
-  width: 398px;
+  width: 98%;
 }
 
 div#index div#toolbar input#new {
   float: right;
 }
 
-ul#notes li {
-  padding-top: 4px; 
-  padding-bottom: 4px; 
+td {
+    cursor : pointer ;
 }
 
-ul#notes {
-  list-style: none;
+table#notes {
+    border-collapse:separate; 
+    border-spacing:0px;
 }
 
-div.abstract {
+tr.abstract {
   color: #aaa;  
   font-size: 10px;
+}
+
+tr.abstract > td {
+  padding-bottom: 7px;
 }
 
 .hidden {
