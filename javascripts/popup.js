@@ -173,7 +173,7 @@ function gettimeadd(s) {
   var diff = (now - mod) / 1000 / 60 / 60;
   var timeadd;
 
-  if (diff < 24 && now.getDay() == mod.getDay()) {
+  if (diff < 24) {
     timeadd = pad(mod.getHours()) + ":" + pad(mod.getMinutes());
   }
   else {
