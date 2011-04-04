@@ -1,21 +1,21 @@
-// event listener for popup close
-// problem is: ajax save request does not finish
-// possible workaround: defer save to background
-//var background = chrome.extension.getBackgroundPage();
-//addEventListener("unload", function (event) {
-    //logBg(event.type);
-    //logBg("dirty:" + $('div#note textarea').attr('dirty'));
-    //if ($('div#note textarea').attr('dirty') == "true") {
-    //    logBg("updating/creating");        
-    //    updateNote(true);
-    //    logBg("updating/creating: done");
-    //}
-//}, true);
-
+var background = chrome.extension.getBackgroundPage();
 function logBg(s) {
     background.console.log(s);
 }
 
+//  ---------------------------------------
+// event listener for popup close
+// defer save to background
+addEventListener("unload", function (event) {
+    if (noteDirty()) {
+        background.savedata = $('div#note textarea').val();
+        background.savekey = $('div#note textarea').attr('key');
+        background.setTimeout("popupClosed()", 1);
+    }
+}, true);
+
+
+//  ---------------------------------------
 // Log in on page load
 $(document).ready(function() {
   var signUpLink =
@@ -57,6 +57,8 @@ $(document).ready(function() {
   }
 });
 
+
+//  ---------------------------------------
 /*
  * Displays a status message.
  * @param message The HTML content of the status message to display. All links
@@ -74,6 +76,8 @@ function displayStatusMessage(message) {
   }
   );
 }
+
+//  ---------------------------------------
 
 function showIndex(query, startidx) {
  
@@ -193,136 +197,121 @@ function pad(i) {
 //  ---------------------------------------
 
 function showNote(key) {
-  var options = {
-    callback : function(){
-      $('div#note textarea').animate({border : "3px solid #00ff00"}, 100);
-      $('div#note div#toolbar input#destroy').attr('disabled', 'disabled');
-      $('div#note input#save').attr('disabled', 'disabled');
-      updateNote();
-    }, 
-    wait : 750,
-    highlight : false,
-    captureLength : 1
-  }
-  $('#loader').show();
-  $('div#index').hide();
+ 
+  $('div#index').hide();  
+  $('#loader').show();  
   $('div#note').show();
 
   $('div#note div#toolbar input').removeAttr('disabled');
   $('div#note textarea').attr('dirty', 'false');
-  $('div#note textarea').show();
-  $('div#note textarea').unbind();
   
-  $('div#note textarea').typeWatch(options);
+  // add note change (dirty) event listeners
+  $('div#note textarea').unbind();
   $('div#note textarea').bind('change keydown keyup paste', function(event) {
     $('div#note textarea').attr('dirty', 'true');
   });
 
+  // bind back button
   $('div#note input#save').unbind();
   $('div#note input#save').click(function() {
-    backToIndex();
-  }
-  );
-  $('div#note input#destroy').unbind();
-  $('div#note input#destroy').click(function() {
-    destroyNote();
-  }
-  );
-  $('#loader').hide();
-
+     if (noteDirty()) 
+        updateNote(backToIndex);
+     else
+        backToIndex();   
+  });
+  
+  // get note contents
   if (key === undefined) { // new note
-    $('div#note div#toolbar input#destroy').hide();
+    
+    // delete button now cancel button
+    $('div#note div#toolbar input#destroy').val("Cancel");
+    $('div#note input#destroy').unbind();
+    $('div#note input#destroy').click(function() {
+        backToIndex();
+    });
+    
+    // insert data
     $('div#note textarea').val("");
     $('div#note textarea').attr('key', '');
-    $('#loader').hide();
+    
+    // show/hide elements
+    $('#loader').hide();  
+    $('div#note textarea').show();
+    $('div#note textarea').focus();    
   }
-  else {
-    $('div#note div#toolbar input#destroy').show();
-    $('div#note textarea').attr('key', key);      
-    chrome.extension.sendRequest({action : "note", key : key}, function(data) {
-      $('div#note textarea').val(data.text);
-    });
-  }
+  else { // existing note, request from server
   
-  $('div#note textarea').focus();
+    // bind delete button
+    $('div#note div#toolbar input#destroy').val("Delete");
+    $('div#note input#destroy').unbind();
+    $('div#note input#destroy').click(function() {
+        destroyNote();
+    });
+    
+    // request note
+    chrome.extension.sendRequest({action : "note", key : key}, function(data) {
+      // insert data
+      $('div#note textarea').val(data.text);
+      $('div#note textarea').attr('key', key);      
+      
+      // show/hide elements
+      $('#loader').hide();  
+      $('div#note textarea').show();      
+      $('div#note textarea').focus();      
+    });
+  }  
+
 }
 
 //  ---------------------------------------
 
-function updateNote(force) {
-  var data = $('div#note textarea').val();
-  var key = $('div#note textarea').attr('key');
-  
-  //logBg("updatenote: " + key + "/" + data );
-  
-//  if (force) {
-//    if (key != '') {
-//      //logBg("forcing update");
-//      Simplenote.update(key, data);
-//    } else {
-//        //logBg("forcing create");
-//        var url = Simplenote.root + "note";
-//        jQuery.ajax({
-//          type: "POST",
-//          url: url,
-//          async: false,
-//          data: Base64.encode(data),
-//          success: function(newkey) {
-//            //logBg(newkey+"::note created");
-//          }
-//        });
-//      
-//    }
-//    return;
-//  }
-  
-  if (key != '') {
-      chrome.extension.sendRequest({action : "update", key : key, data : data}, function(newkey) {
-          $('div#note textarea').animate({border : "0px solid"}, 100);
-          $('div#note textarea').attr('dirty', 'false');
+function updateNote(callback) {
+    var data = $('div#note textarea').val();
+    var key = $('div#note textarea').attr('key');
     
-          $('div#note div#toolbar input#destroy').removeAttr('disabled');
-          $('div#note input#save').removeAttr('disabled');
-          $('div#note div#toolbar input#destroy').show();
-       });
-  } else {
-    if (data != '') {
-        chrome.extension.sendRequest({action : "create", data : data}, function(newkey) {
+    if (key != '') {
+        chrome.extension.sendRequest({action : "update", key : key, data : data}, function(newkey) {
           $('div#note textarea').attr('key',newkey);
-          $('div#note textarea').animate({border : "0px solid"}, 100);
-          $('div#note textarea').attr('dirty', 'false');
-    
-          $('div#note div#toolbar input#destroy').removeAttr('disabled');
-          $('div#note input#save').removeAttr('disabled');
-          $('div#note div#toolbar input#destroy').show();
+          if (callback)
+            callback();
         });
+    } else {
+        if (data != '') {
+            chrome.extension.sendRequest({action : "create", data : data}, function(newkey) {
+              $('div#note textarea').attr('key',newkey);     
+              if (callback)
+                callback();              
+            });
+        }
     }
-  }
+    $('div#note textarea').attr('dirty', 'false');    
+    $('div#note div#toolbar input#destroy').removeAttr('disabled');
+    $('div#note input#save').removeAttr('disabled');
+    $('div#note div#toolbar input#destroy').show();
+}
+
+//  ---------------------------------------
+
+function noteDirty() {
+    return $('div#note textarea').attr("dirty")=="true";
 }
 
 //  ---------------------------------------
 
 function backToIndex() {
-  $('div#note div#toolbar input').attr('disabled', 'disabled');
-  $('div#note textarea').hide();
-  $('div#note').hide();
-  showIndex();
+    $('div#note div#toolbar input').attr('disabled', 'disabled');
+    $('div#note textarea').hide();
+    $('div#note').hide();
+    
+    showIndex();
 }
 
 //  ---------------------------------------
 
 function destroyNote() {
-  $('div#note div#toolbar input').attr('disabled', 'disabled');
-
-  var key = $('div#note textarea').attr('key');
-
-  chrome.extension.sendRequest({
-    action : "destroy", key : key
-  }
-  , function() {
-    $('div#note textarea').hide();
-    $('div#note').hide();
-    showIndex();
-  }
-  );
+    $('div#note div#toolbar input').attr('disabled', 'disabled');
+    
+    chrome.extension.sendRequest({action : "destroy", key : $('div#note textarea').attr('key')}, function() {
+        backToIndex();
+    });
 }

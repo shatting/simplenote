@@ -1,3 +1,5 @@
 *.swp
 *.md.html
 .DS_Store
+
+/res

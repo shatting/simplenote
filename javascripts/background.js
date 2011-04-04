@@ -27,3 +27,18 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
     Simplenote.create(request.data, sendResponse);    
   }
 });
+
+
+// function for popup close saving from background
+var savekey;
+var savedata;
+function popupClosed() {
+    if (!savedata || savedata=="")
+        return;
+    
+    if (savekey)
+        Simplenote.update(savekey, savedata, function() {});
+    else
+        Simplenote.create(savedata, function() {});
+}
+
