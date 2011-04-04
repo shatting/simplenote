@@ -1,7 +1,8 @@
 td.time {
     padding-right : 10px;
     color: #aaa;  
-    text-align : right ;
+    text-align : right;
+    width: 50px;
 }
 
 * {}
@@ -10,6 +11,7 @@ body {
   font-family: Verdana, Helvetica, Arial;
   font-size: 14px;
   margin: 0;
+  margin-right: 17px;
   height: 500px;
   width: 400px;
 }
@@ -25,7 +27,6 @@ div#toolbar {
 }
 
 div#count {
-  padding-right: 8px;
   background: #eee;
   border: solid 1px #ccc;
   left:0; 
@@ -33,6 +34,8 @@ div#count {
   text-align:center; 
   bottom:0; 
   width:100%;
+  padding-right: 8px;
+  margin-right: 15px;
 }
 
 div#note div#toolbar input {
@@ -40,10 +43,6 @@ div#note div#toolbar input {
 }
 
 div#note div#toolbar input#destroy {
-  float: right;
-}
-
-div#nav input#next {
   float: right;
 }
 
@@ -72,6 +71,7 @@ td {
 table#notes {
     border-collapse:separate; 
     border-spacing:0px;
+    width: 100%;
 }
 
 tr.abstract {
@@ -92,4 +92,30 @@ tr.abstract > td {
   width: 64px;
   height: 64px;
   margin: 100px auto;
+}
+
+::-webkit-scrollbar {
+    width: 15px;
+    height: 10px;
+    background-color: #FFF;
+}
+
+::-webkit-scrollbar-track-piece  {
+    background-color: #CACFDE;
+    -webkit-border-radius: 6px;
+}
+
+:-webkit-scrollbar-button:start:decrement,
+
+::-webkit-scrollbar-button:end:increment  {
+    height: 30px;
+    display: block;
+    background-color: #FAA;
+}
+
+::-webkit-scrollbar-thumb:vertical {
+    height: 50px;
+    background: -webkit-gradient(linear, right top, left top,color-stop(0.0, #F7F8FF),color-stop(1.0, #FFF));
+    border: 1px solid #CACFDE;
+    -webkit-border-radius: 6px;
 }

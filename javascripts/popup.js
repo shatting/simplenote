@@ -23,7 +23,7 @@ $(document).ready(function() {
   var optionsLink =
   "<a href='options.html'>options page</a>";
 
-  if ( ! localStorage.email || ! localStorage.password) {
+  if ( !localStorage.email || !localStorage.password) {
     var message = "Please " + signUpLink + " for a Simplenote account and enter your credentials on the " + optionsLink + ".";
     displayStatusMessage(message);
   }
@@ -79,7 +79,7 @@ function displayStatusMessage(message) {
 
 //  ---------------------------------------
 
-function showIndex(query, startidx) {
+function showIndex(query) {
  
   var req;
   if(query) { 
@@ -87,85 +87,72 @@ function showIndex(query, startidx) {
   } else {
     req = { action : "index" };
   }
-
-  if (startidx===undefined) {
-    if ($('#notes').attr("startidx"))
-        startidx=$('#notes').attr("startidx");
-    else
-        startidx=0;
-  }
   
   //logBg("showindex: query=" + query + ", startidx=" + startidx);
   $('#loader').show();
   $('#notes').empty();
   $("#count").hide();
-  $('#notes').attr("startidx",startidx);
        
   chrome.extension.sendRequest(req, function(indexData) {
-    var startidx = parseInt($('#notes').attr("startidx"));
            
     var indexDataNoDeleted = indexData.filter(function (e) { return !e.deleted;});
-
-    if (startidx==0)
-        $('div#nav input#prev').attr("disabled","disabled");
-    else
-        $('div#nav input#prev').removeAttr("disabled");     
-           
-    $('div#nav input#prev').unbind();
-    $('div#nav input#prev').click(function (event) {
-        showIndex(query,Math.max(startidx-10,0));
-    });
-    
-    if (startidx>=indexDataNoDeleted.length-10)
-        $('div#nav input#next').attr("disabled","disabled");
-    else
-        $('div#nav input#next').removeAttr("disabled");        
-        
-    $('div#nav input#next').unbind();
-    $('div#nav input#next').click(function (event) {        
-        showIndex(query,Math.min(startidx+10,indexDataNoDeleted.length-1));
-    });
-    
+      
     var count = 0;
-    for(var i = startidx; i < indexDataNoDeleted.length; i ++ ) {
+    for(var i = 0; i < indexDataNoDeleted.length; i ++ ) {
         
-        $('#notes').append("<tr id='" + indexDataNoDeleted[i].key + "1'><td class='time' id='" + indexDataNoDeleted[i].key + "time'></td><td class='heading' id='" + indexDataNoDeleted[i].key + "heading'></td></tr>");
+        $('#notes').append("<tr class='note' id='" + indexDataNoDeleted[i].key + "1' ><td class='time' id='" + indexDataNoDeleted[i].key + "time'></td><td class='heading' id='" + indexDataNoDeleted[i].key + "heading'></td></tr>");
         $('#notes').append("<tr class='abstract' id='" + indexDataNoDeleted[i].key + "2'><td></td><td id='" + indexDataNoDeleted[i].key + "abstract'></td></tr>");
                            
         if (indexDataNoDeleted[i].modify) {
           $('#' + indexDataNoDeleted[i].key + "time").html(gettimeadd(indexDataNoDeleted[i].modify) + " ");
         }        
         
-        chrome.extension.sendRequest({action : "note", key : indexDataNoDeleted[i].key}, function(noteData) {
-          
-          var lines = noteData.text.split("\n", 10).filter(function(line) {return ( line.length > 1 )});
-    
-          $('#' + noteData.key + "heading").html(lines[0]);
-          $('#' + noteData.key + "abstract").html(lines.slice(1, 3).map(function(element) { 
-            var short = element.substr(0, 55); return (short.length + 3 < element.length ? short + "..." : element )
-          }).join("<br />"));
-    
-          $('#' + noteData.key + "1").unbind();
-          $('#' + noteData.key + "2").unbind();
-          $('#' + noteData.key + "1").click(function() {
-            showNote(this.id.substr(0,this.id.length-1));
-          });
-          $('#' + noteData.key + "2").click(function() {
-            showNote(this.id.substr(0,this.id.length-1));
-          });          
-        });
-    
+        //$('#' + indexDataNoDeleted[i].key + "heading").one('inview',indexDataNoDeleted[i].key,indexFillNote);        
+        
         count += 1;
-        if (count == 10)
-        break;      
+        //if (count == 10)
+        //break;      
     }
-    
-    $("#count").html("" + (startidx+1) + " to " + (Math.min(startidx+10,indexDataNoDeleted.length)) + " of " + indexDataNoDeleted.length);
-    $("#count").show();
-  }
-  );
+        
+    checkInView();
+  });
   $('div#index').show();
   $('#loader').hide();
+  $(window).scroll(checkInView);
+}
+
+// jquery element
+function indexFillNote(element) {        
+    
+    var key = element.attr("id").substr(0,element.attr("id").length-1);
+    
+    $('#' + key + "heading").html('<img src="images/loader_small.gif"/>');
+    $('#' + key + "heading").attr("align","center");
+
+    chrome.extension.sendRequest({action : "note", key :key}, function(noteData) {
+              
+        var lines = noteData.text.split("\n", 10).filter(function(line) {return ( line.length > 1 )});
+        
+        $('#' + noteData.key + "heading").removeAttr("align");
+        // first line
+        $('#' + noteData.key + "heading").html(lines[0]);
+        // abstract
+        $('#' + noteData.key + "abstract").html(lines.slice(1, 3).map(function(element) { 
+            var short = element.substr(0, 55); return (short.length + 3 < element.length ? short + "..." : element )
+        }).join("<br />"));
+        
+        // add click bindings
+        $('#' + noteData.key + "1").unbind();
+        $('#' + noteData.key + "1").click(function() {
+            showNote(this.id.substr(0,this.id.length-1));
+        });
+        $('#' + noteData.key + "2").unbind();        
+        $('#' + noteData.key + "2").click(function() {
+            showNote(this.id.substr(0,this.id.length-1));
+        });         
+        
+        element.data('loaded',true);
+    });
 }
 
 //  ---------------------------------------
@@ -314,4 +301,73 @@ function destroyNote() {
     chrome.extension.sendRequest({action : "destroy", key : $('div#note textarea').attr('key')}, function() {
         backToIndex();
     });
+}
+
+//  ---------------------------------------
+// from inview.js
+function getViewportSize() {
+    var mode, domObject, size = { height: window.innerHeight, width: window.innerWidth };
+
+    // if this is correct then return it. iPad has compat Mode, so will
+    // go into check clientHeight/clientWidth (which has the wrong value).
+    if (!size.height) {
+        mode = document.compatMode;
+        if (mode || !$.support.boxModel) { // IE, Gecko
+            domObject = mode === 'CSS1Compat' ?
+                document.documentElement : // Standards
+                document.body; // Quirks
+            size = {
+                height: domObject.clientHeight,
+                width:  domObject.clientWidth
+            };
+        }
+    }
+
+    return size;
+}
+
+function getViewportOffset() {
+    return {
+        top:  window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop,
+        left: window.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft
+    };
+}
+
+function checkInView() {
+    var elements = $(".note").get(), elementsLength, i = 0, viewportSize, viewportOffset;
+    
+    console.log("checkinview");
+    
+    elementsLength = elements.length;
+    if (elementsLength) {
+        viewportSize   = getViewportSize();
+        viewportOffset = getViewportOffset();
+
+        for (; i<elementsLength; i++) {
+            // Ignore elements that are not in the DOM tree
+            if (!$.contains(document.documentElement, elements[i])) {
+              continue;
+            }
+
+            var $element      = $(elements[i]),
+                elementSize   = { height: $element.height(), width: $element.width() },
+                elementOffset = $element.offset(),
+                loaded        = $element.data('loaded'),
+                inview        = false;
+
+            inview = elementOffset.top < viewportOffset.top + viewportSize.height &&
+                     elementOffset.left + elementSize.width > viewportOffset.left &&
+                     elementOffset.left < viewportOffset.left + viewportSize.width;
+                         
+//            console.log(i + ": loaded " + loaded + ", inview=" + inview);                                                    
+//            console.log(elementOffset);
+//            console.log(elementOffset);
+//            console.log(viewportSize);    
+//            console.log(viewportOffset);                
+            
+            if (!loaded && inview) {
+                indexFillNote($element);                
+            }
+        }
+    }
 }
