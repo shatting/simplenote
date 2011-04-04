@@ -5,7 +5,7 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
     };
     Simplenote.onLoginError = function() {
       sendResponse(false);
-    }
+    };
     if(localStorage.email && localStorage.password) {
       Simplenote.login(localStorage.email, localStorage.password);
     }

@@ -2,8 +2,14 @@ var isDebug = true;
 var Simplenote = {
   root: "https://simple-note.appspot.com/api/",
   isLoggedIn: false,
-  login: function(email, password) {
-    Simplenote.email = email;
+  login: function(email, password) {    
+    if (email == Simplenote.email && Simplenote.isLoggedIn) {
+        if (typeof Simplenote.onLogin === "function")
+            Simplenote.onLogin();
+        return;
+    }
+    
+    Simplenote.email = email;        
     jQuery.ajax({
       type: "POST",
       url: Simplenote.root + "login",
@@ -11,7 +17,7 @@ var Simplenote = {
       dataType: "text",
       success: function (response) {
         debug("::logged in");
-        SimpleNote.isLoggedIn = true;
+        Simplenote.isLoggedIn = true;
         if (typeof Simplenote.onLogin === "function") {
           Simplenote.onLogin();
         }
