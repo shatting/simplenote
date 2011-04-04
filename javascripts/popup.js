@@ -101,7 +101,7 @@ function showIndex(query) {
     for(var i = 0; i < indexDataNoDeleted.length; i ++ ) {
         
         $('#notes').append("<tr class='note' id='" + indexDataNoDeleted[i].key + "1' ><td class='time' id='" + indexDataNoDeleted[i].key + "time'></td><td class='heading' id='" + indexDataNoDeleted[i].key + "heading'></td></tr>");
-        $('#notes').append("<tr class='abstract' id='" + indexDataNoDeleted[i].key + "2'><td></td><td id='" + indexDataNoDeleted[i].key + "abstract'></td></tr>");
+        $('#notes').append("<tr class='abstract' id='" + indexDataNoDeleted[i].key + "2'><td></td><td id='" + indexDataNoDeleted[i].key + "abstract'>&nbsp;<br>&nbsp;</td></tr>");
                            
         if (indexDataNoDeleted[i].modify) {
           $('#' + indexDataNoDeleted[i].key + "time").html(gettimeadd(indexDataNoDeleted[i].modify) + " ");
