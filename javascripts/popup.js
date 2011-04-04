@@ -268,26 +268,26 @@ function showNote(key) {
 function updateNote(callback) {
     var data = $('div#note textarea').val();
     var key = $('div#note textarea').attr('key');
+    var request;
     
-    if (key != '') {
-        chrome.extension.sendRequest({action : "update", key : key, data : data}, function(newkey) {
-          $('div#note textarea').attr('key',newkey);
-          if (callback)
+    if (data == '' && key !='') // existing note emptied -> delete
+        destroyNote();
+    else if (key != '' )        // existing note, new data -> update
+        request = {action : "update", key : key, data : data};
+    else if (data != '')        // new note, new data -> create
+        request = {action : "create", data : data};
+    else                        // new note, no data -> back to index
+        backToIndex();
+        
+    if (request)
+      chrome.extension.sendRequest(request, function(newkey) {
+        $('div#note textarea').attr('key',newkey);
+        $('div#note textarea').attr('dirty', 'false');              
+           
+        if (callback)
             callback();
-        });
-    } else {
-        if (data != '') {
-            chrome.extension.sendRequest({action : "create", data : data}, function(newkey) {
-              $('div#note textarea').attr('key',newkey);     
-              if (callback)
-                callback();              
-            });
-        }
-    }
-    $('div#note textarea').attr('dirty', 'false');    
-    $('div#note div#toolbar input#destroy').removeAttr('disabled');
-    $('div#note input#save').removeAttr('disabled');
-    $('div#note div#toolbar input#destroy').show();
+      });
+            
 }
 
 //  ---------------------------------------
