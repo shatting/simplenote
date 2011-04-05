@@ -57,7 +57,7 @@ $(document).ready(function() {
           callback : function() { showIndex($('#q').val()); },
           wait : 750,
           highlight : false,
-          captureLength : 1
+          captureLength : -1 // needed for empty string ('') capture
         }
         $('div#index div#toolbar input#q').typeWatch(options);
 
@@ -99,49 +99,93 @@ function displayStatusMessage(message) {
 
 function showIndex(query) {    
   var req;
-  if(query) { 
-    req = { action : "search", query : query};
+  if(query !== undefined) { 
+    
+    if ($('div#notes').data("allLoaded")) {                    
+        if (query != '') {
+            $('div.noterow').hide();
+            $('div.noterow:contains(' + query + ')').show();
+        } else
+            $('div.noterow').show();    
+        return;        
+    } else {
+        req = { action : "search", query : query};
+    }
   } else {
     req = { action : "index" };
   }
   
   log("->showIndex" + (query?"->search for " + query:""));
   
-  $('#loader').show();
-  $('#notes').empty();
-       
+  $('#loader').show();  
+  $(window).scroll(checkInView);
+         
   chrome.extension.sendRequest(req, function(indexData) {
-    // indexData: 
+    // indexData[]: 
     //      .deleted:   bool
-    //      .key:       bool
-    //      .modify:    "2011-04-05 14:51:50.570114"
-  
-    var indexDataNoDeleted = indexData.filter(function (e) { return !e.deleted;});
+    //      .key:       string
+    //      .modify:    "2011-04-05 14:51:50.570114"  
     
-    log("->showIndex request complete, " + indexDataNoDeleted.length + " notes");
-      
-    var html;
-    var key;
-    for(var i = 0; i < indexDataNoDeleted.length; i ++ ) {
-        key = indexDataNoDeleted[i].key;
-        
-        html = "<div class='noterow' id='" + key  + "' >";
-        html+=      "<span class='notetime' id='" + key + "time'>" + gettimeadd(indexDataNoDeleted[i].modify) + "</span>";
-        html+=      "<div contenteditable='false' class='noteheading' id='" + key + "heading'>";
-        html+=      "</div>";
-        html+=      "<div contenteditable='false' class='abstract' id='" + key + "abstract'>&nbsp;<br>&nbsp;</div>";
-        html+= "</div>";        
-        
-        $('#notes').append(html);                
+    var now = new Date(Date.now());
+    var lastUpdate = $('div#index').data("updated");
+    if (!lastUpdate) lastUpdate = new Date(0); 
+    var modify;
+    
+    var indexDataNoDeleted = indexData.filter(function (e) { return !e.deleted;});    
+    var indexDataNoDeletedOld, indexDataNoDeletedNew;    
+    indexDataNoDeletedOld = indexDataNoDeleted.filter(function (e) { return serverDateStrToLocalDate(e.modify) < lastUpdate;});
+    indexDataNoDeletedNew = indexDataNoDeleted.filter(function (e) { return serverDateStrToLocalDate(e.modify) >= lastUpdate;});
+    
+    log("->showIndex request complete, " + indexDataNoDeletedOld.length + " old, " + indexDataNoDeletedNew.length + " new notes");
+    
+    // check old ones
+    if (isDebug) {
+        for(var i = 0; i < indexDataNoDeletedOld.length; i ++ ) {
+            modify = $('div.noterow#' + indexDataNoDeletedOld[i].key).data("modify");
+            if (modify != serverDateStrToLocalDate(indexDataNoDeletedOld[i].modify))
+                log("modify date different from saved date! (" + indexDataNoDeletedOld[i].key + ")");
+                log(modify);
+                log(typeof(serverDateStrToLocalDate(indexDataNoDeletedOld[i].modify)));
+        }
     }
+    
+    if (!$('div#index').data("updated")) // first run
+        for(var i = 0; i < indexDataNoDeletedNew.length; i ++ )
+            indexAddNote("append",indexDataNoDeletedNew[i].key, indexDataNoDeletedNew[i].modify);
+    else
+        for(var i = indexDataNoDeletedNew.length-1; i >= 0; i-- )
+            indexAddNote("delteAndPrepend",indexDataNoDeletedNew[i].key, indexDataNoDeletedNew[i].modify);
+
         
+    $('div#index').show();
+    $('#loader').hide();
+    $('div#index').data("updated",now);  
+  
     checkInView();
   });
   
-  $('div#index').show();
-  $('#loader').hide();
-  $(window).scroll(checkInView);
 }
+
+//mode: delteAndPrepend, append
+function indexAddNote(mode, key, modify){
+            
+    var html =  "<div class='noterow' id='" + key  + "' >";    
+    html+=          "<span class='notetime' id='" + key + "time'>" + gettimeadd(modify) + "</span>";
+    html+=          "<div contenteditable='false' class='noteheading' id='" + key + "heading'>";
+    html+=          "</div>";
+    html+=          "<div contenteditable='false' class='abstract' id='" + key + "abstract'>&nbsp;<br>&nbsp;</div>";
+    html+=      "</div>";        
+    
+    if (mode=="delteAndPrepend") {
+        $('div.noterow#' + key).delete();
+        $('#notes').prepend(html);                
+    } else if (mode=="append") {
+        $('#notes').append(html);        
+    }
+    
+    $('div.noterow#' + key).data("modify",serverDateStrToLocalDate(modify));
+}
+
 
 // element: jquery div.noterow#key
 function indexFillNote(element) {        
@@ -162,7 +206,7 @@ function indexFillNote(element) {
         var $noteheading = $('#' + noteData.key + "heading");     
         var $abstract = $('#' + noteData.key + "abstract");    
             
-        var lines = noteData.text.split("\n", 10).filter(function(line) {return ( line.trim().length > 0 )});
+        var lines = noteData.text.split("\n").filter(function(line) {return ( line.trim().length > 0 )});
 
         // first line
         $('#' + key + 'loader').remove();    // remove loader
@@ -170,7 +214,7 @@ function indexFillNote(element) {
         $noteheading.append(htmlEncode(lines[0]));
         
         // abstract
-        $abstract.html(makeAbstract(lines));
+        $abstract.html(htmlEncode(lines.slice(1,lines.length)).join("<br />"));
                 
         // add dblclick binding
         $noterow.css("height",$noterow.height());
@@ -195,9 +239,9 @@ function indexFillNote(element) {
 }
 
 function makeAbstract(lines) {
-    var abstract = lines.slice(1, 3).map(function(element) { 
-                                            var short = element.substr(0, 45); 
-                                            return short.length + 3 < element.length ? short + "..." : element;
+    var abstract = lines.map(function(element) { 
+                         var short = element.substr(0, 45); 
+                         return short.length + 3 < element.length ? short + "..." : element;
                                          });
     return htmlEncode(abstract).join("<br />");
 }
@@ -224,7 +268,7 @@ function maximize(event) {
     var lines = $this.data("fulltext").split("\n");
     
     // insert full text into abstract div
-    $('#' + key + 'abstract').html(htmlEncode(lines.slice(1,lines.length-1)));
+    //$('#' + key + 'abstract').html(htmlEncode(lines.slice(1,lines.length-1)));
     
     //$('div.noterow').not($(this)).trigger('mouseleave');
     //$('div.noterow').not($(this)).stop( true, false );
@@ -251,7 +295,7 @@ function minimize(event) {
     var $this = $(this);
     var lines = $(this).data("fulltext").split("\n",10).filter(function(line) {return ( line.length > 1 )});
     
-    $('#' + key + "abstract").html(makeAbstract(lines));
+    //$('#' + key + "abstract").html(makeAbstract(lines.slice(1, 3)));
         
     $this.animate({ height: $this.data('origheight') }, 50);
 
@@ -260,11 +304,9 @@ function minimize(event) {
 }
 
 //  ---------------------------------------
-// assumung input dates are utc
-// format of s from .modify: "2011-04-05 14:51:50.570114"
 function gettimeadd(s) {
   var now = new Date(Date.now());
-  var mod = new Date(Date.parse(s) - now.getTimezoneOffset()*60000);
+  var mod = serverDateStrToLocalDate(s);
   
   var diff = (now - mod) / 1000 / 60 / 60;
   var timeadd;
@@ -279,6 +321,13 @@ function gettimeadd(s) {
   return timeadd;
 }
 
+// assumung input dates are utc
+// format of s from .modify: "2011-04-05 14:51:50.570114"
+function serverDateStrToLocalDate(s) {
+    var now = new Date(Date.now());
+    return new Date(Date.parse(s) - now.getTimezoneOffset()*60000);
+}
+
 //  ---------------------------------------
 
 function pad(i) {
@@ -290,6 +339,7 @@ function pad(i) {
 
 function showNote(key) {
   log("->showNote");
+  
   $('div#index').hide();  
   $('#loader').show();  
   $('div#note').show();
@@ -455,17 +505,18 @@ function getViewportOffset() {
 var preLoadFactor = 1/4;
 function checkInView() {
     var elements = $('div.noterow').get(), elementsLength, i = 0, viewportSize, viewportOffset;
-       
+    var allLoaded = true;
+    
+    elements = elements.filter(function (e) { return !$(e).data('loaded'); });
+    
     elementsLength = elements.length;
+
     if (elementsLength) {
         viewportSize   = getViewportSize();
         viewportOffset = getViewportOffset();
 
+        
         for (; i<elementsLength; i++) {
-            // Ignore elements that are not in the DOM tree
-            if (!$.contains(document.documentElement, elements[i])) {
-              continue;
-            }
 
             var $element      = $(elements[i]),
                 elementSize   = { height: $element.height(), width: $element.width() },
@@ -482,10 +533,12 @@ function checkInView() {
 //            console.log(elementOffset);
 //            console.log(viewportSize);    
 //            console.log(viewportOffset);                
-            
+            allLoaded = allLoaded && loaded;
             if (!loaded && inview) {
                 indexFillNote($element);                
             }
         }
     }
+        
+    $("div#notes").data('allLoaded',allLoaded);    
 }
