@@ -1,4 +1,13 @@
+var isDebug = true;
+function log(s) {
+    if (isDebug)
+        console.log(s);
+}
+
 chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
+  
+  log("background::request:" + request.action);
+  
   if (request.action === "login") {
     Simplenote.onLogin = function() {
       sendResponse(true);
@@ -14,11 +23,7 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
   } else if (request.action === "search") {
     Simplenote.search(request.query, function(data) { sendResponse(data) });
   } else if (request.action === "note") {
-    if (request.key === undefined) {
-      sendResponse({text:""});
-    } else {
-      Simplenote.note(request.key, function(data) { sendResponse({key: request.key, text: data}) });
-    }
+    Simplenote.note(request.key, function(data) { sendResponse({key: request.key, text: data}) });
   } else if (request.action === "destroy") {
     Simplenote.destroy(request.key, sendResponse);
   } else if (request.action === "update") {
@@ -37,8 +42,8 @@ function popupClosed() {
         return;
     
     if (savekey)
-        Simplenote.update(savekey, savedata, function() {});
+        Simplenote.update(savekey, savedata, function() { log("background::popupClosed update success");});
     else
-        Simplenote.create(savedata, function() {});
+        Simplenote.create(savedata, function() {log("background::popupClosed create success");});
 }
 

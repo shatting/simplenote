@@ -1,4 +1,9 @@
 var isDebug = true;
+function log(s) {
+    if (isDebug)
+        console.log(s);
+}
+
 var Simplenote = {
   root: "https://simple-note.appspot.com/api/",
   isLoggedIn: false,
@@ -16,7 +21,7 @@ var Simplenote = {
       data: Base64.encode("email=" + email + "&password=" + password),
       dataType: "text",
       success: function (response) {
-        debug("::logged in");
+        log("Simplenote::login success");
         Simplenote.isLoggedIn = true;
         if (typeof Simplenote.onLogin === "function") {
           Simplenote.onLogin();
@@ -34,8 +39,8 @@ var Simplenote = {
       url: Simplenote.root + "index",
       dataType: "json",
       success: function(data) {
-        debug("::index fetched");
-        //debug(data);
+        log("Simplenote::index success");
+        //log(data);
         callback(data);
       }
     });
@@ -45,8 +50,8 @@ var Simplenote = {
       url: Simplenote.root + "search?query=" + escape(query),
       dataType: "json",
       success: function(data) {
-        debug(query+"::searched");
-        //debug(data);
+        log("Simplenote::search " + query + " success");
+        //log(data);
         callback(data['Response']['Results']);
       }
     });
@@ -56,15 +61,15 @@ var Simplenote = {
       url: Simplenote.root + "note?key=" + key,
       dataType: "text",
       success: function(data) {
-        //debug(key+"::fetched");
-        //debug(data);
+        //log(key+"::fetched");
+        //log(data);
         callback(data);
       },
       complete: function(jqXHR, textStatus) {
-        //debug("::note complete");
-        //debug(jqXHR);
-        //debug(jqXHR.getAllResponseHeaders());
-        //debug(textStatus);
+        //log("::note complete");
+        //log(jqXHR);
+        //log(jqXHR.getAllResponseHeaders());
+        //log(textStatus);
       }
     });
   },
@@ -72,7 +77,7 @@ var Simplenote = {
     jQuery.ajax({
       url: Simplenote.root + "delete?key=" + key,
       success: function () {
-        debug(key+"::deleted");      
+        log("Simplenote::destroy success");   
         callback();
       }
     });
@@ -85,7 +90,7 @@ var Simplenote = {
       url: url,
       data: Base64.encode(data),
       success: function(newkey) {
-        debug(newkey+"::updated");      
+        log("Simplenote::update success");     
         callback(newkey);
       }
     });
@@ -97,14 +102,9 @@ var Simplenote = {
       url: url,
       data: Base64.encode(data),
       success: function(newkey) {
-        debug(newkey+"::created");
+        log("Simplenote::create success"); 
         callback(newkey);
       }
     });
   }
 };
-
-function debug(s) {
-    if (isDebug)
-        console.log(s);
-}

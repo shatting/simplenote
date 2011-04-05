@@ -1,4 +1,14 @@
 var background = chrome.extension.getBackgroundPage();
+
+var isDebug = true;
+var isDebugToBg = isDebug && true;
+function log(s) {
+    if (isDebug)
+        console.log(s);
+    if (isDebugToBg)
+        background.console.log(s);
+}
+
 function logBg(s) {
     background.console.log(s);
 }
@@ -7,11 +17,14 @@ function logBg(s) {
 // event listener for popup close
 // defer save to background
 addEventListener("unload", function (event) {
-    if (noteDirty()) {
+    log("->unload listener");
+    if (isNoteDirty()) {
+        log("->unload listener requesting background save");
         background.savedata = $('div#note textarea').val();
         background.savekey = $('div#note textarea').attr('key');
         background.setTimeout("popupClosed()", 1);
-    }
+    } else 
+       log("->unload listener no background save");
 }, true);
 
 
@@ -28,10 +41,14 @@ $(document).ready(function() {
     displayStatusMessage(message);
   }
   else {
+    log("->ready listener requesting login");
     chrome.extension.sendRequest({action : "login"}, 
     function(success) {
       if (success) {
+        log("->ready listener login success");
+        
         showIndex();
+        
         $('div#index div#toolbar input#new').click(function() {
           showNote();
         });
@@ -50,6 +67,7 @@ $(document).ready(function() {
         $('input#q').focus();
       }
       else {
+        log("->ready listener login error");
         var message = "Please correct your username and password on the " + optionsLink + "!";
         displayStatusMessage(message);
       }
@@ -79,8 +97,7 @@ function displayStatusMessage(message) {
 
 //  ---------------------------------------
 
-function showIndex(query) {
- 
+function showIndex(query) {    
   var req;
   if(query) { 
     req = { action : "search", query : query};
@@ -88,13 +105,20 @@ function showIndex(query) {
     req = { action : "index" };
   }
   
+  log("->showIndex" + (query?"->search for " + query:""));
+  
   $('#loader').show();
   $('#notes').empty();
-  $("#count").hide();
        
   chrome.extension.sendRequest(req, function(indexData) {
-           
+    // indexData: 
+    //      .deleted:   bool
+    //      .key:       bool
+    //      .modify:    "2011-04-05 14:51:50.570114"
+  
     var indexDataNoDeleted = indexData.filter(function (e) { return !e.deleted;});
+    
+    log("->showIndex request complete, " + indexDataNoDeleted.length + " notes");
       
     var html;
     var key;
@@ -103,9 +127,9 @@ function showIndex(query) {
         
         html = "<div class='noterow' id='" + key  + "' >";
         html+=      "<span class='notetime' id='" + key + "time'>" + gettimeadd(indexDataNoDeleted[i].modify) + "</span>";
-        html+=      "<div contenteditable='true' class='noteheading' id='" + key + "heading'>";
+        html+=      "<div contenteditable='false' class='noteheading' id='" + key + "heading'>";
         html+=      "</div>";
-        html+=      "<div contenteditable='true' class='abstract' id='" + key + "abstract'>&nbsp;<br>&nbsp;</div>";
+        html+=      "<div contenteditable='false' class='abstract' id='" + key + "abstract'>&nbsp;<br>&nbsp;</div>";
         html+= "</div>";        
         
         $('#notes').append(html);                
@@ -113,85 +137,107 @@ function showIndex(query) {
         
     checkInView();
   });
+  
   $('div#index').show();
   $('#loader').hide();
   $(window).scroll(checkInView);
 }
 
-// jquery element
+// element: jquery div.noterow#key
 function indexFillNote(element) {        
     
     var key = element.attr("id");
 
     // reflowing triggers scrolls
-    if ($("#" + key).data("requested"))
+    if (element.data("requested"))
         return;
 
     $('#' + key + "heading").append('<img id="' +key + 'loader" src="images/loader_small.gif"/>');
     $('#' + key + "heading").attr("align","center");
 
     chrome.extension.sendRequest({action : "note", key :key}, function(noteData) {
-                      
-        var lines = noteData.text.split("\n", 10).filter(function(line) {return ( line.length > 1 )});
+        // fields: noteData.key, noteData.text
         
-        $('#' + noteData.key + "heading").removeAttr("align");
-        // first line
-        $('#' + key + 'loader').remove();
-        $('#' + noteData.key + "heading").append(lines[0]);
-        // abstract
-        $('#' + noteData.key + "abstract").html(lines.slice(1, 3).map(function(element) { 
-            var short = element.substr(0, 55); return (short.length + 3 < element.length ? short + "..." : element )
-        }).join("<br />"));
-        
-        // add click binding
-        $('#' + noteData.key).unbind();        
-//        $('#' + noteData.key).click(function() {
-            //showNote(this.id);
-//            maximize();
-//        });                 
-        $('#' + noteData.key).click(maximize);
-        
-        element.data('loaded',true);
-        element.data('fulltext',noteData.text);
+        var $noterow = $('#' + noteData.key);
+        var $noteheading = $('#' + noteData.key + "heading");     
+        var $abstract = $('#' + noteData.key + "abstract");    
+            
+        var lines = noteData.text.split("\n", 10).filter(function(line) {return ( line.trim().length > 0 )});
 
-        $('#' + noteData.key).css("height",$('#' + noteData.key).height());
-        $('#' + noteData.key).data('origheight',$('#' + noteData.key).height());
-        //$('#' + noteData.key).hover(maximize,minimize);
+        // first line
+        $('#' + key + 'loader').remove();    // remove loader
+        $noteheading.removeAttr("align");
+        $noteheading.append(htmlEncode(lines[0]));
         
+        // abstract
+        $abstract.html(makeAbstract(lines));
+                
+        // add dblclick binding
+        $noterow.css("height",$noterow.height());
+        $noterow.data('origheight',$noterow.height());
+        $noterow.dblclick(maximize);
+                
+        // add click binding
+        $noterow.unbind();        
+        $noterow.click(function() { showNote(this.id) });        
         
+        //$noterow.hover(maximize,minimize);
+        
+        // save full note
+        $noterow.data('fulltext',noteData.text);
+        
+        // check new inview, might have changed due to reflow
+        $noterow.data('loaded',true);        
         checkInView();
     });
 
-    $("#" + key).data("requested",true);    
+    element.data("requested",true);    
+}
+
+function makeAbstract(lines) {
+    var abstract = lines.slice(1, 3).map(function(element) { 
+                                            var short = element.substr(0, 45); 
+                                            return short.length + 3 < element.length ? short + "..." : element;
+                                         });
+    return htmlEncode(abstract).join("<br />");
+}
+
+// encode string or string array into html equivalent
+function htmlEncode(s)
+{
+    if (!s)
+        return "";
+    if (s instanceof Array)
+        return s.map(function(s) {return htmlSafe(s).replace(/\n/g,"<br>").replace(/\s/g,"&nbsp;");});
+    else
+        return htmlSafe(s).replace(/\n/g,"<br>").replace(/\s/g,"&nbsp;");
 }
 
 // make string html safe
-function htmlEncode(s)
-{
-    return s.replace(/&(?!\w+([;\s]|$))/g, "&amp;")
-        .replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function htmlSafe(s) {
+    return s.replace(/&(?!\w+([;\s]|$))/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function maximize(event) {
     var key = this.id;
     var $this = $(this);
-    var lines = $this.data("fulltext").split("\n").length - 3;
+    var lines = $this.data("fulltext").split("\n");
     
-    // todo: < 3 zeilen
-    $('#' + key + 'abstract').html(htmlEncode($(this).data("fulltext").slice($(this).data("fulltext").indexOf("\n")+1, $(this).data("fulltext").length)).replace(/\n/gi,"<br>").replace(/\s/g,"&nbsp;"));
+    // insert full text into abstract div
+    $('#' + key + 'abstract').html(htmlEncode(lines.slice(1,lines.length-1)));
     
-    $('div.noterow').not($(this)).trigger('mouseleave');   
+    //$('div.noterow').not($(this)).trigger('mouseleave');
     //$('div.noterow').not($(this)).stop( true, false );
     
+    // animate 
     var $clone = $this.clone().css({ height: 'auto', position: 'absolute', 
             zIndex: '-9999', left: '-9999px', width: $this.width() })
-            .appendTo($this);
-    
-    $this.animate({ height: $clone.height() }, 100);
-    
+            .appendTo($this);    
+    $this.animate({ height: $clone.height() }, 100);    
     $clone.detach();
-    $this.unbind('click');
-    $this.click(minimize);
+    
+    $this.unbind('dblclick');
+    $this.dblclick(minimize);
     //$('#' + key).animate( {height:'+=' + (lines*10), duration:500 }, function(){
         //$('#' + key).removeAttr('style');
     //});
@@ -205,18 +251,17 @@ function minimize(event) {
     var $this = $(this);
     var lines = $(this).data("fulltext").split("\n",10).filter(function(line) {return ( line.length > 1 )});
     
-    $('#' + key + "abstract").html(lines.slice(1, 3).map(function(element) { 
-            var short = element.substr(0, 55); return (short.length + 3 < element.length ? short + "..." : element )
-        }).join("<br />"));
+    $('#' + key + "abstract").html(makeAbstract(lines));
         
     $this.animate({ height: $this.data('origheight') }, 50);
 
-    $this.unbind('click');
-    $this.click(maximize);    
+    $this.unbind('dblclick');
+    $this.dblclick(maximize);    
 }
 
 //  ---------------------------------------
 // assumung input dates are utc
+// format of s from .modify: "2011-04-05 14:51:50.570114"
 function gettimeadd(s) {
   var now = new Date(Date.now());
   var mod = new Date(Date.parse(s) - now.getTimezoneOffset()*60000);
@@ -244,7 +289,7 @@ function pad(i) {
 //  ---------------------------------------
 
 function showNote(key) {
- 
+  log("->showNote");
   $('div#index').hide();  
   $('#loader').show();  
   $('div#note').show();
@@ -255,13 +300,15 @@ function showNote(key) {
   // add note change (dirty) event listeners
   $('div#note textarea').unbind();
   $('div#note textarea').bind('change keydown keyup paste', function(event) {
+    log("note is dirty (" + event.type + ")");
     $('div#note textarea').attr('dirty', 'true');
   });
 
   // bind back button
-  $('div#note input#save').unbind();
-  $('div#note input#save').click(function() {
-     if (noteDirty()) 
+  $('div#note input#backtoindex').unbind();
+  $('div#note input#backtoindex').click(function() {
+     log("->back clicked");
+     if (isNoteDirty()) 
         updateNote(backToIndex);
      else
         backToIndex();   
@@ -269,6 +316,7 @@ function showNote(key) {
   
   // get note contents
   if (key === undefined) { // new note
+    log("->showNote new note");
     
     // delete button now cancel button
     $('div#note div#toolbar input#destroy').val("Cancel");
@@ -287,7 +335,8 @@ function showNote(key) {
     $('div#note textarea').focus();    
   }
   else { // existing note, request from server
-  
+    log("->showNote existing note");
+    
     // bind delete button
     $('div#note div#toolbar input#destroy').val("Delete");
     $('div#note input#destroy').unbind();
@@ -297,6 +346,7 @@ function showNote(key) {
     
     // request note
     chrome.extension.sendRequest({action : "note", key : key}, function(data) {
+      log("->showNote existing note request complete");
       // insert data
       $('div#note textarea').val(data.text);
       $('div#note textarea').attr('key', key);      
@@ -316,36 +366,42 @@ function updateNote(callback) {
     var data = $('div#note textarea').val();
     var key = $('div#note textarea').attr('key');
     var request;
-    
-    if (data == '' && key !='') // existing note emptied -> delete
-        destroyNote();
-    else if (key != '' )        // existing note, new data -> update
-        request = {action : "update", key : key, data : data};
-    else if (data != '')        // new note, new data -> create
-        request = {action : "create", data : data};
-    else                        // new note, no data -> back to index
-        backToIndex();
         
-    if (request)
+    log("->updateNote key:" + key + "\n--->" + data + "<---\ncallback:" + callback);
+    
+    if (data == '' && key !='')     // existing note emptied -> delete
+        destroyNote();
+    else if (key != '' )            // existing note, new data -> update
+        request = {action : "update", key : key, data : data};
+    else if (data != '')            // new note, new data -> create
+        request = {action : "create", data : data};
+    else                            // new note, no data -> back to index
+        backToIndex();
+    
+        
+    if (request!==undefined)
+      log("->updateNote request:");
+      log(request);
       chrome.extension.sendRequest(request, function(newkey) {
         $('div#note textarea').attr('key',newkey);
         $('div#note textarea').attr('dirty', 'false');              
-           
+        log("->updateNote request complete");   
         if (callback)
             callback();
-      });
-            
+    });
+    
 }
 
 //  ---------------------------------------
 
-function noteDirty() {
+function isNoteDirty() {
     return $('div#note textarea').attr("dirty")=="true";
 }
 
 //  ---------------------------------------
 
 function backToIndex() {
+    log("->backToIndex");
     $('div#note div#toolbar input').attr('disabled', 'disabled');
     $('div#note textarea').hide();
     $('div#note').hide();
@@ -356,9 +412,11 @@ function backToIndex() {
 //  ---------------------------------------
 
 function destroyNote() {
+    log("->destroyNote");
     $('div#note div#toolbar input').attr('disabled', 'disabled');
     
     chrome.extension.sendRequest({action : "destroy", key : $('div#note textarea').attr('key')}, function() {
+        log("->destroyNote->sendRequest success");
         backToIndex();
     });
 }
