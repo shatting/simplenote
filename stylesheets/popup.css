@@ -1,23 +1,13 @@
-td.time {
-    padding-right : 10px;
-    color: #aaa;  
-    text-align : right;
-    width: 50px;
-}
-
-* {}
-
 body {
-  font-family: Verdana, Helvetica, Arial;
-  font-size: 14px;
+  'font-family: Verdana, Helvetica, Arial;
+  'font-size: 14px;
+  font: 14px "Lucida Grande", verdana, sans-serif;
   margin: 0;
   margin-right: 17px;
   height: 500px;
   width: 400px;
-}
-
-table#notes {
-    padding-bottom: 20px;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 div#toolbar {
@@ -26,28 +16,12 @@ div#toolbar {
   border: solid 1px #ccc;
 }
 
-div#count {
-  background: #eee;
-  border: solid 1px #ccc;
-  left:0; 
-  position:fixed; 
-  text-align:center; 
-  bottom:0; 
-  width:100%;
-  padding-right: 8px;
-  margin-right: 15px;
-}
-
 div#note div#toolbar input {
   width: 15%;
 }
 
 div#note div#toolbar input#destroy {
   float: right;
-}
-
-div#count {
-   text-align : right ;
 }
 
 div#index div#toolbar input#q {
@@ -64,23 +38,44 @@ div#index div#toolbar input#new {
   float: right;
 }
 
-td {
+div#notes {  
+    width: 100%;
+    padding-bottom: 2px;    
     cursor : pointer ;
 }
 
-table#notes {
-    border-collapse:separate; 
-    border-spacing:0px;
-    width: 100%;
+div.noterow {
+    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
+    'background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #ccc),color-stop(1.0, white));
+     -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
+    border: 1px solid #F7F8FF;
+    border-radius: 6px;
+    margin: 4px;
+    padding: 4px;
 }
 
-tr.abstract {
+div.noterow:hover { 
+    background:#FFF;
+    border: 1px solid #F7F8FF;
+    border-radius: 6px;    
+    -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
+    margin: 4px;    
+    padding: 4px;    
+} 
+
+span.notetime {
+    'padding-right : 10px;
+    color: #aaa;  
+    'text-align : right;
+    'line-height: 95%;
+    float: right;
+}
+
+
+.abstract {
   color: #aaa;  
   font-size: 10px;
-}
-
-tr.abstract > td {
-  padding-bottom: 7px;
+  padding-left : 10px ;
 }
 
 .hidden {
@@ -106,7 +101,6 @@ tr.abstract > td {
 }
 
 :-webkit-scrollbar-button:start:decrement,
-
 ::-webkit-scrollbar-button:end:increment  {
     height: 30px;
     display: block;

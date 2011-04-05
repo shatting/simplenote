@@ -88,7 +88,6 @@ function showIndex(query) {
     req = { action : "index" };
   }
   
-  //logBg("showindex: query=" + query + ", startidx=" + startidx);
   $('#loader').show();
   $('#notes').empty();
   $("#count").hide();
@@ -97,21 +96,18 @@ function showIndex(query) {
            
     var indexDataNoDeleted = indexData.filter(function (e) { return !e.deleted;});
       
-    var count = 0;
+    var html;
+    var key;
     for(var i = 0; i < indexDataNoDeleted.length; i ++ ) {
+        key = indexDataNoDeleted[i].key;
         
-        $('#notes').append("<tr class='note' id='" + indexDataNoDeleted[i].key + "1' ><td class='time' id='" + indexDataNoDeleted[i].key + "time'></td><td class='heading' id='" + indexDataNoDeleted[i].key + "heading'></td></tr>");
-        $('#notes').append("<tr class='abstract' id='" + indexDataNoDeleted[i].key + "2'><td></td><td id='" + indexDataNoDeleted[i].key + "abstract'>&nbsp;<br>&nbsp;</td></tr>");
-                           
-        if (indexDataNoDeleted[i].modify) {
-          $('#' + indexDataNoDeleted[i].key + "time").html(gettimeadd(indexDataNoDeleted[i].modify) + " ");
-        }        
+        html = "<div class='noterow' id='" + key  + "' >";
+        html+=      "<div contenteditable='true' class='noteheading' id='" + key + "heading'>";
+        html+=          "<span class='notetime' id='" + key + "time'>" + gettimeadd(indexDataNoDeleted[i].modify) + "</span></div>";
+        html+=      "<div class='abstract' id='" + key + "abstract'>&nbsp;<br>&nbsp;</div>";
+        html+= "</div>";        
         
-        //$('#' + indexDataNoDeleted[i].key + "heading").one('inview',indexDataNoDeleted[i].key,indexFillNote);        
-        
-        count += 1;
-        //if (count == 10)
-        //break;      
+        $('#notes').append(html);                
     }
         
     checkInView();
@@ -124,9 +120,13 @@ function showIndex(query) {
 // jquery element
 function indexFillNote(element) {        
     
-    var key = element.attr("id").substr(0,element.attr("id").length-1);
-    
-    $('#' + key + "heading").html('<img src="images/loader_small.gif"/>');
+    var key = element.attr("id");
+
+    // reflowing triggers scrolls
+    if ($("#" + key).data("requested"))
+        return;
+
+    $('#' + key + "heading").append('<img id="' +key + 'loader" src="images/loader_small.gif"/>');
     $('#' + key + "heading").attr("align","center");
 
     chrome.extension.sendRequest({action : "note", key :key}, function(noteData) {
@@ -135,24 +135,25 @@ function indexFillNote(element) {
         
         $('#' + noteData.key + "heading").removeAttr("align");
         // first line
-        $('#' + noteData.key + "heading").html(lines[0]);
+        $('#' + key + 'loader').remove();
+        $('#' + noteData.key + "heading").append(lines[0]);
         // abstract
         $('#' + noteData.key + "abstract").html(lines.slice(1, 3).map(function(element) { 
             var short = element.substr(0, 55); return (short.length + 3 < element.length ? short + "..." : element )
         }).join("<br />"));
         
-        // add click bindings
-        $('#' + noteData.key + "1").unbind();
-        $('#' + noteData.key + "1").click(function() {
-            showNote(this.id.substr(0,this.id.length-1));
-        });
-        $('#' + noteData.key + "2").unbind();        
-        $('#' + noteData.key + "2").click(function() {
-            showNote(this.id.substr(0,this.id.length-1));
+        // add click binding
+        $('#' + noteData.key).unbind();        
+        $('#' + noteData.key).click(function() {
+            showNote(this.id);
         });         
         
         element.data('loaded',true);
+        //element.data('fulltext',nodeData.text);
+        checkInView();
     });
+
+    $("#" + key).data("requested",true);    
 }
 
 //  ---------------------------------------
@@ -333,11 +334,11 @@ function getViewportOffset() {
     };
 }
 
+// amount of vertical viewport size to add for preloading
+var preLoadFactor = 1/4;
 function checkInView() {
-    var elements = $(".note").get(), elementsLength, i = 0, viewportSize, viewportOffset;
-    
-    console.log("checkinview");
-    
+    var elements = $('div.noterow').get(), elementsLength, i = 0, viewportSize, viewportOffset;
+       
     elementsLength = elements.length;
     if (elementsLength) {
         viewportSize   = getViewportSize();
@@ -355,7 +356,7 @@ function checkInView() {
                 loaded        = $element.data('loaded'),
                 inview        = false;
 
-            inview = elementOffset.top < viewportOffset.top + viewportSize.height &&
+            inview = elementOffset.top < viewportOffset.top + viewportSize.height*(1 + preLoadFactor) &&
                      elementOffset.left + elementSize.width > viewportOffset.left &&
                      elementOffset.left < viewportOffset.left + viewportSize.width;
                          
