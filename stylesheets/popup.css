@@ -1,7 +1,7 @@
 body {
-  'font-family: Verdana, Helvetica, Arial;
-  'font-size: 14px;
-  font: 14px "Lucida Grande", verdana, sans-serif;
+  font-family: Verdana, Helvetica, Arial;
+  font-size: 14px;
+  'font: 14px "Lucida Grande", verdana, sans-serif;
   margin: 0;
   margin-right: 17px;
   height: 500px;
@@ -52,6 +52,9 @@ div.noterow {
     border-radius: 6px;
     margin: 4px;
     padding: 4px;
+    padding-top: 2px;
+    padding-bottom: 6px;
+    overflow: hidden ;
 }
 
 div.noterow:hover { 
@@ -61,16 +64,21 @@ div.noterow:hover {
     -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
     margin: 4px;    
     padding: 4px;    
+    padding-top: 2px;    
+    padding-bottom: 6px;    
 } 
 
 span.notetime {
-    'padding-right : 10px;
     color: #aaa;  
-    'text-align : right;
+    text-align : left;
     'line-height: 95%;
-    float: right;
+    width: 40px;
+    float: left;
 }
 
+div.noteheading, div.abstract {
+    margin-left: 50px;
+}
 
 .abstract {
   color: #aaa;  

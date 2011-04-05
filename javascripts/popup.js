@@ -102,9 +102,10 @@ function showIndex(query) {
         key = indexDataNoDeleted[i].key;
         
         html = "<div class='noterow' id='" + key  + "' >";
+        html+=      "<span class='notetime' id='" + key + "time'>" + gettimeadd(indexDataNoDeleted[i].modify) + "</span>";
         html+=      "<div contenteditable='true' class='noteheading' id='" + key + "heading'>";
-        html+=          "<span class='notetime' id='" + key + "time'>" + gettimeadd(indexDataNoDeleted[i].modify) + "</span></div>";
-        html+=      "<div class='abstract' id='" + key + "abstract'>&nbsp;<br>&nbsp;</div>";
+        html+=      "</div>";
+        html+=      "<div contenteditable='true' class='abstract' id='" + key + "abstract'>&nbsp;<br>&nbsp;</div>";
         html+= "</div>";        
         
         $('#notes').append(html);                
@@ -130,7 +131,7 @@ function indexFillNote(element) {
     $('#' + key + "heading").attr("align","center");
 
     chrome.extension.sendRequest({action : "note", key :key}, function(noteData) {
-              
+                      
         var lines = noteData.text.split("\n", 10).filter(function(line) {return ( line.length > 1 )});
         
         $('#' + noteData.key + "heading").removeAttr("align");
@@ -144,16 +145,74 @@ function indexFillNote(element) {
         
         // add click binding
         $('#' + noteData.key).unbind();        
-        $('#' + noteData.key).click(function() {
-            showNote(this.id);
-        });         
+//        $('#' + noteData.key).click(function() {
+            //showNote(this.id);
+//            maximize();
+//        });                 
+        $('#' + noteData.key).click(maximize);
         
         element.data('loaded',true);
-        //element.data('fulltext',nodeData.text);
+        element.data('fulltext',noteData.text);
+
+        $('#' + noteData.key).css("height",$('#' + noteData.key).height());
+        $('#' + noteData.key).data('origheight',$('#' + noteData.key).height());
+        //$('#' + noteData.key).hover(maximize,minimize);
+        
+        
         checkInView();
     });
 
     $("#" + key).data("requested",true);    
+}
+
+// make string html safe
+function htmlEncode(s)
+{
+    return s.replace(/&(?!\w+([;\s]|$))/g, "&amp;")
+        .replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function maximize(event) {
+    var key = this.id;
+    var $this = $(this);
+    var lines = $this.data("fulltext").split("\n").length - 3;
+    
+    // todo: < 3 zeilen
+    $('#' + key + 'abstract').html(htmlEncode($(this).data("fulltext").slice($(this).data("fulltext").indexOf("\n")+1, $(this).data("fulltext").length)).replace(/\n/gi,"<br>").replace(/\s/g,"&nbsp;"));
+    
+    $('div.noterow').not($(this)).trigger('mouseleave');   
+    //$('div.noterow').not($(this)).stop( true, false );
+    
+    var $clone = $this.clone().css({ height: 'auto', position: 'absolute', 
+            zIndex: '-9999', left: '-9999px', width: $this.width() })
+            .appendTo($this);
+    
+    $this.animate({ height: $clone.height() }, 100);
+    
+    $clone.detach();
+    $this.unbind('click');
+    $this.click(minimize);
+    //$('#' + key).animate( {height:'+=' + (lines*10), duration:500 }, function(){
+        //$('#' + key).removeAttr('style');
+    //});
+   // $('#' + key).slideDown();
+
+    //$('html,body').animate({scrollTop: $(this).offset().top}, 100);
+}
+
+function minimize(event) {
+    var key = this.id;
+    var $this = $(this);
+    var lines = $(this).data("fulltext").split("\n",10).filter(function(line) {return ( line.length > 1 )});
+    
+    $('#' + key + "abstract").html(lines.slice(1, 3).map(function(element) { 
+            var short = element.substr(0, 55); return (short.length + 3 < element.length ? short + "..." : element )
+        }).join("<br />"));
+        
+    $this.animate({ height: $this.data('origheight') }, 50);
+
+    $this.unbind('click');
+    $this.click(maximize);    
 }
 
 //  ---------------------------------------
