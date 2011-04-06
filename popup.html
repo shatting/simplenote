@@ -9,23 +9,19 @@
   </head>
   <body>
     <div id="index">
-      <form>
         <div id="toolbar">
-          <input type="text" id="q"></input>
+          <input type="text" id="q" onsubmit="return false"></input>
           <input type="button" id="search" value="Search"></input>
           <input type="button" id="new" value="New"></input>
         </div>
-      </form>
       <div id="notes"></div>  
     </div>
     <div id="note" class="hidden">
-      <form>
         <div id="toolbar">
           <input type="button" id="backtoindex" value="Back"></input>
           <input type="button" id="destroy" value="Delete"></input>
         </div>
         <textarea class="hidden"></textarea>
-      </form>
     </div>     
     <div id="loader"></div>
     <div id="status"></div>
