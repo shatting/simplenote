@@ -8,6 +8,7 @@ body {
   overflow: hidden;
 }
 
+/* index toolbar */
 div#toolbar {
     margin: 4px;
     margin-right: 2px;    
@@ -20,14 +21,6 @@ div#toolbar {
     '-webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
     border: 1px solid #F5F6FD;
     border-radius: 6px;  
-}
-
-div#note div#toolbar input {
-  width: 15%;
-}
-
-div#note div#toolbar input#destroy {
-  float: right;
 }
 
 div#index div#toolbar input#q { 
@@ -50,16 +43,11 @@ div#index div#toolbar input#q:focus {
     outline: none;
 }
 
-div#note textarea {
-  margin-top: 8px;
-  height: 452px;
-  width: 98%;
-}
-
 div#index div#toolbar input#new {
   float: right;
 }
 
+/* index */
 div#notes {  
     width: 100%;
     padding-bottom: 2px;    
@@ -122,6 +110,21 @@ div.noteheading, div.abstract {
   height: 64px;
   margin: 100px auto;
 }
+
+/* note div */
+
+div#note div#toolbar input#destroy {
+  float: right;
+}
+
+div#note textarea {
+  margin-top: 8px;
+  height: 452px;
+  width: 98%;
+}
+
+
+/* scrollbar */
 
 ::-webkit-scrollbar {
     width: 15px;
