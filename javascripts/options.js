@@ -1,7 +1,8 @@
 $(document).ready(function() {
   if (localStorage) {
     $("#email").val(localStorage.email);
-    $("#password").val(localStorage.password);
+    $("#password").val(localStorage.password);    
+    localStorage.abstractlines && $("#abstractlines").val(localStorage.abstractlines);
   }
 });
 
@@ -11,13 +12,14 @@ $(document).ready(function() {
  */
 function save_options(ms) {
   if (localStorage) {
-  localStorage.email = $("#email").val();
-  localStorage.password = $("#password").val();	
+      localStorage.email = $("#email").val();
+      localStorage.password = $("#password").val();	
+      localStorage.abstractlines = $("#abstractlines").val();	
   }
 
   var status = $("#status");
-  if (localStorage && localStorage.email && localStorage.password) {
-    status.html("Account saved");
+  if (localStorage && localStorage.email && localStorage.password && localStorage.abstractlines) {
+    status.html("Options saved");
   } else {
     status.html("Save failed");
   }

@@ -233,12 +233,12 @@ function indexFillNote(element) {
         var lines = noteData.text.split("\n").filter(function(line) {return ( line.trim().length > 0 )});
 
         // first line
-        $('#' + key + 'loader').remove();    // remove loader
+        $('#' + key + 'loader').remove();
         $noteheading.removeAttr("align");
         $noteheading.append(htmlEncode(lines[0]));
         
         // abstract
-        $abstract.html(htmlEncode(lines.slice(1,lines.length)).join("<br />"));
+        $abstract.html(htmlEncode(lines.slice(1,Math.min(lines.length,localStorage.abstractlines*1+1))).join("<br />"));
                 
         // add dblclick binding
         $noterow.css("height",$noterow.height());
