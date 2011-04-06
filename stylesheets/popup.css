@@ -30,12 +30,24 @@ div#note div#toolbar input#destroy {
   float: right;
 }
 
-div#index div#toolbar input#q {
-  border-radius: 12px;
-  background: transparent url(/images/searchfield.png) no-repeat 6px 50%;
-  padding: 4px 6px 4px 24px;
-  border: 1px solid rgba(0, 0, 0, 0.3);
-  width: 60%; 
+div#index div#toolbar input#q { 
+    padding: 4px 6px 4px 24px; 
+    color: #33; 
+    font-size: 13px; 
+    width: 60%;     
+    border-radius: 12px; 
+    border: 1px solid #999; 
+    border: 1px solid rgba(0, 0, 0, 0.3); 
+    box-shadow: 0 1px 0 #fff; 
+    background: transparent url(/images/searchfield.png) no-repeat 6px 50%;
+}
+
+div#index div#toolbar input#q:focus { 
+    border: 1px solid #666; 
+    border: 1px solid rgba(0, 0, 0, 0.4); 
+    background: white url(/images/searchfield.png) no-repeat 6px 50%; 
+    -webkit-box-shadow: 0 0 3px #3c7ecf; 
+    outline: none;
 }
 
 div#note textarea {
