@@ -121,10 +121,10 @@ function showIndex(query) {
   
   log("->showIndex" + (query?"->search for " + query:""));
   
-  $('#loader').show();  
   $('div#notes').unbind("scroll");
   $('div#notes').scroll(checkInView);
-           
+  $('div#index').show();
+   
   chrome.extension.sendRequest(req, function(indexData) {
     // indexData[] for index
     //      .deleted:   bool

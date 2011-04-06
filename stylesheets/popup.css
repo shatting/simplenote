@@ -12,8 +12,8 @@ body {
 div#toolbar {
     'margin: 4px;
     margin-right: 2px;    
-    padding: 5px;
-    padding-left: 5px;
+    'padding: 5px;
+    'padding-left: 5px;
     background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
     'background: #CACFDE;
     background: white;
@@ -27,10 +27,11 @@ div#index div#toolbar input#q {
     padding: 4px 6px 4px 24px; 
     color: #33; 
     font-size: 13px; 
-    width: 75%;     
+    width:75%;     
     border-radius: 12px; 
     border: 1px solid #999; 
     border: 1px solid rgba(0, 0, 0, 0.3); 
+    margin-left: 4px;
     box-shadow: 0 1px 0 #fff; 
     background: transparent url(/images/searchfield.png) no-repeat 6px 50%;
 }
@@ -45,11 +46,37 @@ div#index div#toolbar input#q:focus {
 
 div#index div#toolbar input#new {
     float: right;
+    'display: none;    
 }
 
 div#index div#toolbar input#search {
     display: none;
 }
+
+#add {
+    -webkit-transition-duration:0.2s;
+    -webkit-transition-property:background-color;
+    -webkit-user-select:none;
+    background-attachment:initial;
+    background-clip:initial;
+    background-color:rgba(190, 190, 203, 0);
+    background-image:url(/images/add.png);
+    background-repeat:no-repeat no-repeat;
+    background-position:8px 50%;
+    margin-bottom:0 !important;
+    margin-left:0 !important;
+    margin-right:15px !important;
+    margin-top:6px !important;
+    height:32px;
+    opacity:0.8;
+    overflow-x:hidden;
+    overflow-y:hidden;
+    text-decoration:none;
+    text-indent:-999em;
+    width:32px;
+    align:right;
+}
+
 
 /* index */
 div#notes {  
@@ -58,32 +85,33 @@ div#notes {
     cursor : pointer ;
     overflow: auto;
     position: absolute;
-    top: 44px;
+    top: 35px;
     bottom: 0;
 }
 
 div.noterow {
     background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
     'background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #ccc),color-stop(1.0, white));
-     -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
-    border: 1px solid #F7F8FF;
+     -webkit-box-shadow: 0 0px 2px rgba(0,80,128,0.5);
+    border: 2px solid #F7F8FF;
     border-radius: 6px;
     margin: 4px;
+    margin-bottom: 8px;
     padding: 4px;
     padding-top: 2px;
-    padding-bottom: 6px;
+    padding-bottom: 4px;
     overflow: hidden ;
 }
 
 div.noterow:hover { 
     background:#FFF;
-    border: 1px solid #F7F8FF;
-    border-radius: 6px;    
-    -webkit-box-shadow: 0 0px 5px rgba(0,80,128,0.5);
-    margin: 4px;    
-    padding: 4px;    
-    padding-top: 2px;    
-    padding-bottom: 6px;    
+    'border: 1px solid #F7F8FF;
+    'border-radius: 6px;    
+    -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
+    'margin: 4px;       
+    'padding: 4px;    
+    'padding-top: 2px;    
+    'padding-bottom: 6px;    
 } 
 
 span.notetime {
