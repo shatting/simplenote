@@ -10,7 +10,7 @@ body {
 
 /* index toolbar */
 div#toolbar {
-    margin: 4px;
+    'margin: 4px;
     margin-right: 2px;    
     padding: 5px;
     padding-left: 5px;
@@ -18,7 +18,7 @@ div#toolbar {
     'background: #CACFDE;
     background: white;
     outline-color: black;
-    '-webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
+    -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
     border: 1px solid #F5F6FD;
     border-radius: 6px;  
 }
@@ -27,7 +27,7 @@ div#index div#toolbar input#q {
     padding: 4px 6px 4px 24px; 
     color: #33; 
     font-size: 13px; 
-    width: 60%;     
+    width: 75%;     
     border-radius: 12px; 
     border: 1px solid #999; 
     border: 1px solid rgba(0, 0, 0, 0.3); 
@@ -44,7 +44,11 @@ div#index div#toolbar input#q:focus {
 }
 
 div#index div#toolbar input#new {
-  float: right;
+    float: right;
+}
+
+div#index div#toolbar input#search {
+    display: none;
 }
 
 /* index */
