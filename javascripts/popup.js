@@ -18,6 +18,8 @@ function logBg(s) {
 // defer save to background
 addEventListener("unload", function (event) {
     log("->unload listener");
+    if (isDebug)
+        alert("unload");
     if (isNoteDirty()) {
         log("->unload listener requesting background save");
         background.savedata = $('div#note textarea').val();
@@ -110,43 +112,65 @@ function showIndex(query) {
         return;        
     } else {
         req = { action : "search", query : query};
+        $('div.noterow').hide(); // hide all notes
     }
   } else {
     req = { action : "index" };
+    $('div.noterow').show(); // show all notes, incase we searched before
   }
   
   log("->showIndex" + (query?"->search for " + query:""));
   
   $('#loader').show();  
-  $(window).scroll(checkInView);
-         
+  $('div#notes').unbind("scroll");
+  $('div#notes').scroll(checkInView);
+           
   chrome.extension.sendRequest(req, function(indexData) {
-    // indexData[]: 
+    // indexData[] for index
     //      .deleted:   bool
     //      .key:       string
-    //      .modify:    "2011-04-05 14:51:50.570114"  
+    //      .modify:    "2011-04-05 14:51:50.570114"      
+    // indexData[] for search
+    //      .content:   string
+    //      .key:       string
     
     var now = new Date(Date.now());
     var lastUpdate = $('div#index').data("updated");
     if (!lastUpdate) lastUpdate = new Date(0); 
     var modify;
+    var indexDataNoDeleted, indexDataNoDeletedOld, indexDataNoDeletedNew;  
     
-    var indexDataNoDeleted = indexData.filter(function (e) { return !e.deleted;});    
-    var indexDataNoDeletedOld, indexDataNoDeletedNew;    
-    indexDataNoDeletedOld = indexDataNoDeleted.filter(function (e) { return serverDateStrToLocalDate(e.modify) < lastUpdate;});
-    indexDataNoDeletedNew = indexDataNoDeleted.filter(function (e) { return serverDateStrToLocalDate(e.modify) >= lastUpdate;});
-    
+    if (!query) {
+        indexDataNoDeleted = indexData.filter(function (e) { return !e.deleted;});             
+        indexDataNoDeletedOld = indexDataNoDeleted.filter(function (e) { return serverDateStrToLocalDate(e.modify) < lastUpdate;});
+        indexDataNoDeletedNew = indexDataNoDeleted.filter(function (e) { return serverDateStrToLocalDate(e.modify) >= lastUpdate;});
+        // check for removals
+        var keyNoDeleted = indexDataNoDeleted.map(function(e) { return e.key; });    
+        var keyRows = $("div.noterow").get().map(function(e) { return e.id; });  
+        keyRows.map(function(rowKey) {if (keyNoDeleted.indexOf(rowKey)<0) $('div.noterow#' + rowKey).remove(); });
+    } else {
+        indexDataNoDeletedOld = indexData;
+        indexDataNoDeletedNew = new Array();
+    }
+        
     log("->showIndex request complete, " + indexDataNoDeletedOld.length + " old, " + indexDataNoDeletedNew.length + " new notes");
     
     // check old ones
-    if (isDebug) {
-        for(var i = 0; i < indexDataNoDeletedOld.length; i ++ ) {
-            modify = $('div.noterow#' + indexDataNoDeletedOld[i].key).data("modify");
-            if (modify != serverDateStrToLocalDate(indexDataNoDeletedOld[i].modify))
-                log("modify date different from saved date! (" + indexDataNoDeletedOld[i].key + ")");
-                log(modify);
-                log(typeof(serverDateStrToLocalDate(indexDataNoDeletedOld[i].modify)));
-        }
+    for(var i = 0; i < indexDataNoDeletedOld.length; i ++ ) {
+        if (indexDataNoDeletedOld[i].modify) { //index
+            //modify = $('div.noterow#' + indexDataNoDeletedOld[i].key).data("modify");
+            //if (modify != serverDateStrToLocalDate(indexDataNoDeletedOld[i].modify))
+            //    log("modify date different from saved date! (" + indexDataNoDeletedOld[i].key + ")");
+            //log(modify);
+            //log(typeof(serverDateStrToLocalDate(indexDataNoDeletedOld[i].modify)));
+        } else { // search
+            var notediv = $('#' + indexDataNoDeletedOld[i].key);
+            if (!notediv) // TODO: there might be more problems, i.e. ordering
+                indexDataNoDeletedNew.push(indexDataNoDeletedOld[i]);
+            else {
+                $('#' + indexDataNoDeletedOld[i].key).show();
+            }
+        }        
     }
     
     if (!$('div#index').data("updated")) // first run
@@ -177,13 +201,13 @@ function indexAddNote(mode, key, modify){
     html+=      "</div>";        
     
     if (mode=="delteAndPrepend") {
-        $('div.noterow#' + key).delete();
+        $('div.noterow#' + key).remove();
         $('#notes').prepend(html);                
     } else if (mode=="append") {
         $('#notes').append(html);        
     }
     
-    $('div.noterow#' + key).data("modify",serverDateStrToLocalDate(modify));
+    $('div.noterow#' + key).data("modify",modify);
 }
 
 
@@ -429,7 +453,7 @@ function updateNote(callback) {
         backToIndex();
     
         
-    if (request!==undefined)
+    if (request) {
       log("->updateNote request:");
       log(request);
       chrome.extension.sendRequest(request, function(newkey) {
@@ -438,7 +462,8 @@ function updateNote(callback) {
         log("->updateNote request complete");   
         if (callback)
             callback();
-    });
+      });
+    }
     
 }
 
