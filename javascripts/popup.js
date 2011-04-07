@@ -123,7 +123,7 @@ function showIndex(query) {
   
   $('div#notes').unbind("scroll");
   $('div#notes').scroll(checkInView);
-  $('div#index').show();
+  $('div#index').show("fast");
    
   chrome.extension.sendRequest(req, function(indexData) {
     // indexData[] for index
@@ -364,9 +364,9 @@ function pad(i) {
 function showNote(key) {
   log("->showNote");
   
-  $('div#index').hide();  
+  $('div#index').hide("fast");  
   $('#loader').show();  
-  $('div#note').show();
+  $('div#note').show("fast");
 
   $('div#note div#toolbar input').removeAttr('disabled');
   $('div#note textarea').attr('dirty', 'false');
