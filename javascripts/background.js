@@ -8,26 +8,37 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
   
   log("background::request:" + request.action);
   var callbacks;
+  
   if (request.action === "login") {
-    callbacks = {   success:   function() { sendResponse(true); },
+    callbacks = {   success:   function(credentials) { 
+                                    if (credentials) {
+                                        localStorage.token = credentials.token;
+                                        localStorage.tokenTime = credentials.tokenTime;
+                                    }
+                                    sendResponse(true);  
+                                    },
                     error:     function() { sendResponse(false); }
                 };
-    if(localStorage.email && localStorage.password) {
-      Simplenote.login(localStorage.email, localStorage.password, callbacks);
+                
+    var credentials = {email: localStorage.email, password: localStorage.password};
+    if (localStorage.token) {
+        credentials.token = localStorage.token;
+        credentials.tokenTime = new Date(localStorage.tokenTime);        
     }
+    SimplenoteAPI2.login(credentials, callbacks);
   } else if (request.action === "index") {
-    callbacks = {   success :       function(data) { sendResponse(data) }, 
-                    loginInvalid:   function() {  alert('background::index::loginInvalid');   }, 
+    callbacks = {   success :       function(indexData) { sendResponse(indexData.data) }, 
+                    loginInvalid:   function() {    alert('background::index::loginInvalid');   }, 
                     repeat:         function() {    alert('background::index::repeat');    }
                 };
-    Simplenote.index(callbacks);
+    SimplenoteAPI2.index({},callbacks);
   } else if (request.action === "note") {
     callbacks = {   success :       function(data) { sendResponse(data) }, 
                     loginInvalid:   function() {    alert('background::note::loginInvalid');    }, 
                     repeat:         function() {    alert('background::note::repeat');          },
                     noteNotExists:  function() {    alert('background::note::noteNotExists');   }                    
                 };
-    Simplenote.note(request.key, callbacks);
+    SimplenoteAPI2.retrieve(request.key, callbacks);
   } else if (request.action === "search") {
     callbacks = {   success :       function(data)  { sendResponse(data) }, 
                     loginInvalid:   function()      {  alert('background::search::loginInvalid');   }, 
@@ -39,22 +50,22 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
                     loginInvalid:   function() {    alert('background::destroy::loginInvalid');    }, 
                     repeat:         function() {    alert('background::destroy::repeat');          },
                     noteNotExists:  function() {    alert('background::destroy::noteNotExists');   }                    
-            };
-    Simplenote.destroy(request.key, callbacks);
+            };    
+    SimplenoteAPI2.update({key: request.key, deleted:1}, callbacks);
   } else if (request.action === "update") {
     callbacks = {   success :       function(data) { sendResponse(data) }, 
                     loginInvalid:   function() {    alert('background::update::loginInvalid');    }, 
                     repeat:         function() {    alert('background::update::repeat');          },
                     noteNotExists:  function() {    alert('background::update::noteNotExists');   }                    
-            };
-    Simplenote.update(request.key, request.data, callbacks);
+            };            
+    SimplenoteAPI2.update({key:request.key, content:request.data}, callbacks);
   } else if (request.action === "create") {
     callbacks = {   success :       function(data) { sendResponse(data) }, 
                     loginInvalid:   function() {    alert('background::create::loginInvalid');    }, 
                     repeat:         function() {    alert('background::create::repeat');          },
                     noteNotExists:  function() {    alert('background::create::noteNotExists');   }                    
         };
-    Simplenote.create(request.data, callbacks);   
+    SimplenoteAPI2.create({content : request.data}, callbacks);   
   }
 });
 
@@ -71,4 +82,3 @@ function popupClosed() {
     else
         Simplenote.create(savedata, function() {log("background::popupClosed create success");});
 }
-

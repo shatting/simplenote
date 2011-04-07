@@ -33,47 +33,46 @@ addEventListener("unload", function (event) {
 //  ---------------------------------------
 // Log in on page load
 $(document).ready(function() {
-  var signUpLink =
-  "<a href='https://simple-note.appspot.com/create/'>signup</a>";
-  var optionsLink =
-  "<a href='options.html'>options page</a>";
+  var signUpLink =  "<a href='https://simple-note.appspot.com/create/'>signup</a>";
+  var optionsLink = "<a href='options.html'>options page</a>";
 
   if ( !localStorage.email || !localStorage.password) {
     var message = "Please " + signUpLink + " for a Simplenote account and enter your credentials on the " + optionsLink + ".";
     displayStatusMessage(message);
   }
   else {
+    
     log("->ready listener requesting login");
     chrome.extension.sendRequest({action : "login"}, 
-    function(success) {
-      if (success) {
-        log("->ready listener login success");
-        
-        showIndex();
-        
-        $('div#index div#toolbar input#new').click(function() {
-          showNote();
+        function(success) {
+          if (success) {
+            log("->ready listener login success");
+            
+            showIndex();
+            
+            $('div#index div#toolbar input#new').click(function() {
+              showNote();
+            });
+    
+            var options = {
+              callback : function() { showIndex($('#q').val()); },
+              wait : 750,
+              highlight : false,
+              captureLength : -1 // needed for empty string ('') capture
+            }
+            $('div#index div#toolbar input#q').typeWatch(options);
+    
+            $('div#index div#toolbar input#search').click(function() {
+              showIndex($('#q').val());
+            });
+            $('input#q').focus();
+          }
+          else {
+            log("->ready listener login error");
+            var message = "Please correct your username and password on the " + optionsLink + "!";
+            displayStatusMessage(message);
+          }
         });
-
-        var options = {
-          callback : function() { showIndex($('#q').val()); },
-          wait : 750,
-          highlight : false,
-          captureLength : -1 // needed for empty string ('') capture
-        }
-        $('div#index div#toolbar input#q').typeWatch(options);
-
-        $('div#index div#toolbar input#search').click(function() {
-          showIndex($('#q').val());
-        });
-        $('input#q').focus();
-      }
-      else {
-        log("->ready listener login error");
-        var message = "Please correct your username and password on the " + optionsLink + "!";
-        displayStatusMessage(message);
-      }
-    });
   }
 });
 
@@ -141,9 +140,10 @@ function showIndex(query) {
     var indexDataNoDeleted, indexDataNoDeletedOld, indexDataNoDeletedNew;  
     
     if (!query) {
-        indexDataNoDeleted = indexData.filter(function (e) { return !e.deleted;});             
-        indexDataNoDeletedOld = indexDataNoDeleted.filter(function (e) { return serverDateStrToLocalDate(e.modify) < lastUpdate;});
-        indexDataNoDeletedNew = indexDataNoDeleted.filter(function (e) { return serverDateStrToLocalDate(e.modify) >= lastUpdate;});
+        indexDataNoDeleted = indexData.filter(function (e) { return e.deleted!=1;});   
+        console.log(indexDataNoDeleted);   
+        indexDataNoDeletedOld = indexDataNoDeleted.filter(function (e) { return serverDateStrToLocalDate(e.modifydate) < lastUpdate;});
+        indexDataNoDeletedNew = indexDataNoDeleted.filter(function (e) { return serverDateStrToLocalDate(e.modifydate) >= lastUpdate;});
         // check for removals
         var keyNoDeleted = indexDataNoDeleted.map(function(e) { return e.key; });    
         var keyRows = $("div.noterow").get().map(function(e) { return e.id; });  
@@ -157,7 +157,7 @@ function showIndex(query) {
     
     // check old ones
     for(var i = 0; i < indexDataNoDeletedOld.length; i ++ ) {
-        if (indexDataNoDeletedOld[i].modify) { //index
+        if (indexDataNoDeletedOld[i].modifydate) { //index
             //modify = $('div.noterow#' + indexDataNoDeletedOld[i].key).data("modify");
             //if (modify != serverDateStrToLocalDate(indexDataNoDeletedOld[i].modify))
             //    log("modify date different from saved date! (" + indexDataNoDeletedOld[i].key + ")");
@@ -173,12 +173,13 @@ function showIndex(query) {
         }        
     }
     
+    // add new ones
     if (!$('div#index').data("updated")) // first run
         for(var i = 0; i < indexDataNoDeletedNew.length; i ++ )
-            indexAddNote("append",indexDataNoDeletedNew[i].key, indexDataNoDeletedNew[i].modify);
+            indexAddNote("append",indexDataNoDeletedNew[i]);
     else
         for(var i = indexDataNoDeletedNew.length-1; i >= 0; i-- )
-            indexAddNote("delteAndPrepend",indexDataNoDeletedNew[i].key, indexDataNoDeletedNew[i].modify);
+            indexAddNote("delteAndPrepend",indexDataNoDeletedNew[i]);
 
         
     $('div#index').show();
@@ -191,23 +192,23 @@ function showIndex(query) {
 }
 
 //mode: delteAndPrepend, append
-function indexAddNote(mode, key, modify){
+function indexAddNote(mode, data){
             
-    var html =  "<div class='noterow' id='" + key  + "' >";    
-    html+=          "<span class='notetime' id='" + key + "time'>" + gettimeadd(modify) + "</span>";
-    html+=          "<div contenteditable='false' class='noteheading' id='" + key + "heading'>";
+    var html =  "<div class='noterow' id='" + data.key  + "' >";    
+    html+=          "<span class='notetime' id='" + data.key + "time'>" + gettimeadd(data.modifydate) + "</span>";
+    html+=          "<div contenteditable='false' class='noteheading' id='" + data.key + "heading'>";
     html+=          "</div>";
-    html+=          "<div contenteditable='false' class='abstract' id='" + key + "abstract'>&nbsp;<br>&nbsp;</div>";
+    html+=          "<div contenteditable='false' class='abstract' id='" + data.key + "abstract'>&nbsp;<br>&nbsp;</div>";
     html+=      "</div>";        
     
     if (mode=="delteAndPrepend") {
-        $('div.noterow#' + key).remove();
+        $('div.noterow#' + data.key).remove();
         $('#notes').prepend(html);                
     } else if (mode=="append") {
         $('#notes').append(html);        
     }
     
-    $('div.noterow#' + key).data("modify",modify);
+    $('div.noterow#' + data.key).data("modify",data.modifydate);
 }
 
 
@@ -230,7 +231,7 @@ function indexFillNote(element) {
         var $noteheading = $('#' + noteData.key + "heading");     
         var $abstract = $('#' + noteData.key + "abstract");    
             
-        var lines = noteData.text.split("\n").filter(function(line) {return ( line.trim().length > 0 )});
+        var lines = noteData.content.split("\n").filter(function(line) {return ( line.trim().length > 0 )});
 
         // first line
         $('#' + key + 'loader').remove();
@@ -252,7 +253,7 @@ function indexFillNote(element) {
         //$noterow.hover(maximize,minimize);
         
         // save full note
-        $noterow.data('fulltext',noteData.text);
+        $noterow.data('fulltext',noteData.content);
         
         // check new inview, might have changed due to reflow
         $noterow.data('loaded',true);        
@@ -345,11 +346,9 @@ function gettimeadd(s) {
   return timeadd;
 }
 
-// assumung input dates are utc
-// format of s from .modify: "2011-04-05 14:51:50.570114"
+// API2 dates are seconds since epoch
 function serverDateStrToLocalDate(s) {
-    var now = new Date(Date.now());
-    return new Date(Date.parse(s) - now.getTimezoneOffset()*60000);
+    return new Date(eval(s));
 }
 
 //  ---------------------------------------
@@ -422,7 +421,7 @@ function showNote(key) {
     chrome.extension.sendRequest({action : "note", key : key}, function(data) {
       log("->showNote existing note request complete");
       // insert data
-      $('div#note textarea').val(data.text);
+      $('div#note textarea').val(data.content);
       $('div#note textarea').attr('key', key);      
       
       // show/hide elements
