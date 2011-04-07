@@ -3,12 +3,12 @@
   "version": "1.3",
   "description": "Access your Simplenote notes",
   "icons": {
-    "128": "images/simplenote.png"
+    "128": "images/logo_big.png"
   },
   "background_page": "background.html",
   "options_page": "options.html",
   "browser_action": {
-    "default_icon": "images/simplenote.png",
+    "default_icon": "images/logo.png",
     "popup": "popup.html"
   },
   "permissions": [
