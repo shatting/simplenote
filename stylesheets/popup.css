@@ -149,15 +149,26 @@ div#note div#toolbar input#destroy {
   float: right;
 }
 
-div#note textarea {
-  margin-top: 8px;
-  height: 452px;
-  width: 98%;
+#editor {
+    padding: 5px;
+    margin-top: 8px;
+    height: 452px;
+    border-radius: 12px; 
+    border: 1px solid #999; 
+    border: 1px solid rgba(0, 0, 0, 0.3); 
+    box-shadow: 0 1px 0 #fff; 
+    'margin-left: 4px;    
+    width: 98%;    
+    resize: none;
+    overflow: auto;
+}
+
+#editor:focus {
+    outline: none;    
 }
 
 
 /* scrollbar */
-
 ::-webkit-scrollbar {
     width: 15px;
     height: 10px;
