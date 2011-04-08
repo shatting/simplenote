@@ -147,22 +147,21 @@ var SimplenoteAPI2 = {
         if (!callbacks) callbacks = {};
         if (!options) options = {};
         var url = this.root2 + "index" + this.authURLadd();
+        var urloptions = "";
+        if (options.length) urloptions+="&length=" + options.length;
+        if (options.mark) urloptions+="&mark=" + options.mark;
+        if (options.since) urloptions+="&since=" + options.since;        
         
-        if (options.length) url+="&length=" + options.length;
-        if (options.mark) url+="&mark=" + options.mark;
-        if (options.since) url+="&since=" + options.since;
+        SimplenoteAPI2.log("index::options: " + urloptions);
         
         jQuery.ajax({
-          url: url,
+          url: url + urloptions,
           dataType: "json",
           complete: function(jqXHR, textStatus) {
-             SimplenoteAPI2.log("index=" + textStatus);
+             SimplenoteAPI2.log("index::status=" + textStatus);
              switch (jqXHR.status)
              {
                  case 200:
-                    // data[] : deleted: bool
-                    //          key: string
-                    //          modify: "2011-04-05 21:45:13.205000"
                     if (callbacks.success)
                         callbacks.success(jQuery.parseJSON(jqXHR.responseText));
                     break;
@@ -191,7 +190,7 @@ var SimplenoteAPI2 = {
           url: this.root2 + "data/" + key + this.authURLadd(),
           dataType: "json",
           complete: function(jqXHR, textStatus) {
-             SimplenoteAPI2.log("retrieve=" + textStatus);
+             SimplenoteAPI2.log("::retrieve:status=" + textStatus);
              switch (jqXHR.status)
              {
                  case 200:                                     
@@ -370,7 +369,7 @@ var SimplenoteAPI2 = {
 //                    testDelete(note,function() {
 //                        testIndex(function(index) {
 //                            if (index.data[0].key == note.key)
-//                                throw "error, note note deleted";                                        
+//                                throw "error, note not deleted";                                        
 //                        });
 //                    });
 //                });

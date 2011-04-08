@@ -27,18 +27,9 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
     }
     SimplenoteAPI2.login(credentials, callbacks);
   } else if (request.action === "index") {
-    callbacks = {   success :       function(indexData) { sendResponse(indexData.data) }, 
-                    loginInvalid:   function() {    alert('background::index::loginInvalid');   }, 
-                    repeat:         function() {    alert('background::index::repeat');    }
-                };
-    SimplenoteAPI2.index({},callbacks);
+    SimplenoteDB.getIndex(sendResponse);
   } else if (request.action === "note") {
-    callbacks = {   success :       function(data) { sendResponse(data) }, 
-                    loginInvalid:   function() {    alert('background::note::loginInvalid');    }, 
-                    repeat:         function() {    alert('background::note::repeat');          },
-                    noteNotExists:  function() {    alert('background::note::noteNotExists');   }                    
-                };
-    SimplenoteAPI2.retrieve(request.key, callbacks);
+    SimplenoteDB.getNote(request.key,sendResponse);    
   } else if (request.action === "search") {
     callbacks = {   success :       function(data)  { sendResponse(data) }, 
                     loginInvalid:   function()      {  alert('background::search::loginInvalid');   }, 
