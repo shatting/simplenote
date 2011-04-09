@@ -43,13 +43,8 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
                     noteNotExists:  function() {    alert('background::destroy::noteNotExists');   }                    
             };    
     SimplenoteAPI2.update({key: request.key, deleted:1}, callbacks);
-  } else if (request.action === "update") {
-    callbacks = {   success :       function(data) { sendResponse(data) }, 
-                    loginInvalid:   function() {    alert('background::update::loginInvalid');    }, 
-                    repeat:         function() {    alert('background::update::repeat');          },
-                    noteNotExists:  function() {    alert('background::update::noteNotExists');   }                    
-            };            
-    SimplenoteAPI2.update({key:request.key, content:request.data}, callbacks);
+  } else if (request.action === "update") {               
+    SimplenoteDB.updateNote({key:request.key, content:request.data}, sendResponse);
   } else if (request.action === "create") {
     callbacks = {   success :       function(data) { sendResponse(data) }, 
                     loginInvalid:   function() {    alert('background::create::loginInvalid');    }, 
@@ -69,7 +64,7 @@ function popupClosed() {
         return;
     
     if (savekey)
-        Simplenote.update(savekey, savedata, function() { log("background::popupClosed update success");});
+        SimplenoteDB.updateNote({key:savekey, content:savedata}, function() { log("background::popupClosed update success");});
     else
         Simplenote.create(savedata, function() {log("background::popupClosed create success");});
 }
