@@ -1,10 +1,14 @@
 // ------------------------------------------------------------------------------------------------
-// API2
+// Simplenote API2 js implementation.
 // ------------------------------------------------------------------------------------------------
+
+/* 
+ * returns true iff there is a credentials.token and credentials.tokenTime not older than 24hrs
+ */
 function isTokenValid(credentials) {
     if (!credentials.token)
         return false;
-        
+       
     var now = new Date();
     var diff = (now-credentials.tokenTime)/(1000*60*60);
     
@@ -14,56 +18,80 @@ function isTokenValid(credentials) {
         return false;    
 }
 
+$.ajaxSetup({
+  timeout: 200
+});
+
 var SimplenoteAPI2 = {
     
+    // toggle debug output
     isDebug : true,
     
     log : function(s) {
         if (!this.isDebug) return;
-        
         if (typeof s == "string")
             console.log("SimplenoteAPI2::" + s);
         else
             console.log(s);
     },
     
-    // kept for login
+    /*
+     *  API1 root, needed for login
+     **/
     root: "https://simple-note.appspot.com/api/",
     
+    /*
+     *  API2 root
+     **/
     root2: "https://simple-note.appspot.com/api2/",    
     
+    /* 
+     *  returns the authentification part of all request urls:
+     *      ?email=[email]&token=[token] 
+     *  @throws exception if not logged in or token expired
+     */
     authURLadd : function() {
+        if (!this.isLoggedIn())
+            throw "not logged in or token expired"
         return "?email=" + escape(this.credentials.email) + "&auth=" + this.credentials.token;
     },
-    
-    //https://simple+note.appspot.com/api/login
+    /*  
+     *  log the SimplenoteAPI2 object in with the server<br>
+     *     
+     *   A. this has no credentials
+     *         A1. no argument credentials supplied
+     *             --> cannot login
+     *         A2. argument credentials supplied        
+     *             A21. arg cred have valid token
+     *                 --> use arg cred token, save to this
+     *             A22. arg cred have no/invalid token
+     *                 --> get new token
+     *    B. this has credentials
+     *         B0. no arg cred
+     *             --> check this.cred or get new ones
+     *         B1. emails match
+     *             B11. arg has no token
+     *                 --> use this.cred
+     *             B12. arg has token
+     *                 --> use most recent valid creds
+     *         B2. emails dont match
+     *             B21. arg has no token
+     *                 --> get new token with arg email
+     *             B22. arg has token
+     *                 --> use it
+     *              
+     * @param credentials either {.email,.password} or {.email,.password,.token,tokenTime}
+     * @param callbacks.success(credentials) (optional) called after successful login
+     * @param callbacks.error (optional) error logging in
+     */
     login: function(credentials, callbacks) {
         if (!callbacks) callbacks = {};        
         
-        // A. this has no credentials
-        //      A1. no argument credentials supplied
-        //          --> cannot login
-        //      A2. argument credentials supplied        
-        //          A21. arg cred have valid token
-        //              --> use arg cred token, save to this
-        //          A22. arg cred have no/invalid token
-        //              --> get new token
-        // B. this has credentials
-        //      B0. no arg cred
-        //          --> check this.cred or get new ones
-        //      B1. emails match
-        //          B11. arg has no token
-        //              --> use this.cred
-        //          B12. arg has token
-        //              --> use most recent valid creds
-        //      B2. emails dont match
-        //          --> get new token 
-        var haveToken;        
+        var haveToken;
         // precond: this.credentials either full set (email+pass+token) or undefined        
         if (!this.credentials) { //A
             if (!credentials) //A1
-                throw "email and (password or token) required for login";
-                        
+                throw "email and (password or token) required for login";            
             haveToken = isTokenValid(credentials);
             this.credentials = credentials; //A21&A22(save email+password to this, rest is overwritten)
         } else { //B
@@ -81,13 +109,15 @@ var SimplenoteAPI2 = {
                             this.credentials = credentials;
                         } else
                             haveToken = thisHaveToken;
-                    else if (argHaveToken)
+                    else if (argHaveToken) {
                         haveToken = argHaveToken;
-                    else
+                        this.credentials = credentials;
+                    } else
                         haveToken = thisHaveToken;                        
                 }              
             } else {//B2
-                this.credentials = credentials; // save email+password
+                haveToken = isTokenValid(credentials);
+                this.credentials = credentials; // save email+password, poss token too
             }
         }
         // postcond: this.credentials have (email,password) and (valid token iff haveToken)
@@ -100,49 +130,73 @@ var SimplenoteAPI2 = {
         }        
             
         jQuery.ajax({
-          type: "POST",
-          url: this.root + "login",
-          data: Base64.encode("email=" + this.credentials.email + "&password=" + this.credentials.password),
-          dataType: "text",
-          success: function (response) {
-            SimplenoteAPI2.log("login success, token:" + response);
+            type: "POST",
+            url: this.root + "login",
+            data: Base64.encode("email=" + this.credentials.email + "&password=" + this.credentials.password),            
+            dataType: "text",
+            success: function (response) {
+                SimplenoteAPI2.log("login success, token:" + response);
             
-            SimplenoteAPI2.credentials.token = response;
-            SimplenoteAPI2.credentials.tokenTime = new Date();
-            // this.credentials full valid set
+                SimplenoteAPI2.credentials.token = response;
+                SimplenoteAPI2.credentials.tokenTime = new Date();
+                // this.credentials full valid set now
             
-            if (callbacks.success)
-                callbacks.success(SimplenoteAPI2.credentials);
-          },
-          error: function (XMLHttpRequest, textStatus, errorThrown) {
-            SimplenoteAPI2.credentials = undefined;
-            if (callbacks.error)
-                callbacks.error();
-          }
+                if (callbacks.success)
+                    callbacks.success(SimplenoteAPI2.credentials);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                SimplenoteAPI2.credentials = undefined;
+                if (callbacks.error)
+                    callbacks.error();
+            }
         });
     },
-    // https://simple+note.appspot.com/api2/index?length=[number_of_notes]&mark=[bookmark_key]&since=[time_value]&auth=[auth_token]&email=[email]
-    //    401 - User invalid, either authorization key expired or user incorrect, retry login
-    //    Any other error, retry
-    // API2
-    //    data: Array[1]
-    //      0: Object
-    //          createdate: "1301873065.024653"
-    //          deleted: 0
-    //          key: "agtzaW1wbGUtbm90ZXINCxIETm90ZRjWtbQHDA"
-    //          minversion: 52
-    //          modifydate: "1302141103.242000"
-    //          syncnum: 66
-    //          systemtags: Array[1]
-    //          0: "pinned"
-    //          length: 1
-    //          tags: Array[1]
-    //              0: "ideen"
-    //              length: 1
-    //          version: 62
-    //    mark: "agtzaW1wbGUtbm90ZXINCxIETm90ZRjQpNQHDA"
-    //    time: "1302185274.056466"
-    // API2
+    
+    /*
+     *  checks for valid token and whether optional supplied email matches
+     *  @param email (optional)
+     *  @return true iff token valid and optional email matches  
+     */
+    isLoggedIn : function(email) {
+        if (!this.credentials || !isTokenValid(this.credentials))
+            return false;
+        
+        if (email && (this.credentials.email != email))
+            return false;
+        
+        return true;
+    },
+    /**
+     * gets note index from server
+     *      
+     * @param options.length    (optional) maximum number of notes to return (<=100 serverside)<br>
+     * @param options.mark     (optional) marked message key<br>
+     * @param options.since     (optional) get only new/changed since (in seconds from epoch) <br>
+     * @param callbacks.success(data) (optional) callback on success, where
+     *  <code>
+     *  data: Array[1]
+     *      0: Object
+     *          createdate: "1301873065.024653"
+     *          deleted: 0
+     *          key: "..."
+     *          minversion: 52
+     *          modifydate: "1302141103.242000"
+     *          syncnum: 66
+     *          systemtags: Array[1]
+     *              0: "pinned"
+     *              length: 1
+     *          tags: Array[1]
+     *              0: "tag"
+     *              length: 1
+     *          version: 62
+     * mark: "agtzaW1wbGUtbm90ZXINCxIETm90ZRjQpNQHDA"
+     * time: "1302185274.056466"
+     * </code><br>
+     * @param callbacks.timeout(options) called after timeout
+     * @param callbacks.loginInvalid() (optional) User invalid, either authorization key expired or user incorrect, retry login<br> 
+     * @param callbacks.repeat(options,callbacks) (optional) Any other error, retry<br>
+     * 
+     */
     index: function(options,callbacks) {
         if (!callbacks) callbacks = {};
         if (!options) options = {};
@@ -150,211 +204,256 @@ var SimplenoteAPI2 = {
         var urloptions = "";
         if (options.length) urloptions+="&length=" + options.length;
         if (options.mark) urloptions+="&mark=" + options.mark;
-        if (options.since) urloptions+="&since=" + options.since;        
-        
-        SimplenoteAPI2.log("index::options: " + urloptions);
-        
+        if (options.since) urloptions+="&since=" + options.since;                
+        SimplenoteAPI2.log("index::options: " + urloptions);        
         jQuery.ajax({
-          url: url + urloptions,
-          dataType: "json",
-          complete: function(jqXHR, textStatus) {
-             SimplenoteAPI2.log("index::status=" + textStatus);
-             switch (jqXHR.status)
-             {
-                 case 200:
-                    if (callbacks.success)
-                        callbacks.success(jQuery.parseJSON(jqXHR.responseText));
-                    break;
-                 case 401:
-                    if (callbacks.loginInvalid)
-                        callbacks.loginInvalid();
-                    break;
-                 default:
-                    if (callbacks.repeat)
-                        callbacks.repeat(callbacks);
-             }  
-          }      
+            url: url + urloptions,
+            dataType: "json",            
+            complete: function(jqXHR, textStatus) {
+                SimplenoteAPI2.log("index::status=" + textStatus + "(" + jqXHR.status + ")");
+                switch (jqXHR.status) {                    
+                    case 200:
+                        if (callbacks.success)
+                            callbacks.success(jQuery.parseJSON(jqXHR.responseText));
+                        break;
+                    case 401:
+                        if (callbacks.loginInvalid)
+                            callbacks.loginInvalid();
+                        break;
+                    case 0:
+                        if (callbacks.timeout)
+                            callbacks.timeout(options);
+                        break;
+                    default:
+                        if (callbacks.repeat)
+                            callbacks.repeat(options,callbacks);
+                }  
+            }      
         });
     },
-    //https://simple-note.appspot.com/api2/data/[note_key]?auth=[auth_token]&email=[email]
-    //    401 - User invalid, either authorization key expired or user incorrect, retry login
-    //    404 - Note does not exist, do not retry
-    //    Any other error, retry
-    // API2 
+    /**
+     * retrieves a note object from the server
+     * 
+     * @param key the key string of the note to be retrieved
+     * @param callbacks.success(noteObj) (optional) call after note successfully retrieved 
+     * @param callbacks.loginInvalid() (optional) User invalid, either authorization key expired or user incorrect, retry login
+     * @param callbacks.noteNotExist() (optional) Note does not exist, do not retry
+     * @param callbacks.repeat(key,callbacks) (optional) Any other error, retry
+     */    
     retrieve: function(key, callbacks) {
         if (!callbacks) callbacks = {};
         if (!key) 
-            throw "SimplenoteAPI2::retrieve:key missing.";
-        
+            throw "SimplenoteAPI2::retrieve:key missing.";           
         jQuery.ajax({
-          url: this.root2 + "data/" + key + this.authURLadd(),
-          dataType: "json",
-          complete: function(jqXHR, textStatus) {
-             SimplenoteAPI2.log("::retrieve:status=" + textStatus);
-             switch (jqXHR.status)
-             {
-                 case 200:                                     
-                    if (callbacks.success)
-                        callbacks.success(jQuery.parseJSON(jqXHR.responseText));
-                    break;
-                 case 401:
-                    if (callbacks.loginInvalid)
-                        callbacks.loginInvalid();
-                    break;
-                 case 404:
-                    if (callbacks.noteNotExist)
-                        callbacks.noteNotExist();
-                    break;                    
-                 default:
-                    if (callbacks.repeat)
-                        callbacks.repeat(key,callbacks);
-             }  
-           }
+            url: this.root2 + "data/" + key + this.authURLadd(),
+            dataType: "json",
+            complete: function(jqXHR, textStatus) {
+                SimplenoteAPI2.log("::retrieve:status=" + textStatus);
+                switch (jqXHR.status)
+                {
+                    case 200:
+                        if (callbacks.success)
+                            callbacks.success(jQuery.parseJSON(jqXHR.responseText));
+                        break;
+                    case 401:
+                        if (callbacks.loginInvalid)
+                            callbacks.loginInvalid();
+                        break;
+                    case 404:
+                        if (callbacks.noteNotExist)
+                            callbacks.noteNotExist();
+                        break;               
+                    case 0:
+                        if (callbacks.timeout)
+                            callbacks.timeout(key);
+                        break;                        
+                    default:
+                        if (callbacks.repeat)
+                            callbacks.repeat(key,callbacks);
+                }  
+            }
         });
     },
-    // https://simple+note.appspot.com/api/search?query=[search_term]&results=[max_results]&offset=[offset_index]&auth=[auth_token]&email=[email]
-    // API1
+    /**
+     * API1 version of note search
+     * 
+     * @param query the string to be found
+     * @param callbacks.success(resultsArray) (optional) called after successful search
+     * @param callbacks.loginInvalid() (optional) User invalid, either authorization key expired or user incorrect, retry login     
+     * @param callbacks.repeat(query,callbacks,options) (optional) Any other error, retry
+     * @param options.results (optional) max results to be returned
+     * @param options.offset (optional) offset index (use in combination with max results for pagination)
+     */
     search: function(query, callbacks, options) {
         if (!callbacks) callbacks = {};
         var optionsStr = "";
         if (options && options.results)
-            add += "&results="+options.results;
+            optionsStr += "&results="+options.results;
         if (options && options.offset)
-            add += "&offset="+options.results;
+            optionsStr += "&offset="+options.results;
         
         jQuery.ajax({
-          url: this.root + "search" + this.authURLadd() + "&query=" + escape(query) + optionsStr,
-          dataType: "json",
-          complete: function(jqXHR, textStatus) {
-                 SimplenoteAPI2.log("search=" + textStatus);
-                 switch (jqXHR.status)
-                 {
-                     case 200:
+            url: this.root + "search" + this.authURLadd() + "&query=" + escape(query) + optionsStr,
+            dataType: "json",
+            complete: function(jqXHR, textStatus) {
+                SimplenoteAPI2.log(";;search status=" + textStatus);
+                switch (jqXHR.status)
+                {
+                    case 200:
                         var data = jQuery.parseJSON(jqXHR.responseText);
                         if (callbacks.success)
                             callbacks.success(data['Response']['Results']);
                         break;
-                     case 401:
+                    case 401:
                         if (callbacks.loginInvalid)
                             callbacks.loginInvalid();
-                        break;                     
-                     default:
+                        break;   
+                    case 0:
+                        if (callbacks.timeout)
+                            callbacks.timeout(options);
+                        break;                        
+                    default:
                         if (callbacks.repeat)
-                            callbacks.repeat(query,callbacks);
-                 }  
-              }        
+                            callbacks.repeat(query,callbacks,options);
+                }  
+            }        
         });
     },    
-    // https://simple+note.appspot.com/api2/data/[note4key]?auth=[auth4token]&email=[email
-    // 401 - User invalid, either authorization key expired or user incorrect, retry login
-    // 404 - Note does not exist, do not retry
-    // Any other error, retry
-    // API2
-    delete: function(note, callbacks) {
-        if (!callbacks) callbacks = {};
-        if (!note || !note.key) 
-            throw "SimplenoteAPI2::delete:note or note.key missing.";
+    /**
+     * permanently deletes a note from the server. note.deleted must be set to 1 for this to succeed.
+     * 
+     * @param key the key string of the note to be deleted
+     * @param callbacks.success(noteObj) (optional) call after note successfully retrieved 
+     * @param callbacks.loginInvalid() (optional) User invalid, either authorization key expired or user incorrect, retry login
+     * @param callbacks.noteNotExist() (optional) Note does not exist, do not retry
+     * @param callbacks.repeat(key,callbacks) (optional) Any other error, retry
+     */ 
+    destroy: function(key, callbacks) {
+        if (!callbacks)                       
+            callbacks = {};
+        if (!key) 
+            throw "SimplenoteAPI2::destroy:note key missing.";
             
         jQuery.ajax({
-          type: "DELETE",
-          url: this.root2 + "data/" + key + this.authURLadd(),
-          complete: function(jqXHR, textStatus) {
-             SimplenoteAPI2.log("delete=" + textStatus);
-             switch (jqXHR.status)
-             {
-                 case 200:                    
-                    if (callbacks.success)
-                        callbacks.success(jqXHR.responseText);
-                    break;
-                 case 401:
-                    if (callbacks.loginInvalid)
-                        callbacks.loginInvalid();
-                    break;
-                 case 404:
-                    if (callbacks.noteNotExist)
-                        callbacks.noteNotExist();      
-                    break;                
-                 default:
-                    if (callbacks.repeat)
-                        callbacks.repeat(callbacks, permanently);
-             }  
-          }  
+            type: "DELETE",
+            url: this.root2 + "data/" + key + this.authURLadd(),
+            complete: function(jqXHR, textStatus) {
+                SimplenoteAPI2.log("::destroy status=" + textStatus);
+                switch (jqXHR.status)
+                {
+                    case 200:
+                        if (callbacks.success)
+                            callbacks.success(jqXHR.responseText);
+                        break;
+                    case 401:
+                        if (callbacks.loginInvalid)
+                            callbacks.loginInvalid();
+                        break;
+                    case 404:
+                        if (callbacks.noteNotExist)
+                            callbacks.noteNotExist();      
+                        break;              
+                    case 0:
+                        if (callbacks.timeout)
+                            callbacks.timeout(key);
+                        break;                        
+                    default:
+                        if (callbacks.repeat)
+                            callbacks.repeat(callbacks);
+                }  
+            }  
         });
     },    
-    //
-    //  https://simple+note.appspot.com/api2/data/[note4key]?auth=[auth4token]&email=[email]
-    // API2
+    /**
+     * updates a note on the server.
+     * 
+     * @param note note object to be updated
+     * @param callbacks.success(noteObj) (optional) called after note successfully opdated. updated note is passed back.
+     * @param callbacks.loginInvalid() (optional) User invalid, either authorization key expired or user incorrect, retry login
+     * @param callbacks.noteNotExist() (optional) Note does not exist, do not retry
+     * @param callbacks.repeat(key,callbacks) (optional) Any other error, retry
+     */ 
     update: function(note, callbacks) {        
         if (!callbacks) callbacks = {};
         if (!note || !(note.content || note.deleted==1) || !note.key) 
-            throw "SimplenoteAPI2::update:(note.content or note.deleted) or note.key missing.";
+            throw "SimplenoteAPI2::update:note or note.content empty, or note.deleted or note.key missing.";
             
         jQuery.ajax({
-          type: "POST",
-          url: this.root2 + "data/" + note.key + this.authURLadd(),
-          data: encodeURIComponent(JSON.stringify(note)),
-          complete: function(jqXHR, textStatus) {
-             SimplenoteAPI2.log("update=" + textStatus);
-             switch (jqXHR.status)
-             {
-                 case 200:                    
-                    if (callbacks.success)
-                        callbacks.success(JSON.parse(jqXHR.responseText));
-                    break;
-                 case 401:
-                    if (callbacks.loginInvalid)
-                        callbacks.loginInvalid();
-                    break;
-                 case 404:
-                    if (callbacks.noteNotExist)
-                        callbacks.noteNotExist();   
-                    break;                   
-                 default:
-                    if (callbacks.repeat)
-                        callbacks.repeat(note, callbacks);
-             }  
-          }  
+            type: "POST",
+            url: this.root2 + "data/" + note.key + this.authURLadd(),
+            data: encodeURIComponent(JSON.stringify(note)),
+            complete: function(jqXHR, textStatus) {
+                SimplenoteAPI2.log("::update status=" + textStatus);
+                switch (jqXHR.status)
+                {
+                    case 200:
+                        if (callbacks.success)
+                            callbacks.success(JSON.parse(jqXHR.responseText));
+                        break;
+                    case 401:
+                        if (callbacks.loginInvalid)
+                            callbacks.loginInvalid();
+                        break;
+                    case 404:
+                        if (callbacks.noteNotExist)
+                            callbacks.noteNotExist();   
+                        break;              
+                    case 0:
+                        if (callbacks.timeout)
+                            callbacks.timeout(note);
+                        break;                        
+                    default:
+                        if (callbacks.repeat)
+                            callbacks.repeat(note, callbacks);
+                }  
+            }  
         });
     },
-    // https://simple+note.appspot.com/api2/data?auth=[auth_token]&email=[email]
-    // API2
+    /**
+     * creates a note on the server.
+     * 
+     * @param note note object to be created
+     * @param callbacks.success(noteObj) (optional) called after note successfully created. created note is passed back.
+     * @param callbacks.loginInvalid() (optional) User invalid, either authorization key expired or user incorrect, retry login
+     * @param callbacks.repeat(key,callbacks) (optional) Any other error, retry
+     */ 
     create: function(note, callbacks) {
         if (!callbacks) callbacks = {};
         
         if (!note || !note.content) 
-            throw "SimplenoteAPI2::create:note.content missing.";
+            throw "SimplenoteAPI2::create:note or note.content missing.";
         
         jQuery.ajax({
-          type: "POST",
+            type: "POST",
           
-          url: this.root2 + "data" + this.authURLadd(),
+            url: this.root2 + "data" + this.authURLadd(),
           
-          data: encodeURIComponent(JSON.stringify(note)),
+            data: encodeURIComponent(JSON.stringify(note)),
           
-          complete: function(jqXHR, textStatus) {
-             SimplenoteAPI2.log("create=" + textStatus);
-             switch (jqXHR.status)
-             {
-                 case 200:                    
-                    if (callbacks.success)
-                        callbacks.success(JSON.parse(jqXHR.responseText));
-                    break;
-                 case 401:
-                    if (callbacks.loginInvalid)
-                        callbacks.loginInvalid();
-                    break;
-                 case 404:
-                    if (callbacks.noteNotExist)
-                        callbacks.noteNotExist();
-                    break;                   
-                 default:
-                    if (callbacks.repeat)
-                        callbacks.repeat(note, callbacks);
-             }
-          }
+            complete: function(jqXHR, textStatus) {
+                SimplenoteAPI2.log("::create status=" + textStatus);
+                switch (jqXHR.status)
+                {
+                    case 200:
+                        if (callbacks.success)
+                            callbacks.success(JSON.parse(jqXHR.responseText));
+                        break;
+                    case 401:
+                        if (callbacks.loginInvalid)
+                            callbacks.loginInvalid();
+                        break;                    
+                    case 0:
+                        if (callbacks.timeout)
+                            callbacks.timeout(note);
+                        break;                        
+                    default:
+                        if (callbacks.repeat)
+                            callbacks.repeat(note, callbacks);
+                }
+            }
         });
     }
-};
+}
 
 //var indexdata, notedata;
 //function test(text) {
@@ -410,7 +509,7 @@ var SimplenoteAPI2 = {
 
 //function testDelete(key,text, next) {
 //     SimplenoteAPI2.login(localStorage.email,localStorage.password, { success: function() {
-//        SimplenoteAPI2.delete({key:key}, {success: function(data) {
+//        SimplenoteAPI2.destroy({key:key}, {success: function(data) {
 //            notedata=data;
 //            console.log(data);
 //            if (next) next(data);            
