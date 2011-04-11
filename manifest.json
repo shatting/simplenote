@@ -12,7 +12,8 @@
     "popup": "popup.html"
   },
   "permissions": [
-    "https://simple-note.appspot.com/"
+    "https://simple-note.appspot.com/",
+    "contextMenus"
   ]
 }
 

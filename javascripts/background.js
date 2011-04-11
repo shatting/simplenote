@@ -17,6 +17,48 @@ $(document).ready(function(event) {
     });
 });
 
+chrome.contextMenus.create({type:"normal",title:"Create a Simplenote from this",contexts:['all'],onclick:handleContextMenu})
+
+function handleContextMenu(info, tab) {
+    //console.log(JSON.stringify(info));
+    //console.log(JSON.stringify(tab));
+    var content = "";
+    if (info.selectionText)
+        content = info.selectionText + "\n";
+
+    if (info.linkUrl)
+        content += info.linkUrl;
+
+    if (content=="")
+        content = info.pageUrl;
+    else
+        content += "(" + info.pageUrl + ")";
+    
+    var note = {content:content};
+    chrome.browserAction.setBadgeText({text:"..."});
+    chrome.browserAction.setBadgeBackgroundColor({color:[255,0,0,128]});
+    SimplenoteDB.createNote(note, function() {
+        chrome.browserAction.setBadgeText({text:"ok"});
+        chrome.browserAction.setBadgeBackgroundColor({color:[0,255,0,128]});
+        setTimeout('chrome.browserAction.setBadgeText({text:""});', 2000);
+    });
+}
+// selection:
+// {"editable":false,"menuItemId":1,"pageUrl":"http://derstandard.at/r2140/Switchlist","selectionText":"Kalender Girls\n20.15 bis 22.25 | Super RTL | SOZIALKOMÖDIE | Calendar Girls, GB/USA 2003, Nigel Cole"}
+// {"favIconUrl":"http://derstandard.at/favicon.ico","id":16,"incognito":false,"index":4,"pinned":false,"selected":true,"status":"complete","title":"Switchlist - derStandard.at › Etat › Medien › TV","url":"http://derstandard.at/r2140/Switchlist","windowId":1}
+
+// page:
+//{"editable":false,"menuItemId":1,"pageUrl":"http://derstandard.at/r2140/Switchlist"}
+//{"favIconUrl":"http://derstandard.at/favicon.ico","id":16,"incognito":false,"index":4,"pinned":false,"selected":true,"status":"complete","title":"Switchlist - derStandard.at › Etat › Medien › TV","url":"http://derstandard.at/r2140/Switchlist","windowId":1}
+
+// link:
+//{"editable":false,"linkUrl":"http://derstandard.at/1302515898810/Dienstag-Kalender-Girls","menuItemId":1,"pageUrl":"http://derstandard.at/r2140/Switchlist"}
+//{"favIconUrl":"http://derstandard.at/favicon.ico","id":16,"incognito":false,"index":4,"pinned":false,"selected":true,"status":"complete","title":"Switchlist - derStandard.at › Etat › Medien › TV","url":"http://derstandard.at/r2140/Switchlist","windowId":1}
+
+// image:
+// {"editable":false,"linkUrl":"http://derstandard.at/1302515898341/Dienstag-American-Psycho","mediaType":"image","menuItemId":1,"pageUrl":"http://derstandard.at/r2140/Switchlist","srcUrl":"http://images.derstandard.at/t/107/2011/04/11/1302517599597.jpg"}
+//{"favIconUrl":"http://derstandard.at/favicon.ico","id":16,"incognito":false,"index":3,"pinned":false,"selected":true,"status":"complete","title":"Switchlist - derStandard.at › Etat › Medien › TV","url":"http://derstandard.at/r2140/Switchlist","windowId":1}
+
 chrome.extension.onRequest.addListener(handleRequest);
 
 function handleRequest(request, sender, sendResponse) {    
