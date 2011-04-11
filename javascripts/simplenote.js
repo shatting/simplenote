@@ -19,7 +19,7 @@ function isTokenValid(credentials) {
 }
 
 $.ajaxSetup({
-  timeout: 200
+  timeout: 10000
 });
 
 var SimplenoteAPI2 = {
@@ -28,11 +28,8 @@ var SimplenoteAPI2 = {
     isDebug : true,
     
     log : function(s) {
-        if (!this.isDebug) return;
-        if (typeof s == "string")
-            console.log("SimplenoteAPI2::" + s);
-        else
-            console.log(s);
+        if (this.isDebug) 
+            logGeneral(s,"SimplenoteAPI2");
     },
     
     /*
@@ -133,9 +130,9 @@ var SimplenoteAPI2 = {
             type: "POST",
             url: this.root + "login",
             data: Base64.encode("email=" + this.credentials.email + "&password=" + this.credentials.password),            
-            dataType: "text",
+            dataType: "text",         
             success: function (response) {
-                SimplenoteAPI2.log("login success, token:" + response);
+                SimplenoteAPI2.log("login success, new token:" + response);
             
                 SimplenoteAPI2.credentials.token = response;
                 SimplenoteAPI2.credentials.tokenTime = new Date();
@@ -143,11 +140,20 @@ var SimplenoteAPI2 = {
             
                 if (callbacks.success)
                     callbacks.success(SimplenoteAPI2.credentials);
-            },
-            error: function (XMLHttpRequest, textStatus, errorThrown) {
+            },              
+            error: function (jqXHR, textStatus, errorThrown) {
+                SimplenoteAPI2.log("index::status=" + textStatus + "(" + jqXHR.status + ")");
                 SimplenoteAPI2.credentials = undefined;
-                if (callbacks.error)
-                    callbacks.error();
+                switch(jqXHR.status) {
+                    case 401:
+                        if (callbacks.loginInvalid)
+                            callbacks.loginInvalid();
+                        break;
+                    case 0:
+                        if (callbacks.timeout)
+                            callbacks.timeout();
+                        break;                        
+                }
             }
         });
     },
@@ -375,9 +381,10 @@ var SimplenoteAPI2 = {
      */ 
     update: function(note, callbacks) {        
         if (!callbacks) callbacks = {};
-        if (!note || !(note.content || note.deleted==1) || !note.key) 
+        if (!note || !note.key) {
+            console.log(note);
             throw "SimplenoteAPI2::update:note or note.content empty, or note.deleted or note.key missing.";
-            
+        }
         jQuery.ajax({
             type: "POST",
             url: this.root2 + "data/" + note.key + this.authURLadd(),
