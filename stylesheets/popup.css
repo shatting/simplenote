@@ -126,6 +126,30 @@ div.noteheading, div.abstract {
     margin-left: 50px;
 }
 
+div.pinned:hover {
+    -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
+}
+div.unpinned:hover {
+    -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
+}
+div.pinned {
+    background: transparent url(/images/pinned.png) no-repeat;        
+    ''position: relative;
+    width: 12px;
+    ''top: 26px;
+    ''left: 10px;
+    height: 12px;    
+}
+
+div.unpinned {
+    background: transparent url(/images/unpinned.png) no-repeat;        
+    ''position: relative;
+    width: 12px;
+    ''top: 26px;
+    ''left: 10px;
+    height: 12px;    
+}
+
 .abstract {
   color: #aaa;  
   font-size: 10px;

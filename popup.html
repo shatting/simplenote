@@ -4,7 +4,9 @@
     <meta http-equiv='Content-type' content='text/html; charset=utf-8' />
     <link rel="stylesheet" href="stylesheets/popup.css" type="text/css" media="all" />
     <script type="text/javascript" src="javascripts/jquery.js"></script>
-    <script type="text/javascript" src="javascripts/jquery.typewatch.js"></script>    
+    <script type="text/javascript" src="javascripts/jquery.typewatch.js"></script>
+    <script src="javascripts/date.f-0.5.0.js"></script>
+    <script src="javascripts/simplenote_common.js"></script>
     <script type="text/javascript" src="javascripts/popup.js"></script>
     <script>
         var _gaq = _gaq || [];
@@ -32,6 +34,10 @@
         <div id="toolbar">
           <input type="button" id="backtoindex" value="Back"></input>
           <input type="button" id="destroy" value="Delete"></input>
+          <input type="text" id="tags" onsubmit="return false"></input>
+          <input type="checkbox" id="pinned" onsubmit="return false"></input>
+          <div id="info"></div>
+          
         </div>
         <textarea class="hidden" id="editor" wrap="off"></textarea>
     </div>     
