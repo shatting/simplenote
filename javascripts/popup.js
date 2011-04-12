@@ -113,18 +113,12 @@ function displayStatusMessage(message) {
 function showIndex(query) {    
     var req;
     if(query !== undefined) { 
-    
-        if ($('div#notes').data("allLoaded")) {                    
-            if (query != '') {
-                $('div.noterow').hide();
-                $('div.noterow:contains(' + query + ')').show();
-            } else
-                $('div.noterow').show();    
-            return;        
-        } else {
-            req = { action : "search", query : query };
+
+        if (query != '') {
+            req = { action : "search", query : query, deleted : 0 };
             $('div.noterow').hide(); // hide all notes
-        }
+        } else
+            $('div.noterow').show();
     } else {
         req = { action : "index", deleted: 0};
         $('div.noterow').show(); // show all notes, incase we searched before
@@ -168,6 +162,7 @@ function showIndex(query) {
         } else {
             indexDataOld = indexData;
             indexDataNew = new Array();
+            $.each(indexData, function (i,e) { $("#" + e.key).show(); });
         }
         
         log("showIndex: request complete, " + indexDataOld.length + " old, " + indexDataNew.length + " new notes");

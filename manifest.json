@@ -2,6 +2,7 @@
   "name": "Simplenote",
   "version": "1.3",
   "description": "Access your Simplenote notes",
+  "omnibox": { "keyword" : "note" },
   "icons": {
     "128": "images/logo_big.png"
   },

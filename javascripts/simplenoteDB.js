@@ -117,6 +117,9 @@ var SimplenoteLS = {
             
                 if (options.systemtag != undefined && note.systemtags.indexOf(options.systemtag)<0)
                     add = false
+
+                if (options.query != undefined && (!note.content || note.content.indexOf(options.query)<0))
+                    add = false;
             }
             if (add)
                 notes.push(note);
@@ -357,7 +360,7 @@ var SimplenoteDB = {
                 
                 options.systemtag = "pinned";
                 var pinned = SimplenoteLS.getNotes(options);
-                var pinnedKeys = pinned.map(function(e) { return e.key;});
+                var pinnedKeys = pinned.map(function(e) {return e.key;});
                 
                 options.systemtag = undefined;
                 var unpinned = SimplenoteLS.getNotes(options).filter(function (e) {
@@ -520,5 +523,9 @@ var SimplenoteDB = {
             }                    
         };        
         SimplenoteAPI2.destroy(key, callbacks);
+    },
+
+    searchNotes : function(request, callback) {
+        callback(SimplenoteLS.getNotes(request));
     }
 }

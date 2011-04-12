@@ -4,10 +4,11 @@ function log(s) {
         logGeneral(s,"background.js");
 }
 
+
+// sync on browser start
 $(document).ready(function(event) {    
     log("onload:starting sync","background");    
-    log("onload:offlinemode:" + SimplenoteDB.isOffline(),"background");    
-    
+    log("onload:offlinemode:" + SimplenoteDB.isOffline(),"background");        
     handleRequest({action:"login"}, {}, function(successObj) {
         log("onload:login request completed","background");
         if (successObj.success) {
@@ -17,8 +18,8 @@ $(document).ready(function(event) {
     });
 });
 
-chrome.contextMenus.create({type:"normal",title:"Create a Simplenote from this",contexts:['all'],onclick:handleContextMenu})
-
+// add context menus
+chrome.contextMenus.create({type:"normal",title:"Create a Simplenote",contexts:['all'],onclick:handleContextMenu})
 function handleContextMenu(info, tab) {
     //console.log(JSON.stringify(info));
     //console.log(JSON.stringify(tab));
@@ -40,7 +41,7 @@ function handleContextMenu(info, tab) {
     SimplenoteDB.createNote(note, function() {
         chrome.browserAction.setBadgeText({text:"ok"});
         chrome.browserAction.setBadgeBackgroundColor({color:[0,255,0,128]});
-        setTimeout('chrome.browserAction.setBadgeText({text:""});', 2000);
+        setTimeout('chrome.browserAction.setBadgeText({text:""});window.open("popup.html");', 2000);
     });
 }
 // selection:
@@ -58,6 +59,13 @@ function handleContextMenu(info, tab) {
 // image:
 // {"editable":false,"linkUrl":"http://derstandard.at/1302515898341/Dienstag-American-Psycho","mediaType":"image","menuItemId":1,"pageUrl":"http://derstandard.at/r2140/Switchlist","srcUrl":"http://images.derstandard.at/t/107/2011/04/11/1302517599597.jpg"}
 //{"favIconUrl":"http://derstandard.at/favicon.ico","id":16,"incognito":false,"index":3,"pinned":false,"selected":true,"status":"complete","title":"Switchlist - derStandard.at › Etat › Medien › TV","url":"http://derstandard.at/r2140/Switchlist","windowId":1}
+
+
+chrome.omnibox.onInputChanged.addListener(function(text, suggest) {
+    suggest([{content:"content1",description:"description 1"},{content:"content 2",description:"desc 2"}]);
+    //window.open("popup.html");
+});
+
 
 chrome.extension.onRequest.addListener(handleRequest);
 
@@ -116,19 +124,8 @@ function handleRequest(request, sender, sendResponse) {
         SimplenoteDB.getIndex(sendResponse, {}, request);
     } else if (request.action === "note") {
         SimplenoteDB.getNote(request.key,sendResponse);    
-    } else if (request.action === "search") {
-        callbacks = {
-            success :       function(data)  {
-                sendResponse(data)
-            }, 
-            loginInvalid:   function()      {
-                alert('background::search::loginInvalid');
-            }, 
-            repeat:         function()      {
-                alert('background::search::repeat');
-            }
-        }; 
-        Simplenote.search(request.query, callbacks );
+    } else if (request.action === "search") {        
+        SimplenoteDB.searchNotes(request, sendResponse );
     } else if (request.action === "delete") {
         SimplenoteDB.deleteNote(request, sendResponse);
     } else if (request.action === "update") {               
