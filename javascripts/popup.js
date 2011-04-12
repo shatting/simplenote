@@ -113,12 +113,13 @@ function displayStatusMessage(message) {
 function showIndex(query) {    
     var req;
     if(query !== undefined) { 
-
         if (query != '') {
             req = { action : "search", query : query, deleted : 0 };
             $('div.noterow').hide(); // hide all notes
-        } else
+        } else {
             $('div.noterow').show();
+            return;
+        }
     } else {
         req = { action : "index", deleted: 0};
         $('div.noterow').show(); // show all notes, incase we searched before

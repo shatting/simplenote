@@ -62,8 +62,12 @@ function handleContextMenu(info, tab) {
 
 
 chrome.omnibox.onInputChanged.addListener(function(text, suggest) {
-    suggest([{content:"content1",description:"description 1"},{content:"content 2",description:"desc 2"}]);
-    //window.open("popup.html");
+    var notes = SimplenoteLS.getNotes({query:text,deleted:0});
+    for (var i=0; i<notes.length; i++) {
+        notes[i].description = notes[i].content.substr(0, Math.min(notes[i].content.length,40));
+        notes[i].content = notes[i].key;
+    }
+    suggest(notes);
 });
 
 
