@@ -22,12 +22,24 @@ div#toolbar {
     border: 1px solid #F5F6FD;
     border-radius: 6px;  
 }
+div#index div#toolbar select#notetags {
+    width:20%;
+    border-radius: 12px;
+    border: 1px solid #999;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    box-shadow: 0 1px 0 #fff;    
+}
+
+div#index div#toolbar select#notetags:focus {
+    outline: none;
+     -webkit-box-shadow: 0 0 3px #3c7ecf; 
+}
 
 div#index div#toolbar input#q { 
     padding: 4px 6px 4px 24px; 
     color: #33; 
     font-size: 13px; 
-    width:75%;     
+    width:55%;
     border-radius: 12px; 
     border: 1px solid #999; 
     border: 1px solid rgba(0, 0, 0, 0.3); 
@@ -39,7 +51,7 @@ div#index div#toolbar input#q {
 div#index div#toolbar input#q:focus { 
     border: 1px solid #666; 
     border: 1px solid rgba(0, 0, 0, 0.4); 
-    background: white url(/images/searchfield.png) no-repeat 6px 50%; 
+    'background: white url(/images/searchfield.png) no-repeat 6px 50%;
     -webkit-box-shadow: 0 0 3px #3c7ecf; 
     outline: none;
 }
@@ -182,7 +194,7 @@ div#note div#toolbar input#destroy {
     border: 1px solid rgba(0, 0, 0, 0.3); 
     box-shadow: 0 1px 0 #fff; 
     'margin-left: 4px;    
-    width: 98%;    
+    width: 97%;
     resize: none;
     overflow: auto;
 }
@@ -191,6 +203,25 @@ div#note div#toolbar input#destroy {
     outline: none;    
 }
 
+div#note div#toolbar input#tags {
+    padding: 4px 0px 4px 34px;
+    width: 90%;
+    color: #33;
+    font-size: 13px;    
+    border-radius: 12px;
+    border: 1px solid #999;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    margin-left: 4px;
+    box-shadow: 0 1px 0 #fff;
+    background: transparent url(/images/tag_dunkel.png) no-repeat 10px 50%;
+}
+
+div#note div#toolbar input#tags:focus {
+    border: 1px solid #666;
+    border: 1px solid rgba(0, 0, 0, 0.4);    
+    -webkit-box-shadow: 0 0 3px #3c7ecf;
+    outline: none;
+}
 
 /* scrollbar */
 ::-webkit-scrollbar {

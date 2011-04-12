@@ -14,7 +14,7 @@ function log(s) {
 // event listener for popup close
 // defer save to background
 addEventListener("unload", function (event) {
-    log(":unload listener");
+    log("unload listener");
     if (isNoteDirty()) {
         var note = {};
         log("unload listener: requesting background save");
@@ -66,7 +66,7 @@ $(document).ready(function() {
     
                 var options = {
                     callback : function() {
-                        showIndex($('#q').val());
+                        showIndex({type: "content",query:$('#q').val()});
                     },
                     wait : 750,
                     highlight : false,
@@ -75,7 +75,7 @@ $(document).ready(function() {
                 $('div#index div#toolbar input#q').typeWatch(options);
     
                 $('div#index div#toolbar input#search').click(function() {
-                    showIndex($('#q').val());
+                    showIndex({type: "content",query:$('#q').val()});
                 });
                 $('input#q').focus();
             }
@@ -112,16 +112,40 @@ function displayStatusMessage(message) {
 }
 
 //  ---------------------------------------
-
+function fillTags() {    
+    chrome.extension.sendRequest({action:"tags"}, function(tags) {
+        // fill dropdown
+        var val = $("#notetags").val();
+        $("#notetags").html("");
+        $("#notetags").append('<option></option>');
+        $("#notetags").append('<option value="#notag#">(untagged)</option>');
+        $.each(tags,function(i,tag) {            
+            $("#notetags").append('<option value="' + tag + '">' + tag + '</option>');
+        });
+        $("#notetags").val(val);
+        
+        // add handler
+        $("#notetags").unbind();
+        $("#notetags").change(function(event) {            
+            showIndex({type: "tags", query: $(this).val()});
+        });
+    });
+}
+//  ---------------------------------------
+var lastQuery;
 function showIndex(query) {    
     var req;
+    if (!query && lastQuery)
+        query = lastQuery;
     
-    if(query !== undefined) { 
-        if (query != '') {
+    if(query !== undefined) {        
+        if (query.query != '') {
             req = { action : "search", query : query, deleted : 0 };
             $('div.noterow').hide(); // hide all notes
+            lastQuery = query;
         } else {
             $('div.noterow').show();
+            lastQuery = undefined;
             return;
         }
     } else {
@@ -204,6 +228,7 @@ function showIndex(query) {
         $('div#index').data("updated",now);  
   
         checkInView();
+        fillTags();
     });
   
 }
@@ -234,6 +259,7 @@ function indexAddNote(mode, data){
             event.stopPropagation();
             chrome.extension.sendRequest({action:"update",key:event.data,systemtags:tag}, function (note) {
                 $("#" + note.key +"pin").attr("class",note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned");
+                showIndex();
             });
         }); 
     
@@ -289,7 +315,7 @@ function indexFillNote(element) {
         //$noterow.hover(maximize,minimize);
         
         // save full note
-        $noterow.data('fulltext',noteData.content);
+        //$noterow.data('fulltext',noteData.content);
         
         // check new inview, might have changed due to reflow
         $noterow.data('loaded',true);        

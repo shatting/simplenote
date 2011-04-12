@@ -118,8 +118,16 @@ var SimplenoteLS = {
                 if (options.systemtag != undefined && note.systemtags.indexOf(options.systemtag)<0)
                     add = false
 
-                if (options.query != undefined && (!note.content || note.content.indexOf(options.query)<0))
-                    add = false;
+                if (options.query != undefined) {
+                    if (options.query.type == "content")
+                        add = note.content && note.content.indexOf(options.query.query)>=0;
+                    else if (options.query.type == "tags") {
+                        if (options.query.query == "#notag#")
+                            add = note.tags.length == 0;
+                        else
+                            add = note.tags && note.tags.indexOf(options.query.query)>=0;
+                    }
+                }
             }
             if (add)
                 notes.push(note);
@@ -155,7 +163,21 @@ var SimplenoteLS = {
             keys = [];  
         return keys;
     },
-    
+    getTags : function() {
+        var keys = this.getKeys();
+
+        var tags = [];
+        var thistags;
+        $.each(keys,function(i,key) {            
+            thistags = $.storage.get(key).tags;
+            $.each(thistags, function(i,tag) {
+                if (tags.indexOf(tag) < 0)
+                    tags.push(tag);
+            });            
+        });
+        tags.sort();
+        return tags;
+    },
     clear : function () {
         $.each(this.getKeys(), function (i,e) {
             $.storage.del(e);              
@@ -423,8 +445,9 @@ var SimplenoteDB = {
         if (data.deleted) note.deleted = data.deleted;
         if (data.tags) note.tags = data.tags;
         if (data.systemtags) note.systemtags = data.systemtags;
-        
-        note.modifydate = (new Date())/1000;
+
+        if (data.content)
+            note.modifydate = (new Date())/1000;
         
         SimplenoteLS.updateNote(note);
         SimplenoteLS.addToSyncList(note.key);
@@ -453,8 +476,9 @@ var SimplenoteDB = {
                 SimplenoteDB.offline(true);                                
                 callback(note);
             }                    
-        };        
-        SimplenoteAPI2.update(note, callbacks);
+        };
+        delete data.action;
+        SimplenoteAPI2.update(data, callbacks);
         
     },
     

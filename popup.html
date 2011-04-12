@@ -23,9 +23,10 @@
   <body>
     <div id="index">
         <div id="toolbar">
-          <input type="text" id="q" onsubmit="return false"></input>
-          <input type="button" id="search" value="Search"></input>
-          <input type="button" id="new" value="New"></input>
+          <input type="text" id="q" onsubmit="return false"/>
+          <input type="button" id="search" value="Search"/>
+          <select id="notetags"><option></option></select>
+          <input type="button" id="new" value="New"/>
           <!--<a href="" id="add">add</a>-->
         </div>
       <div id="notes"></div>  
@@ -34,9 +35,11 @@
         <div id="toolbar">
           <input type="button" id="backtoindex" value="Back"></input>
           <input type="button" id="destroy" value="Delete"></input>
-          <input type="text" id="tags" onsubmit="return false"></input>
+          
           <input type="checkbox" id="pinned" onsubmit="return false"></input>
+          <input type="text" id="tags" onsubmit="return false"></input>
           <div id="info"></div>
+
           
         </div>
         <textarea class="hidden" id="editor" wrap="off"></textarea>

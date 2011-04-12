@@ -136,6 +136,8 @@ function handleRequest(request, sender, sendResponse) {
         SimplenoteDB.updateNote(request, sendResponse);
     } else if (request.action === "create") {
         SimplenoteDB.createNote(request, sendResponse);
+    } else if (request.action === "tags") {
+        sendResponse(SimplenoteLS.getTags());
     }
 }
 
@@ -148,11 +150,13 @@ function popupClosed() {
     if (saveNote.key)
         SimplenoteDB.updateNote(saveNote, function(note) {
             localStorage.openToNote = note.key;
+            saveNote = undefined;
             log("popupClosed update success");
         });
     else
         SimplenoteDB.createNote(saveNote, function(note) {
             localStorage.openToNote = note.key;
+            saveNote = undefined;
             log("popupClosed create success");
         });
 }
