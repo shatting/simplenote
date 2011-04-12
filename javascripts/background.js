@@ -146,11 +146,13 @@ function popupClosed() {
         return;
     
     if (saveNote.key)
-        SimplenoteDB.updateNote(saveNote, function() {
+        SimplenoteDB.updateNote(saveNote, function(note) {
+            localStorage.openToNote = note.key;
             log("popupClosed update success");
         });
     else
-        SimplenoteDB.createNote(saveNote, function() {
+        SimplenoteDB.createNote(saveNote, function(note) {
+            localStorage.openToNote = note.key;
             log("popupClosed create success");
         });
 }

@@ -54,8 +54,11 @@ $(document).ready(function() {
         function(result) {
             if (result.success) {
                 log("ready listener: login success");
-            
-                showIndex();
+
+                if (localStorage.openToNote && localStorage.openToNote != "")
+                    showNote(localStorage.openToNote);
+                else
+                    showIndex();
             
                 $('div#index div#toolbar input#new').click(function() {
                     showNote();
@@ -112,6 +115,7 @@ function displayStatusMessage(message) {
 
 function showIndex(query) {    
     var req;
+    
     if(query !== undefined) { 
         if (query != '') {
             req = { action : "search", query : query, deleted : 0 };
@@ -521,7 +525,9 @@ function showNote(key) {
             $('div#note input#pinned').html("&nbsp;&nbsp;&nbsp;&nbsp;pinned");
             $('div#note input#tags').show();
             $('div#note textarea').show();      
-            $('div#note textarea').focus();      
+            $('div#note textarea').focus();
+
+            localStorage.openToNote = note.key;
         });
     }  
 
@@ -586,6 +592,7 @@ function backToIndex() {
     $('div#note div#toolbar input').attr('disabled', 'disabled');
     $('div#note textarea').hide();
     $('div#note').hide();
+    localStorage.openToNote = "";
     
     showIndex();
 }
