@@ -26,6 +26,17 @@ input {
   width: 18em;
 }
 
+input[type=checkbox] {
+    width:20px;
+    display:inline;
+}
+
+.cbtext {
+    ''display:inline;
+    margin-top: 6px;
+    font-size: 24px;
+}
+
 #content {
   background: -webkit-gradient(linear, left top, left bottom, from(#F8F8F8), to(#E2E2E2));
   border: 2px solid #8D8D8D;

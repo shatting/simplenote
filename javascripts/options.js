@@ -2,8 +2,16 @@ $(document).ready(function() {
   
   $("#email").val(localStorage.email);
   $("#password").val(localStorage.password);    
-  localStorage.abstractlines && $("#abstractlines").val(localStorage.abstractlines);
-  
+  if (localStorage.abstractlines == undefined)
+    $("#abstractlines").val("3");
+  else
+    $("#abstractlines").val(localStorage.abstractlines);
+
+  if (localStorage.opentonote == undefined || localStorage.opentonote == "true")
+    $("#opentonote").attr("checked","true");
+
+  if (localStorage.showdate== undefined || localStorage.showdate == "true")
+    $("#showdate").attr("checked","true");
 });
 
 /*
@@ -22,13 +30,14 @@ function save_options(ms) {
                 return;
           }
   }
-  
-  localStorage.clear(); 
+  if (email != localStorage.email)
+    localStorage.clear();
             
   localStorage.email = email;
   localStorage.password = $("#password").val();	
-  localStorage.abstractlines = $("#abstractlines").val();	
-  
+  localStorage.abstractlines = $("#abstractlines").val();
+  localStorage.opentonote  = $('#opentonote').attr("checked");
+  localStorage.showdate  = $('#showdate').attr("checked");
 
   
   if (localStorage && localStorage.email && localStorage.password && localStorage.abstractlines) {

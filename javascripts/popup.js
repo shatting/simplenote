@@ -10,6 +10,32 @@ function log(s) {
         background.console.log("popup::" + s);
 }
 
+// insert at caret
+jQuery.fn.extend({
+insertAtCaret: function(myValue){
+  return this.each(function(i) {
+    if (document.selection) {
+      this.focus();
+      sel = document.selection.createRange();
+      sel.text = myValue;
+      this.focus();
+    }
+    else if (this.selectionStart || this.selectionStart == '0') {
+      var startPos = this.selectionStart;
+      var endPos = this.selectionEnd;
+      var scrollTop = this.scrollTop;
+      this.value = this.value.substring(0, startPos)+myValue+this.value.substring(endPos,this.value.length);
+      this.focus();
+      this.selectionStart = startPos + myValue.length;
+      this.selectionEnd = startPos + myValue.length;
+      this.scrollTop = scrollTop;
+    } else {
+      this.value += myValue;
+      this.focus();
+    }
+  })
+}
+});
 //  ---------------------------------------
 // event listener for popup close
 // defer save to background
@@ -55,7 +81,7 @@ $(document).ready(function() {
             if (result.success) {
                 log("ready listener: login success");
 
-                if (localStorage.openToNote && localStorage.openToNote != "")
+                if (localStorage.openToNote && localStorage.openToNote != "" && localStorage.opentonote == "true")
                     showNote(localStorage.openToNote);
                 else
                     showIndex();
@@ -144,10 +170,10 @@ function showIndex(query) {
         query = lastQuery;
     
     if (query !== undefined && query.query != '') {
-        req = { action : "search", query : query, deleted : 0 };            
+        req = {action : "search", query : query, deleted : 0};            
         lastQuery = query;
     } else {
-        req = { action : "index", deleted: 0};
+        req = {action : "index", deleted: 0};
         lastQuery = undefined;        
     }
   
@@ -238,8 +264,8 @@ function showIndex(query) {
 //mode: delteAndPrepend, append
 function indexAddNote(mode, note){
             
-    var html =  "<div class='noterow' id='" + note.key  + "' >";
-    html+=          "<span class='notetime' id='" + note.key + "time'>" + gettimeadd(note.modifydate);
+    var html =  "<div class='noterow' id='" + note.key  + "' >";   
+    html+=          "<span class='notetime' id='" + note.key + "time'>" + (localStorage.showdate == "true"?gettimeadd(note.modifydate):"");
     if (note.deleted == 0)
         html+=          "<div class='" + (note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + "' id='" + note.key + "pin'>&nbsp;</div>";
     html+=          "</span>";
@@ -525,6 +551,16 @@ function showNote(key) {
         else
             backToIndex();   
     });
+
+    // bind editor    
+    $('div#note textarea#editor').keydown(function(event) {
+        // tab: keyCode: 9
+        if (event.keyCode == 9) {
+            $('div#note textarea#editor').insertAtCaret("   ");
+            //event.stopPropagation();
+            event.preventDefault();
+        }
+    });
   
     // get note contents
     if (key === undefined) { // new note
@@ -545,10 +581,9 @@ function showNote(key) {
         $('div#note textarea').data("note",note);
 
         // show/hide elements
-        $('#loader').hide();  
-        //$('div#note input#pinned').hide();
-        //$('div#note input#pinned').html("");
-        //$('div#note input#tags').hide();
+        $('#loader').hide();
+        $("div#note input#pinned").attr("checked","");        
+        $('div#note input#tags').val("");
         $('div#note input#undo').hide();
         $('div#note textarea').show();
         $('div#note textarea').focus();    
@@ -591,10 +626,10 @@ function showNote(key) {
             // show/hide elements
             $('#loader').hide();  
             $('div#note input#pinned').show();
-            $('div#note input#pinned').html("&nbsp;&nbsp;&nbsp;&nbsp;pinned");
+            $('div#note input#pinned').html("&nbsp;&nbsp;&nbsp;&nbsp;pin");
             $('div#note input#tags').show();
-            $('div#note textarea').show();      
-            $('div#note textarea').focus();
+            $('div#note textarea#editor').show();
+            $('div#note textarea#editor').focus();
 
             localStorage.openToNote = note.key;
         });

@@ -147,7 +147,7 @@ div.unpinned:hover {
     -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
 }
 div.pinned {
-    background: transparent url(/images/pinned.png) no-repeat;
+    background: transparent url(/images/pinned.png) no-repeat;    
     cursor: pointer;
     'position: relative;
     width: 12px;
@@ -193,7 +193,7 @@ div#note div#toolbar input#destroy {
     padding: 10px;
     margin-top: 8px;
     height: 452px;
-    border-radius: 12px; 
+    border-radius: 12px 0px 0px 0px;
     border: 1px solid #999; 
     border: 1px solid rgba(0, 0, 0, 0.3); 
     box-shadow: 0 1px 0 #fff; 
@@ -204,12 +204,15 @@ div#note div#toolbar input#destroy {
 }
 
 #editor:focus {
+    border: 1px solid #666;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    -webkit-box-shadow: 0 0 3px #3c7ecf;
     outline: none;    
 }
 
 div#note div#toolbar input#tags {
     padding: 4px 0px 4px 34px;
-    width: 88%;
+    width: 75%;
     color: #33;
     font-size: 13px;    
     border-radius: 12px;
@@ -230,8 +233,8 @@ div#note div#toolbar input#tags:focus {
 /* scrollbar */
 ::-webkit-scrollbar {
     width: 15px;
-    height: 10px;
-    background-color: #FFF;
+    height: 15px;    
+    background-color: #FFF;    
 }
 
 ::-webkit-scrollbar-track-piece  {
@@ -246,8 +249,12 @@ div#note div#toolbar input#tags:focus {
     background-color: #FAA;
 }
 
-::-webkit-scrollbar-thumb:vertical {
-    height: 50px;
+::-webkit-scrollbar-thumb:vertical {      
+    background: -webkit-gradient(linear, right top, left top,color-stop(0.0, #F7F8FF),color-stop(1.0, #FFF));
+    border: 1px solid #CACFDE;
+    -webkit-border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:horizontal {    
     background: -webkit-gradient(linear, right top, left top,color-stop(0.0, #F7F8FF),color-stop(1.0, #FFF));
     border: 1px solid #CACFDE;
     -webkit-border-radius: 6px;
