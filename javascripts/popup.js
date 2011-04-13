@@ -216,14 +216,17 @@ function showIndex(query) {
     
         // add new ones
         //if (!$('div#index').data("updated")) // first run
+        if (indexData.length > 0)
             for(var i = 0; i < indexData.length; i ++ )
                 indexAddNote("append",indexData[i]);
+        else
+            $('div#index div#notes').html("no notes found.");
         // else
         //    for(i = indexDataNew.length-1; i >= 0; i-- )
         //        indexAddNote("delteAndPrepend",indexDataNew[i]);
 
         
-        $('div#index').show();
+        //$('div#index').show();
         $('#loader').hide();
 //        $('div#index').data("updated",now);
   
