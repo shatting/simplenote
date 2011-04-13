@@ -12,6 +12,13 @@ $(document).ready(function() {
 
   if (localStorage.showdate== undefined || localStorage.showdate == "true")
     $("#showdate").attr("checked","true");
+
+  if (localStorage.sort != undefined)
+      $("#sort").val(localStorage.sort);
+
+  if (localStorage.sortdirection != undefined)
+      $("#sortdirection").attr("checked",localStorage.sortdirection==-1?"true":"");
+
 });
 
 /*
@@ -38,6 +45,8 @@ function save_options(ms) {
   localStorage.abstractlines = $("#abstractlines").val();
   localStorage.opentonote  = $('#opentonote').attr("checked");
   localStorage.showdate  = $('#showdate').attr("checked");
+  localStorage.sort = $("#sort").val();
+  localStorage.sortdirection = $("#sortdirection").attr("checked")?-1:1;
 
   
   if (localStorage && localStorage.email && localStorage.password && localStorage.abstractlines) {

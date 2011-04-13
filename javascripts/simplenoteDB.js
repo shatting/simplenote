@@ -242,9 +242,9 @@ var SimplenoteDB = {
                 callback();
             }                    
         };        
-        SimplenoteAPI2.create(note, callbacks);
-        
-    },      
+        SimplenoteAPI2.create(note, callbacks);        
+    },
+    
     deleteNote : function(key, callback) {
         var callbacks = {
             success :       function(data) {

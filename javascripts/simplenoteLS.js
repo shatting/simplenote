@@ -138,9 +138,28 @@ var SimplenoteLS = {
                 notes.push(note);
         });
 
-        notes.sort(function(note1,note2) {
-            return note2.modifydate-note1.modifydate;
-        });
+        if (options.sortdirection == undefined)
+            options.sortdirection = 1;
+
+        if (options.sort == undefined || options.sort == "modifydate")
+            notes.sort(function(note1,note2) {
+                return options.sortdirection*(note2.modifydate-note1.modifydate);
+            });
+        else if (options.sort == "createdate")
+            notes.sort(function(note1,note2) {
+                return options.sortdirection*(note2.createdate-note1.createdate);
+            });
+        else if (options.sort == "alpha")
+            notes.sort(function(note1,note2) {
+                var c1 = note1.content.toLowerCase();
+                var c2 = note2.content.toLowerCase();
+
+                if (c1 < c2)
+                    return -options.sortdirection;
+                if (c1 > c2)
+                    return options.sortdirection;
+                return 0
+            });
 
         return notes;
     },

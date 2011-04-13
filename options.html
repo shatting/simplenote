@@ -20,13 +20,22 @@
   </head>
   <body>
     <div id="content">
-      <div id="instructions">Enter your Simplenote account information</div>
+      <div id="instructions">Simplenote account information</div>
       <div id="inputs">
         <input type="text" placeholder="Email Address" id="email"/>
         <input type="password" placeholder="Password" id="password"/>
-        <input type="text" placeholder="Number of Lines in Abstract" id="abstractlines"/>
+        <div id="instructions">Additional options</div>
+        <div class="cbtext">Number of Lines in Abstract<input type="text" id="abstractlines"/></div>
         <div class="cbtext"><input type="checkbox" id="opentonote"/>Open to last open note</div>
         <div class="cbtext"><input type="checkbox" id="showdate"/>Show modification date in index</div>
+        <div class="cbtext">
+            Sort notes
+            <select id="sort">
+                <option value="modifydate">by modify date, newest to oldest</option>
+                <option value="createdate">by create date, newest to oldest</option>
+                <option value="alpha">alphabetical, a-z</option>
+            </select> (reverse:<input type="checkbox" id="sortdirection"/>)
+        </div>
       </div>
       <div id="message">
         <button onclick="save_options(1500)">Save</button>

@@ -173,7 +173,7 @@ function showIndex(query) {
         req = {action : "search", query : query, deleted : 0};            
         lastQuery = query;
     } else {
-        req = {action : "index", deleted: 0};
+        req = {action : "index", deleted: 0, sort:localStorage.sort, sortdirection:localStorage.sortdirection};
         lastQuery = undefined;        
     }
   
