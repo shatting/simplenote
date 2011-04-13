@@ -1,7 +1,6 @@
-/* 
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+// ------------------------------------------------------------------------------------------------
+// Simplenote common functions.
+// ------------------------------------------------------------------------------------------------
 
 // global debug switch
 var commonDebug = true;

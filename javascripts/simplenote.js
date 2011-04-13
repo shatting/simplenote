@@ -2,6 +2,7 @@
 // Simplenote API2 js implementation.
 // ------------------------------------------------------------------------------------------------
 
+
 /* 
  * returns true iff there is a credentials.token and credentials.tokenTime not older than 24hrs
  */
