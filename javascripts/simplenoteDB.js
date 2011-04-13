@@ -120,12 +120,14 @@ var SimplenoteLS = {
 
                 if (options.query != undefined) {
                     if (options.query.type == "content")
-                        add = note.content && note.content.indexOf(options.query.query)>=0;
+                        add = add && note.content && note.content.indexOf(options.query.query)>=0;
                     else if (options.query.type == "tags") {
                         if (options.query.query == "#notag#")
-                            add = note.tags.length == 0;
+                            add = add && note.tags.length == 0;
+                        else if (options.query.query == "#trash#")
+                            add = note.deleted == 1;
                         else
-                            add = note.tags && note.tags.indexOf(options.query.query)>=0;
+                            add = add && note.tags && note.tags.indexOf(options.query.query)>=0;
                     }
                 }
             }
@@ -167,13 +169,17 @@ var SimplenoteLS = {
         var keys = this.getKeys();
 
         var tags = [];
+        var thisnote;
         var thistags;
-        $.each(keys,function(i,key) {            
-            thistags = $.storage.get(key).tags;
-            $.each(thistags, function(i,tag) {
-                if (tags.indexOf(tag) < 0)
-                    tags.push(tag);
-            });            
+        $.each(keys,function(i,key) {
+            thisnote = $.storage.get(key);
+            if (thisnote.deleted != 1) {
+                thistags = thisnote.tags;
+                $.each(thistags, function(i,tag) {
+                    if (tags.indexOf(tag) < 0)
+                        tags.push(tag);
+                });
+            }
         });
         tags.sort();
         return tags;

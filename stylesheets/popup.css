@@ -23,19 +23,21 @@ div#toolbar {
     border-radius: 6px;  
 }
 div#index div#toolbar select#notetags {
-    width:20%;
+    width:25%;
     border-radius: 12px;
     border: 1px solid #999;
     border: 1px solid rgba(0, 0, 0, 0.3);
-    box-shadow: 0 1px 0 #fff;    
+    box-shadow: 0 1px 0 #fff;
+    padding: 2px 8px 2px 2px;
+    background: rgba(255,255,255,0.1) url(/images/tag_dunkel.png) no-repeat 6px 50%;
 }
 
 div#index div#toolbar select#notetags:focus {
     outline: none;
-     -webkit-box-shadow: 0 0 3px #3c7ecf; 
+    -webkit-box-shadow: 0 0 3px #3c7ecf;
 }
 
-div#index div#toolbar input#q { 
+div#index div#toolbar input#q {
     padding: 4px 6px 4px 24px; 
     color: #33; 
     font-size: 13px; 
@@ -48,17 +50,16 @@ div#index div#toolbar input#q {
     background: transparent url(/images/searchfield.png) no-repeat 6px 50%;
 }
 
-div#index div#toolbar input#q:focus { 
+div#index div#toolbar input#q:focus {
     border: 1px solid #666; 
     border: 1px solid rgba(0, 0, 0, 0.4); 
-    'background: white url(/images/searchfield.png) no-repeat 6px 50%;
     -webkit-box-shadow: 0 0 3px #3c7ecf; 
     outline: none;
 }
 
 div#index div#toolbar input#new {
     float: right;
-    'display: none;    
+    display: none;    
 }
 
 div#index div#toolbar input#search {
@@ -68,33 +69,29 @@ div#index div#toolbar input#search {
 #add {
     -webkit-transition-duration:0.2s;
     -webkit-transition-property:background-color;
-    -webkit-user-select:none;
-    background-attachment:initial;
-    background-clip:initial;
-    background-color:rgba(190, 190, 203, 0);
+    -webkit-user-select:none;    
     background-image:url(/images/add.png);
     background-repeat:no-repeat no-repeat;
-    background-position:8px 50%;
-    margin-bottom:0 !important;
-    margin-left:0 !important;
-    margin-right:15px !important;
-    margin-top:6px !important;
-    height:32px;
-    opacity:0.8;
-    overflow-x:hidden;
-    overflow-y:hidden;
-    text-decoration:none;
-    text-indent:-999em;
-    width:32px;
-    align:right;
+    float:right;
+    background-position:50% 50%;
+    height:22px;
+    width:22px;
+    margin-right: 6px;
+    margin-top: 3px;
+    ''background-color: #aaaaaa;
+    border-radius: 6px;
+    vertical-align: middle;
+}
+
+#add:hover {
+    background-color: #aaaaaa;
 }
 
 
 /* index */
 div#notes {  
     width: 100%;
-    padding-bottom: 2px;    
-    cursor : pointer ;
+    padding-bottom: 2px;        
     overflow: auto;
     position: absolute;
     top: 35px;
@@ -112,18 +109,12 @@ div.noterow {
     padding: 4px;
     padding-top: 2px;
     padding-bottom: 4px;
-    overflow: hidden ;
+    overflow: hidden;
 }
 
 div.noterow:hover { 
-    background:#FFF;
-    'border: 1px solid #F7F8FF;
-    'border-radius: 6px;    
+    background:#FFF;    
     -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
-    'margin: 4px;       
-    'padding: 4px;    
-    'padding-top: 2px;    
-    'padding-bottom: 6px;    
 } 
 
 span.notetime {
@@ -135,7 +126,18 @@ span.notetime {
 }
 
 div.noteheading, div.abstract {
+    cursor: pointer;
     margin-left: 50px;
+}
+
+div.noteheadingdeleted {
+    color: #aaa; 
+    cursor: pointer;
+    margin-left: 50px;
+}
+
+div.noterowdeleted:hover {
+     background: white url(/images/undelete.png) no-repeat 100% 2px;
 }
 
 div.pinned:hover {
@@ -145,20 +147,22 @@ div.unpinned:hover {
     -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
 }
 div.pinned {
-    background: transparent url(/images/pinned.png) no-repeat;        
-    ''position: relative;
+    background: transparent url(/images/pinned.png) no-repeat;
+    cursor: pointer;
+    'position: relative;
     width: 12px;
-    ''top: 26px;
-    ''left: 10px;
+    'top: 26px;
+    'left: 10px;
     height: 12px;    
 }
 
 div.unpinned {
-    background: transparent url(/images/unpinned.png) no-repeat;        
-    ''position: relative;
+    background: transparent url(/images/unpinned.png) no-repeat;
+    cursor: pointer;
+    'position: relative;
     width: 12px;
-    ''top: 26px;
-    ''left: 10px;
+    'top: 26px;
+    'left: 10px;
     height: 12px;    
 }
 
@@ -186,7 +190,7 @@ div#note div#toolbar input#destroy {
 }
 
 #editor {
-    padding: 5px;
+    padding: 10px;
     margin-top: 8px;
     height: 452px;
     border-radius: 12px; 
@@ -194,7 +198,7 @@ div#note div#toolbar input#destroy {
     border: 1px solid rgba(0, 0, 0, 0.3); 
     box-shadow: 0 1px 0 #fff; 
     'margin-left: 4px;    
-    width: 97%;
+    width: 94%;
     resize: none;
     overflow: auto;
 }
@@ -205,7 +209,7 @@ div#note div#toolbar input#destroy {
 
 div#note div#toolbar input#tags {
     padding: 4px 0px 4px 34px;
-    width: 90%;
+    width: 88%;
     color: #33;
     font-size: 13px;    
     border-radius: 12px;

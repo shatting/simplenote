@@ -59,8 +59,10 @@ $(document).ready(function() {
                     showNote(localStorage.openToNote);
                 else
                     showIndex();
-            
-                $('div#index div#toolbar input#new').click(function() {
+
+                //$("select, input, textarea").uniform();
+
+                $('div#index div#toolbar div#add').click(function() {
                     showNote();
                 });
     
@@ -68,16 +70,18 @@ $(document).ready(function() {
                     callback : function() {
                         showIndex({type: "content",query:$('#q').val()});
                     },
-                    wait : 750,
+                    wait : 250,
                     highlight : false,
                     captureLength : -1 // needed for empty string ('') capture
-                }
+                };
                 $('div#index div#toolbar input#q').typeWatch(options);
-    
-                $('div#index div#toolbar input#search').click(function() {
-                    showIndex({type: "content",query:$('#q').val()});
-                });
-                $('input#q').focus();
+
+                $('div#index div#toolbar input#q').watermark("Search notes");
+                $('div#note div#toolbar input#tags').watermark("Tag this note");
+                //$('div#index div#toolbar input#search').click(function() {
+                //    showIndex({type: "content",query:$('#q').val()});
+                //});
+                //$('div#index div#toolbar input#q').focus();
             }
             else {
                 log("ready listener: login error, message=" + result.message);
@@ -117,8 +121,9 @@ function fillTags() {
         // fill dropdown
         var val = $("#notetags").val();
         $("#notetags").html("");
-        $("#notetags").append('<option></option>');
+        $("#notetags").append('<option value="">(show all)</option>');
         $("#notetags").append('<option value="#notag#">(untagged)</option>');
+        $("#notetags").append('<option value="#trash#">(trash)</option>');
         $.each(tags,function(i,tag) {            
             $("#notetags").append('<option value="' + tag + '">' + tag + '</option>');
         });
@@ -128,7 +133,7 @@ function fillTags() {
         $("#notetags").unbind();
         $("#notetags").change(function(event) {            
             showIndex({type: "tags", query: $(this).val()});
-        });
+        });        
     });
 }
 //  ---------------------------------------
@@ -138,123 +143,121 @@ function showIndex(query) {
     if (!query && lastQuery)
         query = lastQuery;
     
-    if(query !== undefined) {        
-        if (query.query != '') {
-            req = { action : "search", query : query, deleted : 0 };
-            $('div.noterow').hide(); // hide all notes
-            lastQuery = query;
-        } else {
-            $('div.noterow').show();
-            lastQuery = undefined;
-            return;
-        }
+    if (query !== undefined && query.query != '') {
+        req = { action : "search", query : query, deleted : 0 };            
+        lastQuery = query;
     } else {
         req = { action : "index", deleted: 0};
-        $('div.noterow').show(); // show all notes, incase we searched before
+        lastQuery = undefined;        
     }
   
-    log("showIndex" + (query?":search for " + query:""));
+    log("showIndex" + (query?":query type=" + query.type + ", query=" + query.query:""));
   
     $('div#notes').unbind("scroll");
     $('div#notes').scroll(checkInView);
     $('div#index').show("fast");
+    $('div#index div#notes').empty();
+    fillTags();
    
     chrome.extension.sendRequest(req, function(indexData) {     
         // indexData[] for search
         //      .content:   string
         //      .key:       string
     
-        var now = new Date(Date.now());
-        var lastUpdate = $('div#index').data("updated");
-        if (!lastUpdate) lastUpdate = new Date(0); 
+        //var now = new Date(Date.now());
+        //var lastUpdate = $('div#index').data("updated");
+        //if (!lastUpdate) lastUpdate = new Date(0);
 
-        var indexDataOld, indexDataNew;  
-    
-        if (!query) {                         
-            indexDataOld = indexData.filter(function (e) {
-                return convertDate(e.modifydate) < lastUpdate;
-            });
-            indexDataNew = indexData.filter(function (e) {
-                return convertDate(e.modifydate) >= lastUpdate;
-            });
-            
-            // check for removals, remove divrows not in result
-            var keys = indexData.map(function(e) {
-                return e.key;
-            });    
-            var keyRows = $("div.noterow").get().map(function(e) {
-                return e.id;
-            });  
-            keyRows.map(function(rowKey) {
-                if (keys.indexOf(rowKey)<0) $('div.noterow#' + rowKey).remove();
-            });
-        } else {
-            indexDataOld = indexData;
-            indexDataNew = new Array();
-            $.each(indexData, function (i,e) { $("#" + e.key).show(); });
-        }
+//        var indexDataOld, indexDataNew;
+//
+//        if (!query) {
+//            indexDataOld = indexData.filter(function (e) {
+//                return convertDate(e.modifydate) < lastUpdate;
+//            });
+//            indexDataNew = indexData.filter(function (e) {
+//                return convertDate(e.modifydate) >= lastUpdate;
+//            });
+//
+//            // check for removals, remove divrows not in result
+//            var keys = indexData.map(function(e) {
+//                return e.key;
+//            });
+//            var keyRows = $("div.noterow").get().map(function(e) {
+//                return e.id;
+//            });
+//            keyRows.map(function(rowKey) {
+//                if (keys.indexOf(rowKey)<0) $('div.noterow#' + rowKey).remove();
+//            });
+//        } else {
+//            indexDataOld = indexData;
+//            indexDataNew = new Array();
+//            $.each(indexData, function (i,e) { $("#" + e.key).show(); });
+//        }
         
-        log("showIndex: request complete, " + indexDataOld.length + " old, " + indexDataNew.length + " new notes");
+//        log("showIndex: request complete, " + indexDataOld.length + " old, " + indexDataNew.length + " new notes");
     
         // check old ones
-        for(var i = 0; i < indexDataOld.length; i ++ ) {
-            if (indexDataOld[i].modifydate) { //index
-            //modify = $('div.noterow#' + indexDataNoDeletedOld[i].key).data("modify");
-            //if (modify != serverDateStrToLocalDate(indexDataNoDeletedOld[i].modify))
-            //    log("modify date different from saved date! (" + indexDataNoDeletedOld[i].key + ")");
-            //log(modify);
-            //log(typeof(serverDateStrToLocalDate(indexDataNoDeletedOld[i].modify)));
-            } else { // search
-                var notediv = $('#' + indexDataOld[i].key);
-                if (!notediv) // TODO: there might be more problems, i.e. ordering
-                    indexDataNew.push(indexDataOld[i]);
-                else {
-                    $('#' + indexDataOld[i].key).show();
-                }
-            }        
-        }
+//        for(var i = 0; i < indexDataOld.length; i ++ ) {
+//            if (indexDataOld[i].modifydate) { //index
+//            //modify = $('div.noterow#' + indexDataNoDeletedOld[i].key).data("modify");
+//            //if (modify != serverDateStrToLocalDate(indexDataNoDeletedOld[i].modify))
+//            //    log("modify date different from saved date! (" + indexDataNoDeletedOld[i].key + ")");
+//            //log(modify);
+//            //log(typeof(serverDateStrToLocalDate(indexDataNoDeletedOld[i].modify)));
+//            } else { // search
+//                var notediv = $('#' + indexDataOld[i].key);
+//                if (!notediv) // TODO: there might be more problems, i.e. ordering
+//                    indexDataNew.push(indexDataOld[i]);
+//                else {
+//                    $('#' + indexDataOld[i].key).show();
+//                }
+//            }
+//        }
     
         // add new ones
-        if (!$('div#index').data("updated")) // first run
-            for(i = 0; i < indexDataNew.length; i ++ )
-                indexAddNote("append",indexDataNew[i]);
-        else
-            for(i = indexDataNew.length-1; i >= 0; i-- )
-                indexAddNote("delteAndPrepend",indexDataNew[i]);
+        //if (!$('div#index').data("updated")) // first run
+            for(var i = 0; i < indexData.length; i ++ )
+                indexAddNote("append",indexData[i]);
+        // else
+        //    for(i = indexDataNew.length-1; i >= 0; i-- )
+        //        indexAddNote("delteAndPrepend",indexDataNew[i]);
 
         
         $('div#index').show();
         $('#loader').hide();
-        $('div#index').data("updated",now);  
+//        $('div#index').data("updated",now);
   
-        checkInView();
-        fillTags();
+        checkInView();        
     });
   
 }
 
 //mode: delteAndPrepend, append
-function indexAddNote(mode, data){
+function indexAddNote(mode, note){
             
-    var html =  "<div class='noterow' id='" + data.key  + "' >";    
-    html+=          "<span class='notetime' id='" + data.key + "time'>" + gettimeadd(data.modifydate);
-    html+=          "<div class='" + (data.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + "' id='" + data.key + "pin'>&nbsp;</div>";
+    var html =  "<div class='noterow' id='" + note.key  + "' >";
+    html+=          "<span class='notetime' id='" + note.key + "time'>" + gettimeadd(note.modifydate);
+    if (note.deleted == 0)
+        html+=          "<div class='" + (note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + "' id='" + note.key + "pin'>&nbsp;</div>";
     html+=          "</span>";
-    html+=          "<div contenteditable='false' class='noteheading' id='" + data.key + "heading'>";
+    html+=          "<div contenteditable='false' class='noteheading' id='" + note.key + "heading'>";
     html+=          "</div>";
-    html+=          "<div contenteditable='false' class='abstract' id='" + data.key + "abstract'>&nbsp;<br>&nbsp;</div>";
+    html+=          "<div contenteditable='false' class='abstract' id='" + note.key + "abstract'>&nbsp;<br>&nbsp;</div>";
     
     html+=      "</div>";        
     
     if (mode=="delteAndPrepend") {
-        $('div.noterow#' + data.key).remove();
+        $('div.noterow#' + note.key).remove();
         $('#notes').prepend(html);                
     } else if (mode=="append") {
         $('#notes').append(html);        
     }
     
-    $("#" + data.key +"pin").unbind();        
-    $("#" + data.key +"pin").click(data.key,function(event) {
+    if (note.deleted != 0)
+        return
+
+    $("#" + note.key +"pin").unbind();
+    $("#" + note.key +"pin").click(note.key,function(event) {
             var tag = $(this).attr("class")=="pinned"?[]:["pinned"];
             event.stopPropagation();
             chrome.extension.sendRequest({action:"update",key:event.data,systemtags:tag}, function (note) {
@@ -263,7 +266,7 @@ function indexAddNote(mode, data){
             });
         }); 
     
-    $('div.noterow#' + data.key).data("modify",data.modifydate);
+    //$('div.noterow#' + note.key).data("modify",note.modifydate);
 }
 
 
@@ -282,14 +285,14 @@ function indexFillNote(element) {
     chrome.extension.sendRequest({
         action : "note", 
         key :key
-    }, function(noteData) {
+    }, function(note) {
         // fields: noteData.key, noteData.text
         
-        var $noterow = $('#' + noteData.key);
-        var $noteheading = $('#' + noteData.key + "heading");     
-        var $abstract = $('#' + noteData.key + "abstract");    
+        var $noterow = $('#' + note.key);
+        var $noteheading = $('#' + note.key + "heading");
+        var $abstract = $('#' + note.key + "abstract");
             
-        var lines = noteData.content.split("\n").filter(function(line) {
+        var lines = note.content.split("\n").filter(function(line) {
             return ( line.trim().length > 0 )
             });
 
@@ -297,7 +300,11 @@ function indexFillNote(element) {
         $('#' + key + 'loader').remove();
         $noteheading.removeAttr("align");
         $noteheading.append(htmlEncode(lines[0]));
-        
+        if (note.deleted == 1) {
+            $noteheading.addClass("noteheadingdeleted"); // for text color
+            $noterow.addClass("noterowdeleted"); // for undelete image on hover
+        }
+
         // abstract
         $abstract.html(htmlEncode(lines.slice(1,Math.min(lines.length,localStorage.abstractlines*1+1))).join("<br />"));
                 
@@ -306,11 +313,22 @@ function indexFillNote(element) {
         $noterow.data('origheight',$noterow.height());
         $noterow.dblclick(maximize);
                 
-        // add click binding
-        $noterow.unbind();        
-        $noterow.click(function() {
-            showNote(this.id)
-        });        
+        // add click binding        
+        $noterow.unbind();
+        if (note.deleted == 0)
+            $noterow.click(function() {
+                showNote(this.id)
+            });
+        else
+            $noterow.click(function() {
+                chrome.extension.sendRequest({
+                    action : "update",
+                    key : note.key,
+                    deleted : 0
+                    }, function() {
+                        showIndex();
+                    });
+            });
         
         //$noterow.hover(maximize,minimize);
         
@@ -437,9 +455,11 @@ function showNote(key) {
     $('#loader').show();  
     $('div#note').show("fast");
 
-    $('div#note div#toolbar input').removeAttr('disabled');
-    $('div#note textarea').attr('dirty', 'false');
-  
+    $('div#note div#toolbar input').removeAttr('disabled');    
+    $("div#note input").removeAttr("dirty");
+    // dont work:
+    //$('div#note textarea#editor').scrollTop(0);
+    //$('div#note textarea#editor').scrollLeft(0);
     // add note content change (dirty) event listeners
     $('div#note textarea').unbind();
     $('div#note textarea').bind('change keyup paste', function(event) {
@@ -451,6 +471,10 @@ function showNote(key) {
             log("note content not dirty (" + event.type + ")");
             $('div#note textarea').removeAttr('dirty');
         }
+        if (isNoteDirty())
+            $('div#note input#undo').removeAttr("disabled");
+        else
+            $('div#note input#undo').attr("disabled","true");
     });
     
     // add note tags change (dirty) event listeners
@@ -464,9 +488,13 @@ function showNote(key) {
             log("tags not dirty (" + event.type + ")");
             $('div#note input#tags').removeAttr('dirty');
         }
+        if (isNoteDirty())
+            $('div#note input#undo').removeAttr("disabled");
+        else
+            $('div#note input#undo').attr("disabled","true");
     });
     
-    // add note tags change (dirty) event listeners
+    // add note pinned (dirty) event listeners
     $('div#note input#pinned').unbind();
     $('div#note input#pinned').bind('change', function(event) {
         var note = $('div#note textarea').data("note");
@@ -479,6 +507,10 @@ function showNote(key) {
             log("pinned not dirty (" + event.type + ")");
             $('div#note input#pinned').removeAttr('dirty');
         }
+        if (isNoteDirty())
+            $('div#note input#undo').removeAttr("disabled");
+        else
+            $('div#note input#undo').attr("disabled","true");
     });
 
     // bind back button
@@ -511,10 +543,10 @@ function showNote(key) {
 
         // show/hide elements
         $('#loader').hide();  
-        $('div#note input#pinned').hide();
-        $('div#note input#pinned').html("");
-        $('div#note input#tags').hide();
-
+        //$('div#note input#pinned').hide();
+        //$('div#note input#pinned').html("");
+        //$('div#note input#tags').hide();
+        $('div#note input#undo').hide();
         $('div#note textarea').show();
         $('div#note textarea').focus();    
     }
@@ -526,7 +558,15 @@ function showNote(key) {
         $('div#note input#destroy').click(function() {
             trashNote();
         });
-    
+
+        // bind undo button
+        $('div#note input#undo').unbind();
+        $('div#note input#undo').click(key,function(event) {            
+            showNote(event.data);
+        });
+        $('div#note input#undo').attr("disabled","true");
+        $('div#note input#undo').show();
+        
         // request note
         chrome.extension.sendRequest({
             action : "note", 
@@ -578,12 +618,12 @@ function updateNote(callback) {
     
     if (note.content == '' && key !='')     // existing note emptied -> trash
         trashNote();
-    else if (key != '' ) {                    // existing note, new data -> update
+    else if (key != '' ) {                  // existing note, new data -> update
         note.key = key;
         note.action = "update";
-    } else if (note.content != '')                // new note, new data -> create
+    } else if (note.content != '')          // new note, new data -> create
         note.action = "create";
-    else                            // new note, no data -> back to index
+    else                                    // new note, no data -> back to index
         backToIndex();
     
         
