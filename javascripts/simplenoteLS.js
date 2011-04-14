@@ -101,7 +101,15 @@ var SimplenoteLS = {
     getNote : function(key) {
         return $.storage.get(key);
     },
-
+    /*
+     *     options:
+     *          deleted : 0/1 (default: 0)
+     *          tag : string (default: ""=all)
+     *          systemtag : string (default: ""=all)
+     *          search : string (default: "" = all)
+     *          sort : "modifydate" | "createdate" | "alphabetical" (default: modifydate)
+     *          sortdirection: +1/-1 (default: 1)
+     */
     getNotes: function(options) {
         var keys = this.getKeys();
 
@@ -109,39 +117,48 @@ var SimplenoteLS = {
         var add;
         var note;
         var regQuery;
-        if (options && options.query && options.query.query)
-            regQuery = new RegExp(options.query.query,"im");
-        
-        $.each(keys,function(i,key) {
+        if (options && options.search && options.search != "")
+            regQuery = new RegExp(options.search,"im");
+
+        // filter with options
+        for (var i = 0; i<keys.length;i++) {
             add = true;
-            note = $.storage.get(key);
-            if (options) {
-                if (options.deleted != undefined && note.deleted != options.deleted)
-                    add = false
-
-                if (options.tag != undefined && note.tags.indexOf(options.tag)<0)
-                    add = false
-
-                if (options.systemtag != undefined && note.systemtags.indexOf(options.systemtag)<0)
-                    add = false
-
-                if (regQuery != undefined) {
-                    if (options.query.type == "content")
-                        add = add && regQuery.test(note.content);
-                    else if (options.query.type == "tags") {
-                        if (options.query.query == "#notag#")
-                            add = add && note.tags.length == 0;
-                        else if (options.query.query == "#trash#")
-                            add = note.deleted == 1;
-                        else
-                            add = add && note.tags && note.tags.indexOf(options.query.query)>=0;
-                    }
-                }
+            note = $.storage.get(keys[i]);
+            if (!options) {
+                notes.push(note);
+                continue;
             }
+            
+            add &= options.deleted == undefined || note.deleted == options.deleted || options.tag != undefined && options.tag == "#trash#";
+            if (!add) continue;
+
+            if (options.tag != undefined && options.tag != "") {
+                switch (options.tag) {
+                    case "#notag#": 
+                        add &= note.tags.length == 0;
+                        break;
+                    case "#trash#":
+                        add &= note.deleted == 1;
+                        break;
+                    case "#all#":
+                        add &= note.deleted == 0;
+                        break;
+                    default:
+                        add &= note.tags && note.tags.indexOf(options.tag)>=0;
+                }
+            }                   
+            if (!add) continue;
+
+            add &= regQuery == undefined || regQuery.test(note.content);
+            if (!add) continue;
+            
+            add &= options.systemtag == undefined || note.systemtags.indexOf(options.systemtag)>=0;
+
             if (add)
                 notes.push(note);
-        });
+        }
 
+        // sort with options
         if (!options)
             options={};
 
@@ -167,6 +184,21 @@ var SimplenoteLS = {
                     return options.sortdirection;
                 return 0
             });
+
+        // get pinned on top
+        //   since chromes sort isnt stable, we gotta stabilize it
+        for (i=0; i<notes.length; i++)
+            notes[i].index = i;
+        notes.sort(function(n1,n2) {            
+            var d = (n2.systemtags.indexOf("pinned")>=0?1:0) - (n1.systemtags.indexOf("pinned")>=0?1:0);
+            if (d==0) // stabilize
+                return n1.index - n2.index;
+            else
+                return d;
+        });
+        for (i=0; i<notes.length; i++)
+            delete notes[i].index;
+
 
         return notes;
     },
@@ -232,6 +264,7 @@ var SimplenoteLS = {
         
         return predeftags.concat(tags);
     },
+    
     clear : function () {
         $.each(this.getKeys(), function (i,e) {
             $.storage.del(e);
@@ -282,6 +315,7 @@ var SimplenoteLS = {
             since:0
         });
     },
+    
     maintain: function () {
         var keys = this.getKeys();
         keys = keys.filter(function(e) {
@@ -293,6 +327,7 @@ var SimplenoteLS = {
         $.storage.set(this.keysKey,keys);
 
     },
+    
     info : function() {
         var keys = this.getKeys();
         this.log("last index received " + dateAgo(this.indexTime()));

@@ -11,19 +11,22 @@ var SimplenoteDB = {
         if (this.isDebug)       
             logGeneral(s,"SimplenoteDB");
     },
+    
     isOffline : function() {        
         return $.storage.get(this.offlineKey) == "true";
     },
+    
     offline : function(isOffline) {
         
         if(isOffline==undefined)
-            throw("SimplenoteDB.offline please query via .isOffline()");
+            throw("SimplenoteDB.offline: please query via .isOffline()");
         
         var oldIsOffline = $.storage.get(this.offlineKey) == "true";
         
         if (isOffline != oldIsOffline) {
             this.log("offline:mode change to offline=" + isOffline);
         }
+        
         $.storage.set(this.offlineKey,isOffline==true);
     },
     
@@ -271,9 +274,5 @@ var SimplenoteDB = {
             }                    
         };        
         SimplenoteAPI2.destroy(key, callbacks);
-    },
-
-    searchNotes : function(request, callback) {
-        callback(SimplenoteLS.getNotes(request));
     }
 }

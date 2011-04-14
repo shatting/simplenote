@@ -83,8 +83,9 @@ $(document).ready(function() {
 
                 if (localStorage.openToNote && localStorage.openToNote != "" && localStorage.opentonote == "true")
                     showNote(localStorage.openToNote);
-                else
+                else {                    
                     showIndex();
+                }
 
                 //$("select, input, textarea").uniform();
 
@@ -94,7 +95,7 @@ $(document).ready(function() {
     
                 var options = {
                     callback : function() {
-                        showIndex({type: "content", query:$('#q').val()});
+                        showIndex();
                     },
                     wait : 250,
                     highlight : false,
@@ -104,13 +105,9 @@ $(document).ready(function() {
 
                 $('div#index div#toolbar input#q').watermark("Search notes");
                 $('div#note div#toolbar input#tags').watermark("Tag this note");
-
+                
                 if (!isDebug)
                      $('div#note div#info').hide();
-                //$('div#index div#toolbar input#search').click(function() {
-                //    showIndex({type: "content",query:$('#q').val()});
-                //});
-                //$('div#index div#toolbar input#q').focus();
             }
             else {
                 log("ready listener: login error, message=" + result.message);
@@ -145,9 +142,10 @@ function displayStatusMessage(message) {
 }
 
 //  ---------------------------------------
-function fillTags() {    
+function fillTags(allowedToShowIndex) {
     chrome.extension.sendRequest({action:"tags"}, function(taginfos) {
         // fill dropdown
+        var stillhavetag = false;
         var val = $("#notetags").val();
         $("#notetags").html("");        
         $.each(taginfos,function(i,taginfo) {
@@ -159,50 +157,41 @@ function fillTags() {
                 $("#notetags").append('<option value="#trash#">(deleted) [' + taginfo.count + ']</option>');
             else
                 $("#notetags").append('<option value="' + taginfo.tag + '">' + taginfo.tag + " [" + taginfo.count + "] </option>");
+
+            if (val == taginfo.tag)
+                stillhavetag = true;
         });
-        $("#notetags").val(val);
-        
+
+        if (!stillhavetag) {
+            val = "";            
+        }
         // add handler
         $("#notetags").unbind();
+        $("#notetags").val(val);
         $("#notetags").change(function(event) {            
-            showIndex(getTagQuery());
-        });        
+            showIndex();
+        });
+        if (!stillhavetag && allowedToShowIndex)
+            showIndex();
     });
 }
 
-function getTagQuery() {
-    return {type: "tags", query : $("#notetags").val()};
-}
-
 //  ---------------------------------------
-var lastQuery;
-function showIndex(query) {    
-    var req;
-    if (!query && lastQuery)
-        query = lastQuery;
-    
-    if (query !== undefined && query.query != '') {
-        req = {action : "search", query : query, deleted : 0};
-        lastQuery = query;
-    } else {
-        req = {action : "index", deleted: 0};
-        lastQuery = undefined;        
-    }
-    
-    var tagReq = getTagQuery();
-    var sortReq = {sort:localStorage.sort, sortdirection:localStorage.sortdirection};
-    req = mergeobj(req, tagReq);
-    req = mergeobj(req, sortReq);
+function showIndex() {
+
+    var req =               {action : "search", deleted : 0};
+    req     = mergeobj(req, {tag : $("#notetags").val()});
+    req     = mergeobj(req, {search : $('#q').val()});
+    req     = mergeobj(req, {sort:localStorage.sort, sortdirection:localStorage.sortdirection});
 
     log("showIndex:");
     log(req);
   
-    $('div#notes').unbind("scroll");
-    $('div#notes').scroll(checkInView);
     $('div#index').show("fast");
-    $('div#index div#notes').empty();
-    fillTags();
-   
+    $('div#index div#notes').empty();    
+
+    fillTags(false);
+
     chrome.extension.sendRequest(req, function(indexData) {     
         // indexData[] for search
         //      .content:   string
@@ -257,13 +246,17 @@ function showIndex(query) {
 //                }
 //            }
 //        }
-    
+        
+        $('#loader').hide();
         // add new ones
         //if (!$('div#index').data("updated")) // first run
-        if (indexData.length > 0)
+        $('div#notes').unbind("scroll");
+        $('div#notes').scroll(checkInView);
+        if (indexData.length > 0) {
             for(var i = 0; i < indexData.length; i ++ )
                 indexAddNote("append",indexData[i]);
-        else
+            checkInView();
+        } else
             $('div#index div#notes').html("<div id='nonotes'>no notes found.</div>");
         // else
         //    for(i = indexDataNew.length-1; i >= 0; i-- )
@@ -271,10 +264,9 @@ function showIndex(query) {
 
         
         //$('div#index').show();
-        $('#loader').hide();
+        
 //        $('div#index').data("updated",now);
-  
-        checkInView();        
+          
     });
   
 }
@@ -812,5 +804,5 @@ function checkInView() {
         }
     }
         
-    $("div#notes").data('allLoaded',allLoaded);    
+    $("div#notes").data('allLoaded',allLoaded);
 }

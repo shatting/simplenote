@@ -129,8 +129,8 @@ function handleRequest(request, sender, sendResponse) {
         SimplenoteDB.getIndex(sendResponse, {}, request);
     } else if (request.action === "note") {
         SimplenoteDB.getNote(request.key,sendResponse);    
-    } else if (request.action === "search") {        
-        SimplenoteDB.searchNotes(request, sendResponse );
+    } else if (request.action === "search") {
+        sendResponse(SimplenoteLS.getNotes(request));
     } else if (request.action === "delete") {
         SimplenoteDB.deleteNote(request, sendResponse);
     } else if (request.action === "update") {               
