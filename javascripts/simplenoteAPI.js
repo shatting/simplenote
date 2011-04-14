@@ -20,7 +20,7 @@ function isTokenValid(credentials) {
 }
 
 $.ajaxSetup({
-  timeout: 10000
+  timeout: 5000
 });
 
 var SimplenoteAPI2 = {
@@ -215,7 +215,8 @@ var SimplenoteAPI2 = {
         SimplenoteAPI2.log("index::options: " + urloptions);        
         jQuery.ajax({
             url: url + urloptions,
-            dataType: "json",            
+            dataType: "json",
+            timeout: 3000,
             complete: function(jqXHR, textStatus) {
                 SimplenoteAPI2.log("index::status=" + textStatus + "(" + jqXHR.status + ")");
                 switch (jqXHR.status) {                    

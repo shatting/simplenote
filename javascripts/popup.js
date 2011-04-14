@@ -1,6 +1,6 @@
 var background = chrome.extension.getBackgroundPage();
 
-var isDebug = true && commonDebug;
+var isDebug = false && commonDebug;
 var isDebugToBg = isDebug && false;
 
 function log(s) {
@@ -94,7 +94,7 @@ $(document).ready(function() {
     
                 var options = {
                     callback : function() {
-                        showIndex({type: "content",query:$('#q').val()});
+                        showIndex({type: "content", query:$('#q').val()});
                     },
                     wait : 250,
                     highlight : false,
@@ -104,6 +104,9 @@ $(document).ready(function() {
 
                 $('div#index div#toolbar input#q').watermark("Search notes");
                 $('div#note div#toolbar input#tags').watermark("Tag this note");
+
+                if (!isDebug)
+                     $('div#note div#info').hide();
                 //$('div#index div#toolbar input#search').click(function() {
                 //    showIndex({type: "content",query:$('#q').val()});
                 //});
@@ -143,25 +146,34 @@ function displayStatusMessage(message) {
 
 //  ---------------------------------------
 function fillTags() {    
-    chrome.extension.sendRequest({action:"tags"}, function(tags) {
+    chrome.extension.sendRequest({action:"tags"}, function(taginfos) {
         // fill dropdown
         var val = $("#notetags").val();
-        $("#notetags").html("");
-        $("#notetags").append('<option value="">(show all)</option>');
-        $("#notetags").append('<option value="#notag#">(untagged)</option>');
-        $("#notetags").append('<option value="#trash#">(trash)</option>');
-        $.each(tags,function(i,tag) {            
-            $("#notetags").append('<option value="' + tag + '">' + tag + '</option>');
+        $("#notetags").html("");        
+        $.each(taginfos,function(i,taginfo) {
+            if (taginfo.tag == "#all#")
+                $("#notetags").append('<option value="">(all) [' + taginfo.count + ']</option>');
+            else if (taginfo.tag == "#notag#")
+                $("#notetags").append('<option value="#notag#">(untagged) [' + taginfo.count + ']</option>');
+            else if (taginfo.tag == "#trash#")
+                $("#notetags").append('<option value="#trash#">(deleted) [' + taginfo.count + ']</option>');
+            else
+                $("#notetags").append('<option value="' + taginfo.tag + '">' + taginfo.tag + " [" + taginfo.count + "] </option>");
         });
         $("#notetags").val(val);
         
         // add handler
         $("#notetags").unbind();
         $("#notetags").change(function(event) {            
-            showIndex({type: "tags", query: $(this).val()});
+            showIndex(getTagQuery());
         });        
     });
 }
+
+function getTagQuery() {
+    return {type: "tags", query : $("#notetags").val()};
+}
+
 //  ---------------------------------------
 var lastQuery;
 function showIndex(query) {    
@@ -170,14 +182,20 @@ function showIndex(query) {
         query = lastQuery;
     
     if (query !== undefined && query.query != '') {
-        req = {action : "search", query : query, deleted : 0};            
+        req = {action : "search", query : query, deleted : 0};
         lastQuery = query;
     } else {
-        req = {action : "index", deleted: 0, sort:localStorage.sort, sortdirection:localStorage.sortdirection};
+        req = {action : "index", deleted: 0};
         lastQuery = undefined;        
     }
-  
-    log("showIndex" + (query?":query type=" + query.type + ", query=" + query.query:""));
+    
+    var tagReq = getTagQuery();
+    var sortReq = {sort:localStorage.sort, sortdirection:localStorage.sortdirection};
+    req = mergeobj(req, tagReq);
+    req = mergeobj(req, sortReq);
+
+    log("showIndex:");
+    log(req);
   
     $('div#notes').unbind("scroll");
     $('div#notes').scroll(checkInView);
@@ -246,7 +264,7 @@ function showIndex(query) {
             for(var i = 0; i < indexData.length; i ++ )
                 indexAddNote("append",indexData[i]);
         else
-            $('div#index div#notes').html("no notes found.");
+            $('div#index div#notes').html("<div id='nonotes'>no notes found.</div>");
         // else
         //    for(i = indexDataNew.length-1; i >= 0; i-- )
         //        indexAddNote("delteAndPrepend",indexDataNew[i]);
@@ -285,6 +303,7 @@ function indexAddNote(mode, note){
     if (note.deleted != 0)
         return
 
+    // bind pin div
     $("#" + note.key +"pin").unbind();
     $("#" + note.key +"pin").click(note.key,function(event) {
             var tag = $(this).attr("class")=="pinned"?[]:["pinned"];
@@ -335,7 +354,7 @@ function indexFillNote(element) {
         }
 
         // abstract
-        $abstract.html(htmlEncode(lines.slice(1,Math.min(lines.length,localStorage.abstractlines*1+1))).join("<br />"));
+        $abstract.html(htmlEncode(lines.slice(1,Math.min(lines.length,localStorage.abstractlines*1+1))).join("<br/>"));
                 
         // add dblclick binding
         $noterow.css("height",$noterow.height());

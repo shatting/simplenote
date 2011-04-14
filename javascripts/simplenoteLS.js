@@ -108,6 +108,10 @@ var SimplenoteLS = {
         var notes = [];
         var add;
         var note;
+        var regQuery;
+        if (options && options.query && options.query.query)
+            regQuery = new RegExp(options.query.query,"im");
+        
         $.each(keys,function(i,key) {
             add = true;
             note = $.storage.get(key);
@@ -121,9 +125,9 @@ var SimplenoteLS = {
                 if (options.systemtag != undefined && note.systemtags.indexOf(options.systemtag)<0)
                     add = false
 
-                if (options.query != undefined) {
+                if (regQuery != undefined) {
                     if (options.query.type == "content")
-                        add = add && note.content && note.content.indexOf(options.query.query)>=0;
+                        add = add && regQuery.test(note.content);
                     else if (options.query.type == "tags") {
                         if (options.query.query == "#notag#")
                             add = add && note.tags.length == 0;
@@ -137,6 +141,9 @@ var SimplenoteLS = {
             if (add)
                 notes.push(note);
         });
+
+        if (!options)
+            options={};
 
         if (options.sortdirection == undefined)
             options.sortdirection = 1;
@@ -190,21 +197,40 @@ var SimplenoteLS = {
     getTags : function() {
         var keys = this.getKeys();
 
+        var predeftags = [{tag:"#all#",count:0},{tag:"#notag#",count:0},{tag:"#trash#",count:0}];
         var tags = [];
         var thisnote;
         var thistags;
-        $.each(keys,function(i,key) {
+        var thistagfound;
+        $.each(keys,function(keyindex,key) {
             thisnote = $.storage.get(key);
             if (thisnote.deleted != 1) {
+                predeftags[0].count++;
                 thistags = thisnote.tags;
-                $.each(thistags, function(i,tag) {
-                    if (tags.indexOf(tag) < 0)
-                        tags.push(tag);
-                });
+                if (thistags.length == 0)
+                    predeftags[1].count++;
+                else {
+                    $.each(thistags, function(thistagindex,thistag) {
+                        thistagfound = false
+                        for (var i = 0; i<tags.length; i++) {
+                            if (tags[i].tag == thistag) {
+                                tags[i].count++;
+                                thistagfound = true;
+                                break;
+                            }
+                        }
+                        if (!thistagfound)
+                            tags.push({tag:thistag,count:1});
+                    });
+                }
+            } else {
+                predeftags[2].count++;
             }
         });
-        tags.sort();
-        return tags;
+        
+        tags.sort(function(t1,t2) { var diff = - t1.count + t2.count; return diff!=0?diff:t2.tag<t1.tag;});
+        
+        return predeftags.concat(tags);
     },
     clear : function () {
         $.each(this.getKeys(), function (i,e) {
