@@ -11,7 +11,9 @@ body {
 /* index toolbar */
 div#toolbar {
     'margin: 4px;
-    margin-right: 2px;    
+    margin-right: 2px;
+    margin-left: 2px;
+    margin-top: 2px;
     'padding: 5px;
     'padding-left: 5px;
     background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
@@ -19,7 +21,7 @@ div#toolbar {
     background: white;
     outline-color: black;
     -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
-    border: 1px solid #F5F6FD;
+    border: 2px solid #F5F6FD;
     border-radius: 6px;  
 }
 div#index div#toolbar select#notetags {
@@ -94,8 +96,15 @@ div#notes {
     padding-bottom: 2px;        
     overflow: auto;
     position: absolute;
-    top: 35px;
+    top: 37px;
     bottom: 0;
+}
+
+div#nonotes {
+  color: #aaa;
+  width:100%;
+  text-align: center;  
+  padding-top : 30px ;
 }
 
 div.noterow {
@@ -109,7 +118,7 @@ div.noterow {
     padding: 4px;
     padding-top: 2px;
     padding-bottom: 4px;
-    overflow: hidden;
+     
 }
 
 div.noterow:hover { 
@@ -128,6 +137,10 @@ span.notetime {
 div.noteheading, div.abstract {
     cursor: pointer;
     margin-left: 50px;
+    text-overflow: ellipsis;    
+    overflow: hidden;
+    width:85%;
+    margin-right:0px;
 }
 
 div.noteheadingdeleted {
@@ -197,7 +210,7 @@ div#note div#toolbar input#destroy {
     border: 1px solid #999; 
     border: 1px solid rgba(0, 0, 0, 0.3); 
     box-shadow: 0 1px 0 #fff; 
-    'margin-left: 4px;    
+    margin-left: 2px;
     width: 94%;
     resize: none;
     overflow: auto;

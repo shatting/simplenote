@@ -16,7 +16,17 @@ button {
   font-size: inherit;
 }
 
-input {
+#donate {
+    border-style: hidden;
+    border-width: 0px;
+    font-size: medium;
+    padding: 8px;
+    width: auto;
+    display:inline;
+    float:right;
+}
+
+input#email, input#password {
   border-color: #8D8D8D;
   border-radius: 2px;
   border-style: solid;
@@ -25,6 +35,8 @@ input {
   padding: 8px;
   width: 18em;
 }
+
+
 
 input[type=checkbox] {
     width:20px;
