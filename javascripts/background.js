@@ -20,28 +20,29 @@ $(document).ready(function(event) {
 
 // add context menus
 chrome.contextMenus.create({type:"normal",title:"Create a Simplenote",contexts:['all'],onclick:handleContextMenu})
+
 function handleContextMenu(info, tab) {
-    //console.log(JSON.stringify(info));
-    //console.log(JSON.stringify(tab));
     var content = "";
-    if (info.selectionText)
-        content = info.selectionText + "\n";
-
-    if (info.linkUrl)
+    if (info.linkUrl) {
+        if (info.selectionText)
+            content += info.selectionText + "\n";
         content += info.linkUrl;
-
-    if (content=="")
-        content = info.pageUrl;
-    else
-        content += "(" + info.pageUrl + ")";
+    } else {
+        if (info.selectionText)
+            content += info.selectionText + "\n";
+        content += tab.title + " (" + info.pageUrl + ")";
+       
+    } 
     
     var note = {content:content};
     chrome.browserAction.setBadgeText({text:"..."});
     chrome.browserAction.setBadgeBackgroundColor({color:[255,0,0,128]});
-    SimplenoteDB.createNote(note, function() {
+    SimplenoteDB.createNote(note, function(note) {
         chrome.browserAction.setBadgeText({text:"ok"});
         chrome.browserAction.setBadgeBackgroundColor({color:[0,255,0,128]});
-        setTimeout('chrome.browserAction.setBadgeText({text:""});window.open("popup.html");', 2000);
+        localStorage.openToNote = note.key;
+        //setTimeout('chrome.browserAction.setBadgeText({text:""});window.open("popup.html");', 2000);
+        setTimeout('chrome.browserAction.setBadgeText({text:""});', 2000);
     });
 }
 // selection:
