@@ -11,25 +11,6 @@ var SimplenoteLS = {
     syncKeysKey     : "_syncKeys",
     indexTimeKey    : "_indexTime",
 
-    setNoteListener : function(key, noteListenFn) {
-        var keys = this.getKeys();
-        if (keys.indexOf(key)<0)
-            throw "cannot add note listener, unknown key";
-
-        if (this._noteListeners == undefined)
-            this._noteListeners = {};
-
-        this._noteListeners[key] = noteListenFn;
-    },
-
-    _fireNoteListener : function(key) {                
-        if (this._noteListeners && this._noteListeners[key])
-            this._noteListeners[key](this.getNote(key));
-    },
-    
-    setNewNoteListener : function(newNoteListener) {
-        this._newNoteListener = newNoteListener;
-    },
     // toggle debug output
     isDebug : true,
 
@@ -113,7 +94,8 @@ var SimplenoteLS = {
             this.log(note2str(note, true));
 
             $.storage.set(note.key,note);
-            this._fireNoteListener(note.key);
+            //this._fireNoteListener(note.key);
+            chrome.extension.sendRequest({action:"noteupdated", note: note});
         } else {
             this.log("updateNote:not updating note, no new sync or modifydate");
         }
@@ -231,7 +213,8 @@ var SimplenoteLS = {
             keys.splice(keys.indexOf(key),1);
             $.storage.set(this.keysKey,keys);
             $.storage.del(key);
-            this._fireNoteListener(key);
+
+            chrome.extension.sendRequest({action:"notedeleted", key: key});
             log("delNote:deleting " + key);
         } else
             log("delNote:cannot delete unknown note " + key);

@@ -4,16 +4,16 @@ function log(s) {
         logGeneral(s,"background.js");
 }
 
-var isBackgroundSyncEnabled = true;
+//var isBackgroundSyncEnabled = true;
 function backgroundSync(fullSync, callbackComplete, callbackPartial) {
     if (localStorage.option_email == undefined || localStorage.option_password == undefined) {
         log("backgroundSync:no credentials, exiting..")
         return;
     }
-    if (!isBackgroundSyncEnabled) {
-        log("backgroundSync: sync disabled, exiting..");
-        return;
-    }
+    //if (!isBackgroundSyncEnabled) {
+    //    log("backgroundSync: sync disabled, exiting..");
+    //    return;
+    //}
     if (!fullSync && !SimplenoteDB.hadSync())
         fullSync = true;
 
@@ -37,9 +37,8 @@ function backgroundSync(fullSync, callbackComplete, callbackPartial) {
 }
 // sync on browser start
 $(document).ready(function() {
-    backgroundSync(true);
-    log("ready listener: turning off backgroundsync.");
-    isBackgroundSyncEnabled = false; // only do it once on chrome start, then wait for popup
+    backgroundSync(true);    
+    //isBackgroundSyncEnabled = false; // only do it once on chrome start, then wait for popup
 });
 
 // add context menus
@@ -99,8 +98,9 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest) {
 chrome.extension.onRequest.addListener(handleRequest);
 function handleRequest(request, sender, sendResponse) {    
 
+    // first run
     if (!SimplenoteDB.hadSync() && request.action != "login") {
-        isBackgroundSyncEnabled = true;
+        //isBackgroundSyncEnabled = true;
         log("handleRequest:starting initial sync.");
         backgroundSync(true, function() {
             log("handleRequest:initial sync done.");
@@ -110,10 +110,11 @@ function handleRequest(request, sender, sendResponse) {
     }
 
 
-    log("request:" + request.action);    
+    log("request: " + request.action);
+    log(request);
     var callbacks;
-  
     if (request.action === "login") {
+
         callbacks = {
             success:   function(credentials) { 
                      
@@ -124,24 +125,18 @@ function handleRequest(request, sender, sendResponse) {
                     localStorage.token = credentials.token;
                     localStorage.tokenTime = credentials.tokenTime;
                 }
-                sendResponse({
-                    success:true
-                });  
+                sendResponse({success:true});  
             },
             loginInvalid:     function() {
                 SimplenoteDB.offline(false);
-                sendResponse({
-                    success:false
-                }); 
+                sendResponse({ success:false });
             },
             timeout: function() { 
                                         
                 SimplenoteDB.offline(true);
                                         
                 if (localStorage.token) // offline mode despite token older than 24hrs
-                    sendResponse({
-                        success:true
-                    })
+                    sendResponse({ success:true })
                 else
                     sendResponse({
                         success:false,
@@ -173,8 +168,8 @@ function handleRequest(request, sender, sendResponse) {
         SimplenoteDB.createNote(request, sendResponse);
     } else if (request.action === "tags") {
         sendResponse(SimplenoteLS.getTags());
-    } else if (request.action === "notelistener") {
-        SimplenoteLS.setNoteListener(request.key, request.fn);
+    } else if (request.action === "isoffline") {
+        sendResponse(SimplenoteDB.isOffline());
     }
 }
 

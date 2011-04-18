@@ -12,6 +12,7 @@ body {
   width: 100%;
 }
 
+
 button {
   font-size: inherit;
 }
@@ -102,5 +103,5 @@ input[type=checkbox] {
 div.tips {
   font-size:small;
   color:#666;
-  margin-top: 22px;  
+  margin-top: 22px;
 }

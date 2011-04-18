@@ -39,23 +39,57 @@ addEventListener("unload", function (event) {
         log("unload listener: no background save");
 }, true);
 
+
+chrome.extension.onRequest.addListener(function (request, sender, sendResponse) {
+    log("got event: " + request.event);
+    log(request);
+    if (request.event == "sync") {
+        log("syncListener:status=" + request.status + ", hadChanges=" + request.hadChanges );
+
+        if (request.status == "started") {
+            $("#sync").html("sync started");            
+        } else if (request.status == "done") {
+            if (request.hadChanges) {
+                showIndex();
+                $("#sync").html("sync done, had changes");
+            } else {
+                $("#sync").html("sync done.");
+            }            
+        } else if (request.status == "error") {
+            $("#sync").html("sync error");
+        }
+    } else if (request.event == "offline") {
+        if (request.isOffline)
+            $("#offline").html("offline");
+        else
+            $("#offline").html("online");
+    } else if (request.event == "noteupdated") {
+        // request.note
+    } else if (request.event == "notedeleted") {
+        // request.key
+    }
+});
+
 //  ---------------------------------------
 $(document).ready(function() {
     background.console.log("------- popup opened");
     var signUpLink =  "<a href='https://simple-note.appspot.com/create/'>signup</a>";
     var optionsLink = "<a href='options.html'>options page</a>";
-
+    
     if ( !localStorage.option_email || !localStorage.option_password) {
         var message = "Please " + signUpLink + " for a Simplenote account and enter your credentials on the " + optionsLink + ".";
         displayStatusMessage(message);
     }
-    else {
-        
+    else {        
         log("ready listener: requesting login");
-        chrome.extension.sendRequest({ action : "login" }, function(result) {
+        chrome.extension.sendRequest({action : "login"}, function(result) {
             if (result.success) {
-                log("ready listener: login success, turning on backgroundsync");                              
+                log("ready listener: login success");                                
+
+                log("ready listener: requesting sync");
+                chrome.extension.sendRequest({action: "sync", fullsync:true});
                 
+
                 if (localStorage.opentonotekey && localStorage.opentonotekey != "" && localStorage.option_opentonote == "true")
                     showNote(localStorage.opentonotekey);
                 else {
@@ -66,6 +100,10 @@ $(document).ready(function() {
                 $('div#index div#toolbar div#add').click(function() {
                     showNote();
                 });
+
+                $("#sync").click( function() {
+                    chrome.extension.sendRequest({action: "sync", fullsync:true});
+                })
     
                 var options = {
                     callback : function() {
@@ -77,7 +115,7 @@ $(document).ready(function() {
                     captureLength : -1 // needed for empty string ('') capture
                 };
                 $('div#index div#toolbar input#q').typeWatch(options);                                                
-
+                
                 if (!isDebug)
                      $('div#note div#info').hide();
             }
@@ -153,6 +191,7 @@ function fillTags(allowedToShowIndex) {
 
 //  ---------------------------------------
 function showIndex() {
+    log("showIndex: setting listeners");    
 
     var req =               {action : "getnotes", deleted : 0};
     req     = mergeobj(req, {tag : $("#notetags").val()});
@@ -241,7 +280,7 @@ function indexFillNote(elementOrNote) {
         $('#' + key + "heading").append('<img id="' +key + 'loader" src="images/loader_small.gif"/>');
         $('#' + key + "heading").attr("align","center");
 
-        chrome.extension.sendRequest({ action : "note", key :key}, indexFillNoteReqComplete);
+        chrome.extension.sendRequest({action : "note", key :key}, indexFillNoteReqComplete);
 
         elementOrNote.data("requested",true);
     }
@@ -302,8 +341,7 @@ function indexFillNoteReqComplete(note) {
         //$noterow.data('fulltext',noteData.content);
         
         // check new inview, might have changed due to reflow
-        $noterow.data('loaded',true);
-        chrome.extension.sendRequest({ action : "notelistener", key : note.key, fn : indexFillNoteReqComplete});
+        $noterow.data('loaded',true);        
         checkInView();    
 }
 
@@ -706,10 +744,10 @@ function checkInView() {
         viewportSize   = getViewportSize();
         viewportOffset = getViewportOffset();
 
-        log("checkInView:viewportSize=[" + viewportSize.height + "," + viewportSize.width + "], viewportOffset=[" + viewportOffset.left + "," + viewportOffset.top + "]");
+        //log("checkInView:viewportSize=[" + viewportSize.height + "," + viewportSize.width + "], viewportOffset=[" + viewportOffset.left + "," + viewportOffset.top + "]");
         // fix a bug on first load, size not initialized
         if (viewportSize.height == 0 && viewportSize.width == 0) {
-            viewportSize.height = 502; viewportSize.width = 400;
+            viewportSize.height = 502;viewportSize.width = 400;
         }
         
         for (; i<elementsLength; i++) {
@@ -723,7 +761,7 @@ function checkInView() {
             loaded        = $element.data('loaded'),
             inview        = false;
 
-            log("checkInView:elementSize=[" + elementSize.height + "," + elementSize.width + "], elementOffset=[" + elementOffset.left + "," + elementOffset.top + "]");
+            //log("checkInView:elementSize=[" + elementSize.height + "," + elementSize.width + "], elementOffset=[" + elementOffset.left + "," + elementOffset.top + "]");
 
             inview = elementOffset.top <= viewportOffset.top + viewportSize.height*(1 + preLoadFactor) &&
                 elementOffset.left + elementSize.width >= viewportOffset.left &&

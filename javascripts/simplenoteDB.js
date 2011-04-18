@@ -15,7 +15,7 @@ var SimplenoteDB = {
     isOffline : function() {        
         return $.storage.get(this.offlineKey) == "true";
     },
-    
+        
     offline : function(isOffline) {
         
         if(isOffline==undefined)
@@ -28,6 +28,7 @@ var SimplenoteDB = {
         }
         
         $.storage.set(this.offlineKey,isOffline==true);
+        chrome.extension.sendRequest({event:"offline", isOffline:isOffline});
     },
     // jsut to detect whether we actually had a sync
     hadSync : function() {
@@ -67,6 +68,9 @@ var SimplenoteDB = {
 
         if (fullSync)
             this._indexKeysTemp = [];
+        
+        chrome.extension.sendRequest({event:"sync", status: "started", hadChanges : false});
+        
         this.getIndex(apioptions, fullSync);
 
     },
@@ -81,13 +85,16 @@ var SimplenoteDB = {
                 this.syncCallbackFinished(false);
             this.log("gotIndexChunk:error getting index from server.");
             this.offline(true);
+            chrome.extension.sendRequest({event:"sync", status: "error", hadChanges : false});
         } else {
+            var hadChanges;
             $.each(indexData.data, function(i,note) {
                 if (fullSync)
                     SimplenoteDB._indexKeysTemp.push(note.key);
                 
                 if (!SimplenoteLS.haveNote(note.key)) {
                     SimplenoteDB.log("gotIndexChunk:found new note in index, saving to storage");
+                    hadChanges = true;
                     SimplenoteLS.addNote(note);
                 } else {
                     SimplenoteDB.log("gotIndexChunk:found known note in index, updating in storage");
@@ -98,7 +105,7 @@ var SimplenoteDB = {
             if (this.syncCallbackChunk)
                 this.syncCallbackChunk(indexData);
 
-            if (!havemore) {
+            if (!havemore) {                
                 if (indexData.data.length > 0)
                     SimplenoteLS.indexTime(indexData.time);
                 
@@ -113,6 +120,7 @@ var SimplenoteDB = {
                 }
                 if (this.syncCallbackFinished)
                     this.syncCallbackFinished(true);
+                chrome.extension.sendRequest({event:"sync", status: "done", hadChanges : hadChanges});
             } 
         }
     },
@@ -145,11 +153,11 @@ var SimplenoteDB = {
                 }
             }, 
             loginInvalid:   function()          {
-                SimplenoteDB._gotIndexChunk(undefined, false);
+                SimplenoteDB._gotIndexChunk(undefined, false);                
             }, 
             repeat:         function()      
             {
-                SimplenoteDB._gotIndexChunk(undefined, false);
+                SimplenoteDB._gotIndexChunk(undefined, false);                
             },
             timeout: function() {
                 SimplenoteDB._gotIndexChunk(undefined, false);
