@@ -1,6 +1,6 @@
 {
   "name": "Simplenote",
-  "version": "1.3",
+  "version": "1.4",
   "description": "Access your Simplenote notes",
   "omnibox": { "keyword" : "note" },
   "icons": {
@@ -15,6 +15,7 @@
   "permissions": [
     "https://simple-note.appspot.com/",
     "contextMenus"
-  ]
+  ],
+  "update_url": "http://dl.dropbox.com/u/14742040/simplenote.xml"
 }
 
