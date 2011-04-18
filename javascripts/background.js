@@ -4,18 +4,42 @@ function log(s) {
         logGeneral(s,"background.js");
 }
 
+var isBackgroundSyncEnabled = true;
+function backgroundSync(fullSync, callbackComplete, callbackPartial) {
+    if (localStorage.option_email == undefined || localStorage.option_password == undefined) {
+        log("backgroundSync:no credentials, exiting..")
+        return;
+    }
+    if (!isBackgroundSyncEnabled) {
+        log("backgroundSync: sync disabled, exiting..");
+        return;
+    }
+    if (!fullSync && !SimplenoteDB.hadSync())
+        fullSync = true;
 
-// sync on browser start
-$(document).ready(function(event) {    
-    log("onload:starting sync","background");    
-    log("onload:offlinemode:" + SimplenoteDB.isOffline(),"background");        
-    handleRequest({action:"login"}, {}, function(successObj) {
-        log("onload:login request completed","background");
+    log("backgroundSync: starting..");
+    log("backgroundSync: offlinemode: " + SimplenoteDB.isOffline());
+    log("backgroundSync: fullsync: " + fullSync);    
+
+    handleRequest({action:"login"}, {}, function(successObj) {        
         if (successObj.success) {
-            log("onload:login request completed","background");
-            handleRequest({action:"index"});
-        }        
+            log("backgroundSync: login request completed, requesting sync..");
+            SimplenoteDB.sync(fullSync, function() {
+                //log("backgroundSync: complete, setting timer for partial sync..");
+                if (callbackComplete)
+                    callbackComplete();
+                //window.setTimeout("backgroundSync(false);", 2000);
+            }, callbackPartial);
+        } else {
+            log("backgroundSync: login request failed.");
+        }               
     });
+}
+// sync on browser start
+$(document).ready(function() {
+    backgroundSync(true);
+    log("ready listener: turning off backgroundsync.");
+    isBackgroundSyncEnabled = false; // only do it once on chrome start, then wait for popup
 });
 
 // add context menus
@@ -40,7 +64,7 @@ function handleContextMenu(info, tab) {
     SimplenoteDB.createNote(note, function(note) {
         chrome.browserAction.setBadgeText({text:"ok"});
         chrome.browserAction.setBadgeBackgroundColor({color:[0,255,0,128]});
-        localStorage.openToNote = note.key;
+        localStorage.opentonotekey = note.key;
         //setTimeout('chrome.browserAction.setBadgeText({text:""});window.open("popup.html");', 2000);
         setTimeout('chrome.browserAction.setBadgeText({text:""});', 2000);
     });
@@ -61,7 +85,7 @@ function handleContextMenu(info, tab) {
 // {"editable":false,"linkUrl":"http://derstandard.at/1302515898341/Dienstag-American-Psycho","mediaType":"image","menuItemId":1,"pageUrl":"http://derstandard.at/r2140/Switchlist","srcUrl":"http://images.derstandard.at/t/107/2011/04/11/1302517599597.jpg"}
 //{"favIconUrl":"http://derstandard.at/favicon.ico","id":16,"incognito":false,"index":3,"pinned":false,"selected":true,"status":"complete","title":"Switchlist - derStandard.at › Etat › Medien › TV","url":"http://derstandard.at/r2140/Switchlist","windowId":1}
 
-
+// handle omnibox
 chrome.omnibox.onInputChanged.addListener(function(text, suggest) {
     var notes = SimplenoteLS.getNotes({query:text,deleted:0});
     for (var i=0; i<notes.length; i++) {
@@ -73,10 +97,20 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest) {
 
 
 chrome.extension.onRequest.addListener(handleRequest);
-
 function handleRequest(request, sender, sendResponse) {    
-  
-    log("request:" + request.action);  
+
+    if (!SimplenoteDB.hadSync() && request.action != "login") {
+        isBackgroundSyncEnabled = true;
+        log("handleRequest:starting initial sync.");
+        backgroundSync(true, function() {
+            log("handleRequest:initial sync done.");
+            handleRequest(request, sender, sendResponse);
+        });
+        return;
+    }
+
+
+    log("request:" + request.action);    
     var callbacks;
   
     if (request.action === "login") {
@@ -117,19 +151,19 @@ function handleRequest(request, sender, sendResponse) {
         };
                 
         var credentials = {
-            email: localStorage.email, 
-            password: localStorage.password
+            email: localStorage.option_email, 
+            password: localStorage.option_password
             };
         if (localStorage.token) {
             credentials.token = localStorage.token;
             credentials.tokenTime = new Date(localStorage.tokenTime);        
         }
         SimplenoteAPI2.login(credentials, callbacks);
-    } else if (request.action === "index") {
-        SimplenoteDB.getIndex(sendResponse, {}, request);
+    } else if (request.action === "sync") {        
+        backgroundSync(request.fullsync);
     } else if (request.action === "note") {
         SimplenoteDB.getNote(request.key,sendResponse);    
-    } else if (request.action === "search") {
+    } else if (request.action === "getnotes") {                
         sendResponse(SimplenoteLS.getNotes(request));
     } else if (request.action === "delete") {
         SimplenoteDB.deleteNote(request, sendResponse);
@@ -139,6 +173,8 @@ function handleRequest(request, sender, sendResponse) {
         SimplenoteDB.createNote(request, sendResponse);
     } else if (request.action === "tags") {
         sendResponse(SimplenoteLS.getTags());
+    } else if (request.action === "notelistener") {
+        SimplenoteLS.setNoteListener(request.key, request.fn);
     }
 }
 
@@ -148,15 +184,15 @@ function popupClosed() {
     if (!saveNote)
         return;
     
-    if (saveNote.key)
+    if (saveNote.key && saveNote.key != "")
         SimplenoteDB.updateNote(saveNote, function(note) {
-            localStorage.openToNote = note.key;
+            localStorage.opentonotekey = note.key;
             saveNote = undefined;
             log("popupClosed update success");
         });
     else
         SimplenoteDB.createNote(saveNote, function(note) {
-            localStorage.openToNote = note.key;
+            localStorage.opentonotekey = note.key;
             saveNote = undefined;
             log("popupClosed create success");
         });

@@ -2,11 +2,16 @@
 <html>
   <head>
     <meta http-equiv='Content-type' content='text/html; charset=utf-8' />    
-    <link rel="stylesheet" href="stylesheets/popup.css" type="text/css" media="all" />    
+    <link rel="stylesheet" href="stylesheets/popup.css" type="text/css" media="all" />
+    <link href="http://fonts.googleapis.com/css?family=Walter+Turncoat:regular" rel="stylesheet" type="text/css" >
+    <link href="http://fonts.googleapis.com/css?family=Inconsolata:regular" rel="stylesheet" type="text/css" >
+    <link href="http://fonts.googleapis.com/css?family=Droid+Sans+Mono:regular" rel="stylesheet" type="text/css" >
+    <link href='http://fonts.googleapis.com/css?family=Lekton' rel='stylesheet' type='text/css'>
+    <link href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:300" rel="stylesheet" type="text/css" >
+    <link  href="http://fonts.googleapis.com/css?family=Vollkorn:regular" rel="stylesheet" type="text/css" >
     <script type="text/javascript" src="javascripts/lib/jquery.js"></script>
     <script type="text/javascript" src="javascripts/lib/jquery.typewatch.js"></script>
-    <script type="text/javascript" src="javascripts/lib/jquery.data.js"></script>
-    <script type="text/javascript" src="javascripts/lib/jquery.watermark.js"></script>
+    <script type="text/javascript" src="javascripts/lib/jquery.data.js"></script>    
     <script type="text/javascript" src="javascripts/common.js"></script>
     <script type="text/javascript" src="javascripts/popup.js"></script>
     <script>
@@ -24,10 +29,8 @@
   <body>
     <div id="index">
         <div id="toolbar">
-          <input type="text" id="q" onsubmit="return false"/>
-          <!--<input type="button" id="search" value="Search"/>-->
-          <select id="notetags"><option></option></select>
-          <!--<input type="button" id="new" value="New"/>-->
+          <input type="text" id="q" onsubmit="return false" placeholder="Search notes"/>
+          <select id="notetags"><option></option></select>          
           <div id="add"></div>
         </div>
       <div id="notes"></div>  
@@ -37,7 +40,7 @@
           <input type="button" id="backtoindex" value="Back"/>
           <input type="button" id="undo" value="Undo changes"/>
           <input type="button" id="destroy" value="Delete"/>                   
-          <input type="text" id="tags"/>
+          <input type="text" id="tags" placeholder="Tag this note"/>
           <input type="checkbox" id="pinned"/>
           <div id="info"></div>
         </div>

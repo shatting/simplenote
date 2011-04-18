@@ -19,11 +19,23 @@ button {
 #donate {
     border-style: hidden;
     border-width: 0px;
-    font-size: medium;
-    padding: 8px;
+    font-size: medium;    
     width: auto;
     display:inline;
-    float:right;
+    ''float:right;
+}
+
+input[type=text], input[type=checkbox], select {
+  border-color: #8D8D8D;
+  border-radius: 2px;
+  border-style: solid;
+  border-width: 1px;
+  font-size: inherit;
+  padding: 8px;  
+}
+input[type=text] {
+    width: 30px;
+    ''text-align: right;
 }
 
 input#email, input#password {
@@ -36,8 +48,6 @@ input#email, input#password {
   width: 18em;
 }
 
-
-
 input[type=checkbox] {
     width:20px;
     display:inline;
@@ -45,8 +55,9 @@ input[type=checkbox] {
 
 .cbtext {
     ''display:inline;
-    margin-top: 6px;
-    font-size: 24px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    font-size: 22px;
 }
 
 #content {
@@ -72,6 +83,11 @@ input[type=checkbox] {
   font-weight: bold;
   font-size: 105%;
 }
+#options {
+  padding-top: 0.5em;
+  font-weight: bold;
+  font-size: 105%;
+}
 
 #message {
   text-align: left;
@@ -81,4 +97,10 @@ input[type=checkbox] {
   font-size: inherit;
   opacity: 0;
   -webkit-transition: opacity .5s linear;
+}
+
+div.tips {
+  font-size:small;
+  color:#666;
+  margin-top: 22px;  
 }

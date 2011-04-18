@@ -9,6 +9,10 @@ body {
 }
 
 /* index toolbar */
+div#status {
+    
+}
+
 div#toolbar {
     'margin: 4px;
     margin-right: 2px;
@@ -24,6 +28,7 @@ div#toolbar {
     border: 2px solid #F5F6FD;
     border-radius: 6px;  
 }
+
 div#index div#toolbar select#notetags {
     width:25%;
     border-radius: 12px;
@@ -57,15 +62,6 @@ div#index div#toolbar input#q:focus {
     border: 1px solid rgba(0, 0, 0, 0.4); 
     -webkit-box-shadow: 0 0 3px #3c7ecf; 
     outline: none;
-}
-
-div#index div#toolbar input#new {
-    float: right;
-    display: none;    
-}
-
-div#index div#toolbar input#search {
-    display: none;
 }
 
 #add {
@@ -213,7 +209,7 @@ div#note div#toolbar input#destroy {
     margin-left: 2px;
     width: 94%;
     resize: none;
-    overflow: auto;
+    overflow: auto;    
 }
 
 #editor:focus {

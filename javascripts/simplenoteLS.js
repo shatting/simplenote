@@ -11,6 +11,25 @@ var SimplenoteLS = {
     syncKeysKey     : "_syncKeys",
     indexTimeKey    : "_indexTime",
 
+    setNoteListener : function(key, noteListenFn) {
+        var keys = this.getKeys();
+        if (keys.indexOf(key)<0)
+            throw "cannot add note listener, unknown key";
+
+        if (this._noteListeners == undefined)
+            this._noteListeners = {};
+
+        this._noteListeners[key] = noteListenFn;
+    },
+
+    _fireNoteListener : function(key) {                
+        if (this._noteListeners && this._noteListeners[key])
+            this._noteListeners[key](this.getNote(key));
+    },
+    
+    setNewNoteListener : function(newNoteListener) {
+        this._newNoteListener = newNoteListener;
+    },
     // toggle debug output
     isDebug : true,
 
@@ -20,9 +39,10 @@ var SimplenoteLS = {
     },
 
     indexTime : function(newIndexTime) {
-        if (newIndexTime)
+        if (newIndexTime) {
+            log("indexTime:setting new indexTime:" + convertDate(newIndexTime) );
             localStorage[this.indexTimeKey] = newIndexTime;
-        else
+        } else
             return localStorage[this.indexTimeKey];
     },
 
@@ -31,7 +51,7 @@ var SimplenoteLS = {
         return keys.indexOf(key)>=0;
     },
 
-    addNote : function(note,top) {
+    addNote : function(note) {
 
         if (!note || !note.key) {
             console.log(note);
@@ -41,13 +61,15 @@ var SimplenoteLS = {
             console.log(note);
             throw "cannot add note, note already in LS"
             //this.updateNote(note)
-        } else {
-            var keys = this.getKeys();
-            keys.push(note.key);
-
-            $.storage.set(this.keysKey,keys);
-            $.storage.set(note.key,note);
         }
+        this.log("addNote, note: ");
+        this.log(note);
+        
+        var keys = this.getKeys();
+        keys.push(note.key);
+
+        $.storage.set(this.keysKey,keys);
+        $.storage.set(note.key,note);        
     },
 
     updateNote : function(note, force) {
@@ -61,6 +83,7 @@ var SimplenoteLS = {
             console.log(note);
             throw "cannot update note, note not in LS"
         }
+        
         this.log("updateNote:stored:");
         this.log(note2str(storedNote, true));
         this.log("updateNote:input:");
@@ -90,9 +113,7 @@ var SimplenoteLS = {
             this.log(note2str(note, true));
 
             $.storage.set(note.key,note);
-        } else if (storedNote.syncnum > note.syncnum) { // push changes should make sync function for this
-            this.log("updateNote:pushing note changes to server.");
-            SimplenoteDB.update(storedNote);
+            this._fireNoteListener(note.key);
         } else {
             this.log("updateNote:not updating note, no new sync or modifydate");
         }
@@ -106,7 +127,7 @@ var SimplenoteLS = {
      *          deleted : 0/1 (default: 0)
      *          tag : string (default: ""=all)
      *          systemtag : string (default: ""=all)
-     *          search : string (default: "" = all)
+     *          contentquery : string (default: "" = all)
      *          sort : "modifydate" | "createdate" | "alphabetical" (default: modifydate)
      *          sortdirection: +1/-1 (default: 1)
      */
@@ -117,8 +138,8 @@ var SimplenoteLS = {
         var add;
         var note;
         var regQuery;
-        if (options && options.search && options.search != "")
-            regQuery = new RegExp(options.search,"im");
+        if (options && options.contentquery && options.contentquery != "")
+            regQuery = new RegExp(options.contentquery,"im");
 
         // filter with options
         for (var i = 0; i<keys.length;i++) {
@@ -134,7 +155,7 @@ var SimplenoteLS = {
 
             if (options.tag != undefined && options.tag != "") {
                 switch (options.tag) {
-                    case "#notag#": 
+                    case "#notag#":
                         add &= note.tags.length == 0;
                         break;
                     case "#trash#":
@@ -205,12 +226,15 @@ var SimplenoteLS = {
 
     delNote : function(key) {
         var keys = this.getKeys();
-
+        
         if (keys.indexOf(key)>=0) {
             keys.splice(keys.indexOf(key),1);
             $.storage.set(this.keysKey,keys);
             $.storage.del(key);
-        }
+            this._fireNoteListener(key);
+            log("delNote:deleting " + key);
+        } else
+            log("delNote:cannot delete unknown note " + key);
     },
 
     getKeys : function() {
@@ -239,7 +263,7 @@ var SimplenoteLS = {
             if (thisnote.deleted != 1) {
                 predeftags[0].count++;
                 thistags = thisnote.tags;
-                if (thistags.length == 0)
+                if (thistags==undefined || thistags.length == 0) // undefined for syncCreated notes
                     predeftags[1].count++;
                 else {
                     $.each(thistags, function(thistagindex,thistag) {
@@ -260,7 +284,7 @@ var SimplenoteLS = {
             }
         });
         
-        tags.sort(function(t1,t2) { var diff = - t1.count + t2.count; return diff!=0?diff:t2.tag<t1.tag;});
+        tags.sort(function(t1,t2) {var diff = - t1.count + t2.count;return diff!=0?diff:t2.tag<t1.tag;});
         
         return predeftags.concat(tags);
     },
@@ -269,16 +293,30 @@ var SimplenoteLS = {
         $.each(this.getKeys(), function (i,e) {
             $.storage.del(e);
         });
+        $.each(this.getSyncKeys(), function (i,e) {
+            $.storage.del(e);
+        });
         $.storage.del(this.keysKey);
         $.storage.del(this.syncKeysKey);
         $.storage.del(this.indexTimeKey);
     },
 
-    addToSyncList : function(key) {
-
-        if (key instanceof Object) { // create
-            return "dummy";
+    getCreatedNoteTempKey : function() {
+        var maxnum = 0;
+        var matches;   
+        var syncKeys = this.getSyncKeys();
+        for (var i = 0; i<syncKeys.length; i++ ) {
+            matches = syncKeys[i].match(/creatednote(\d+)/);                        
+            if (matches && matches[1] >= maxnum)
+                maxnum = matches[1]*1+1;
         }
+
+        return "creatednote" + maxnum;
+    },
+
+    addToSyncList : function(key) {
+        if (key == undefined || key instanceof Object)
+            throw "cannot add undefined key or entire note to synclist"
 
         var keys = this.getSyncKeys();
         if (keys.indexOf(key)<0) {
@@ -300,22 +338,7 @@ var SimplenoteLS = {
                 $.storage.set(this.syncKeysKey,keys);
         }
     },
-
-    populate : function(password) {
-        var credentials = {
-            email: localStorage.email,
-            password: localStorage.password
-        };
-        if (localStorage.token) {
-            credentials.token = localStorage.token;
-            credentials.tokenTime = new Date(localStorage.tokenTime);
-        }
-        SimplenoteAPI2.login(credentials);
-        this.getIndex(undefined,{
-            since:0
-        });
-    },
-    
+  
     maintain: function () {
         var keys = this.getKeys();
         keys = keys.filter(function(e) {
@@ -346,7 +369,7 @@ var SimplenoteLS = {
                     logNote(item);
                 }
             } catch (e) {
-                //this.log("threw error: key=" + key);
+                this.log("threw error: key=" + key);
             }
 
         }

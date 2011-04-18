@@ -1,7 +1,7 @@
 // ------------------------------------------------------------------------------------------------
 // Simplenote API2 js implementation.
 // ------------------------------------------------------------------------------------------------
-
+var emulateOffline = false;
 
 /* 
  * returns true iff there is a credentials.token and credentials.tokenTime not older than 24hrs
@@ -20,7 +20,7 @@ function isTokenValid(credentials) {
 }
 
 $.ajaxSetup({
-  timeout: 5000
+  timeout: emulateOffline?1:5000
 });
 
 var SimplenoteAPI2 = {
@@ -145,15 +145,14 @@ var SimplenoteAPI2 = {
             error: function (jqXHR, textStatus, errorThrown) {
                 SimplenoteAPI2.log("index::status=" + textStatus + "(" + jqXHR.status + ")");
                 SimplenoteAPI2.credentials = undefined;
-                switch(jqXHR.status) {
-                    case 401:
-                        if (callbacks.loginInvalid)
-                            callbacks.loginInvalid();
-                        break;
+                switch(jqXHR.status) {                    
                     case 0:
                         if (callbacks.timeout)
                             callbacks.timeout();
-                        break;                        
+                        break;
+                    default:
+                        if (callbacks.loginInvalid)
+                            callbacks.loginInvalid();                        
                 }
             }
         });
@@ -216,7 +215,7 @@ var SimplenoteAPI2 = {
         jQuery.ajax({
             url: url + urloptions,
             dataType: "json",
-            timeout: 3000,
+            //timeout: 3000,
             complete: function(jqXHR, textStatus) {
                 SimplenoteAPI2.log("index::status=" + textStatus + "(" + jqXHR.status + ")");
                 switch (jqXHR.status) {                    
@@ -230,7 +229,7 @@ var SimplenoteAPI2 = {
                         break;
                     case 0:
                         if (callbacks.timeout)
-                            callbacks.timeout(options);
+                            callbacks.timeout();
                         break;
                     default:
                         if (callbacks.repeat)
@@ -440,7 +439,7 @@ var SimplenoteAPI2 = {
             data: encodeURIComponent(JSON.stringify(note)),
           
             complete: function(jqXHR, textStatus) {
-                SimplenoteAPI2.log("::create status=" + textStatus);
+                SimplenoteAPI2.log("create status=" + textStatus);
                 switch (jqXHR.status)
                 {
                     case 200:
@@ -487,7 +486,7 @@ var SimplenoteAPI2 = {
 //}
 
 //function testIndex(next) {
-//    SimplenoteAPI2.login(localStorage.email,localStorage.password, { success: function() {
+//    SimplenoteAPI2.login(localStorage.option_email,localStorage.option_password, { success: function() {
 //        SimplenoteAPI2.index({length:1},{success : function(data) {
 //            indexdata = data;
 //            console.log(data);
@@ -497,7 +496,7 @@ var SimplenoteAPI2 = {
 //}
 
 //function testCreate(text, next) {
-//    SimplenoteAPI2.login(localStorage.email,localStorage.password, { success: function() {
+//    SimplenoteAPI2.login(localStorage.option_email,localStorage.option_password, { success: function() {
 //        SimplenoteAPI2.create({content:text}, {success: function(data) {
 //            notedata=data;
 //            console.log(data);
@@ -507,7 +506,7 @@ var SimplenoteAPI2 = {
 //}
 
 //function testUpdate(key,text, next) {
-//     SimplenoteAPI2.login(localStorage.email,localStorage.password, { success: function() {
+//     SimplenoteAPI2.login(localStorage.option_email,localStorage.option_password, { success: function() {
 //        SimplenoteAPI2.update({key:key, content:text}, {success: function(data) {
 //            notedata=data;
 //            console.log(data);
@@ -517,7 +516,7 @@ var SimplenoteAPI2 = {
 //}
 
 //function testDelete(key,text, next) {
-//     SimplenoteAPI2.login(localStorage.email,localStorage.password, { success: function() {
+//     SimplenoteAPI2.login(localStorage.option_email,localStorage.option_password, { success: function() {
 //        SimplenoteAPI2.destroy({key:key}, {success: function(data) {
 //            notedata=data;
 //            console.log(data);

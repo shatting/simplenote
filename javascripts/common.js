@@ -60,11 +60,14 @@ __proto__: Object*/
     s += " s:"+note.syncnum;
     s += " v:"+note.version;
     s += " t:";
-    $.each(note.tags,function(i,e) {s+=e + " ";});
+    if (note.tags)
+        $.each(note.tags,function(i,e) {s+=e + " ";});
     s += " st:";
-    $.each(note.systemtags,function(i,e) {s+=e + " ";});
+    if (note.systemtags)
+        $.each(note.systemtags,function(i,e) {s+=e + " ";});
     s += " m:" + dateAgo(note.modifydate);
     s += " c:" + dateAgo(note.createdate);
+    s += " <br> k:" + note.key;
     if (content) {
         if (note.content)
             s += "\n" + note.content;
@@ -86,3 +89,30 @@ function mergeobj(obj1,obj2){
     for (attrname in obj2) { obj3[attrname] = obj2[attrname]; }
     return obj3;
 }
+
+// insert at caret
+jQuery.fn.extend({
+insertAtCaret: function(myValue){
+  return this.each(function(i) {
+    if (document.selection) {
+      this.focus();
+      sel = document.selection.createRange();
+      sel.text = myValue;
+      this.focus();
+    }
+    else if (this.selectionStart || this.selectionStart == '0') {
+      var startPos = this.selectionStart;
+      var endPos = this.selectionEnd;
+      var scrollTop = this.scrollTop;
+      this.value = this.value.substring(0, startPos)+myValue+this.value.substring(endPos,this.value.length);
+      this.focus();
+      this.selectionStart = startPos + myValue.length;
+      this.selectionEnd = startPos + myValue.length;
+      this.scrollTop = scrollTop;
+    } else {
+      this.value += myValue;
+      this.focus();
+    }
+  })
+}
+});

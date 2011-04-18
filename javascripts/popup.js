@@ -1,58 +1,37 @@
 var background = chrome.extension.getBackgroundPage();
+var popup = this;
 
-var isDebug = false && commonDebug;
-var isDebugToBg = isDebug && false;
+var isDebug = true && commonDebug;
+var isDebugToBg =  true && isDebug;
 
 function log(s) {
     if (isDebug)
-        console.log("popup::" + s);
+        logGeneral(s,"popup.js",console);
     if (isDebugToBg)
-        background.console.log("popup::" + s);
+        logGeneral(s,"popup.js",background.console);
 }
 
-// insert at caret
-jQuery.fn.extend({
-insertAtCaret: function(myValue){
-  return this.each(function(i) {
-    if (document.selection) {
-      this.focus();
-      sel = document.selection.createRange();
-      sel.text = myValue;
-      this.focus();
-    }
-    else if (this.selectionStart || this.selectionStart == '0') {
-      var startPos = this.selectionStart;
-      var endPos = this.selectionEnd;
-      var scrollTop = this.scrollTop;
-      this.value = this.value.substring(0, startPos)+myValue+this.value.substring(endPos,this.value.length);
-      this.focus();
-      this.selectionStart = startPos + myValue.length;
-      this.selectionEnd = startPos + myValue.length;
-      this.scrollTop = scrollTop;
-    } else {
-      this.value += myValue;
-      this.focus();
-    }
-  })
-}
-});
 //  ---------------------------------------
 // event listener for popup close
 // defer save to background
 addEventListener("unload", function (event) {
     log("unload listener");
+    background.isBackgroundSyncEnabled = false;
     if (isNoteDirty()) {
         var note = {};
         log("unload listener: requesting background save");
-        
+                
         if ($('div#note textarea').attr("dirty")=="true")
-            note.content = $('div#note textarea').val();
+            note.content = $('div#note textarea').val();        
         if ($('div#note input#pinned').attr("dirty")=="true")
-            note.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[]; // todo: "read" systag
+            note.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[]; // todo: "read" systag       
         if ($('div#note input#tags').attr("dirty")=="true")
-            note.tags = $('div#note input#tags').split(" ");
+            note.tags = $('div#note input#tags').val().split(" ");
         
         note.key = $('div#note textarea').attr('key');
+
+        log("unload listener: note:");
+        log(note);
         
         background.saveNote = note;
         background.setTimeout("popupClosed()", 1);
@@ -61,33 +40,28 @@ addEventListener("unload", function (event) {
 }, true);
 
 //  ---------------------------------------
-// Log in on page load
 $(document).ready(function() {
     background.console.log("------- popup opened");
     var signUpLink =  "<a href='https://simple-note.appspot.com/create/'>signup</a>";
     var optionsLink = "<a href='options.html'>options page</a>";
 
-    if ( !localStorage.email || !localStorage.password) {
+    if ( !localStorage.option_email || !localStorage.option_password) {
         var message = "Please " + signUpLink + " for a Simplenote account and enter your credentials on the " + optionsLink + ".";
         displayStatusMessage(message);
     }
     else {
-    
+        
         log("ready listener: requesting login");
-        chrome.extension.sendRequest({
-            action : "login"
-        }, 
-        function(result) {
+        chrome.extension.sendRequest({ action : "login" }, function(result) {
             if (result.success) {
-                log("ready listener: login success");
-
-                if (localStorage.openToNote && localStorage.openToNote != "" && localStorage.opentonote == "true")
-                    showNote(localStorage.openToNote);
-                else {                    
+                log("ready listener: login success, turning on backgroundsync");                              
+                
+                if (localStorage.opentonotekey && localStorage.opentonotekey != "" && localStorage.option_opentonote == "true")
+                    showNote(localStorage.opentonotekey);
+                else {
+                    log("ready listener:calling showIndex");
                     showIndex();
                 }
-
-                //$("select, input, textarea").uniform();
 
                 $('div#index div#toolbar div#add').click(function() {
                     showNote();
@@ -95,24 +69,22 @@ $(document).ready(function() {
     
                 var options = {
                     callback : function() {
+                        log("typewatch:calling showIndex");
                         showIndex();
                     },
                     wait : 250,
                     highlight : false,
                     captureLength : -1 // needed for empty string ('') capture
                 };
-                $('div#index div#toolbar input#q').typeWatch(options);
+                $('div#index div#toolbar input#q').typeWatch(options);                                                
 
-                $('div#index div#toolbar input#q').watermark("Search notes");
-                $('div#note div#toolbar input#tags').watermark("Tag this note");
-                
                 if (!isDebug)
                      $('div#note div#info').hide();
             }
             else {
                 log("ready listener: login error, message=" + result.message);
                 if (!result.message)
-                    result.message = "Please correct your username and password on the " + optionsLink + "!";
+                    result.message = "Login failed, please check your username and password on the " + optionsLink + "!";
                 else
                     result.message += "<br><br>Alternatively you can try to correct your username and password on the " + optionsLink + "!";
                 displayStatusMessage(result.message);
@@ -127,7 +99,7 @@ $(document).ready(function() {
  * Displays a status message.
  * @param message The HTML content of the status message to display. All links
  *     in the message are be adjusted to open in a new window and close the
- * ß    popup.
+ *     popup.
  */
 function displayStatusMessage(message) {
     $('#loader').hide();
@@ -135,28 +107,28 @@ function displayStatusMessage(message) {
     $('#status').html(message);
     links = $('a');
     links.attr('target', '_blank');
-    links.click(function() {
-        window.close();
-    }
-    );
+    links.click(function() {window.close();});
 }
 
 //  ---------------------------------------
 function fillTags(allowedToShowIndex) {
     chrome.extension.sendRequest({action:"tags"}, function(taginfos) {
         // fill dropdown
+        $("#notetags").unbind();
         var stillhavetag = false;
         var val = $("#notetags").val();
-        $("#notetags").html("");        
+        $("#notetags").html("");
+        var style;
         $.each(taginfos,function(i,taginfo) {
+            style = taginfo.count > 0?"":'style="color:#aaa"';
             if (taginfo.tag == "#all#")
-                $("#notetags").append('<option value="">(all) [' + taginfo.count + ']</option>');
+                $("#notetags").append('<option value="" ' + style +  '>(all) [' + taginfo.count + ']</option>');
             else if (taginfo.tag == "#notag#")
-                $("#notetags").append('<option value="#notag#">(untagged) [' + taginfo.count + ']</option>');
+                $("#notetags").append('<option value="#notag#" ' + style +  '>(untagged) [' + taginfo.count + ']</option>');
             else if (taginfo.tag == "#trash#")
-                $("#notetags").append('<option value="#trash#">(deleted) [' + taginfo.count + ']</option>');
+                $("#notetags").append('<option value="#trash#" ' + style +  '>(deleted) [' + taginfo.count + ']</option>');
             else
-                $("#notetags").append('<option value="' + taginfo.tag + '">' + taginfo.tag + " [" + taginfo.count + "] </option>");
+                $("#notetags").append('<option value="' + taginfo.tag + '" ' + style +  '>' + taginfo.tag + " [" + taginfo.count + "] </option>");
 
             if (val == taginfo.tag)
                 stillhavetag = true;
@@ -166,23 +138,26 @@ function fillTags(allowedToShowIndex) {
             val = "";            
         }
         // add handler
-        $("#notetags").unbind();
+        
         $("#notetags").val(val);
-        $("#notetags").change(function(event) {            
+        $("#notetags").change(function(event) {
+            log("notetags changed:calling showIndex");
             showIndex();
         });
-        if (!stillhavetag && allowedToShowIndex)
+        if (!stillhavetag && allowedToShowIndex) {
+            log("fillTags:calling showIndex");
             showIndex();
+        }
     });
 }
 
 //  ---------------------------------------
 function showIndex() {
 
-    var req =               {action : "search", deleted : 0};
+    var req =               {action : "getnotes", deleted : 0};
     req     = mergeobj(req, {tag : $("#notetags").val()});
-    req     = mergeobj(req, {search : $('#q').val()});
-    req     = mergeobj(req, {sort:localStorage.sort, sortdirection:localStorage.sortdirection});
+    req     = mergeobj(req, {contentquery : $('#q').val()});
+    req     = mergeobj(req, {sort:localStorage.option_sortby, sortdirection:localStorage.option_sortbydirection});
 
     log("showIndex:");
     log(req);
@@ -192,90 +167,32 @@ function showIndex() {
 
     fillTags(false);
 
-    chrome.extension.sendRequest(req, function(indexData) {     
-        // indexData[] for search
-        //      .content:   string
-        //      .key:       string
-    
-        //var now = new Date(Date.now());
-        //var lastUpdate = $('div#index').data("updated");
-        //if (!lastUpdate) lastUpdate = new Date(0);
-
-//        var indexDataOld, indexDataNew;
-//
-//        if (!query) {
-//            indexDataOld = indexData.filter(function (e) {
-//                return convertDate(e.modifydate) < lastUpdate;
-//            });
-//            indexDataNew = indexData.filter(function (e) {
-//                return convertDate(e.modifydate) >= lastUpdate;
-//            });
-//
-//            // check for removals, remove divrows not in result
-//            var keys = indexData.map(function(e) {
-//                return e.key;
-//            });
-//            var keyRows = $("div.noterow").get().map(function(e) {
-//                return e.id;
-//            });
-//            keyRows.map(function(rowKey) {
-//                if (keys.indexOf(rowKey)<0) $('div.noterow#' + rowKey).remove();
-//            });
-//        } else {
-//            indexDataOld = indexData;
-//            indexDataNew = new Array();
-//            $.each(indexData, function (i,e) { $("#" + e.key).show(); });
-//        }
-        
-//        log("showIndex: request complete, " + indexDataOld.length + " old, " + indexDataNew.length + " new notes");
-    
-        // check old ones
-//        for(var i = 0; i < indexDataOld.length; i ++ ) {
-//            if (indexDataOld[i].modifydate) { //index
-//            //modify = $('div.noterow#' + indexDataNoDeletedOld[i].key).data("modify");
-//            //if (modify != serverDateStrToLocalDate(indexDataNoDeletedOld[i].modify))
-//            //    log("modify date different from saved date! (" + indexDataNoDeletedOld[i].key + ")");
-//            //log(modify);
-//            //log(typeof(serverDateStrToLocalDate(indexDataNoDeletedOld[i].modify)));
-//            } else { // search
-//                var notediv = $('#' + indexDataOld[i].key);
-//                if (!notediv) // TODO: there might be more problems, i.e. ordering
-//                    indexDataNew.push(indexDataOld[i]);
-//                else {
-//                    $('#' + indexDataOld[i].key).show();
-//                }
-//            }
-//        }
-        
+    chrome.extension.sendRequest(req, function(notes) {
+            
         $('#loader').hide();
-        // add new ones
-        //if (!$('div#index').data("updated")) // first run
-        $('div#notes').unbind("scroll");
-        $('div#notes').scroll(checkInView);
-        if (indexData.length > 0) {
-            for(var i = 0; i < indexData.length; i ++ )
-                indexAddNote("append",indexData[i]);
+
+        if (notes.length > 0) {
+            for(var i = 0; i < notes.length; i ++ ) {
+                indexAddNote("append",notes[i]);
+                if (i<15 && note.content != undefined)
+                    indexFillNote(notes[i]);
+            }
             checkInView();
         } else
             $('div#index div#notes').html("<div id='nonotes'>no notes found.</div>");
-        // else
-        //    for(i = indexDataNew.length-1; i >= 0; i-- )
-        //        indexAddNote("delteAndPrepend",indexDataNew[i]);
 
-        
-        //$('div#index').show();
-        
-//        $('div#index').data("updated",now);
-          
+        $('div#notes').scroll(checkInView);
+       
     });
   
 }
 
 //mode: delteAndPrepend, append
 function indexAddNote(mode, note){
-            
-    var html =  "<div class='noterow' id='" + note.key  + "' >";   
-    html+=          "<span class='notetime' id='" + note.key + "time'>" + (localStorage.showdate == "true"?gettimeadd(note.modifydate):"");
+    
+    var html =  "<div class='noterow' id='" + note.key  + "' >";
+
+    html+=          "<span class='notetime' id='" + note.key + "time'>" + (localStorage.option_showdate == "true"?gettimeadd(note.modifydate):"");
     if (note.deleted == 0)
         html+=          "<div class='" + (note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + "' id='" + note.key + "pin'>&nbsp;</div>";
     html+=          "</span>";
@@ -301,8 +218,7 @@ function indexAddNote(mode, note){
             var tag = $(this).attr("class")=="pinned"?[]:["pinned"];
             event.stopPropagation();
             chrome.extension.sendRequest({action:"update",key:event.data,systemtags:tag}, function (note) {
-                $("#" + note.key +"pin").attr("class",note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned");
-                showIndex();
+                $("#" + note.key +"pin").attr("class",note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned");                
             });
         }); 
     
@@ -310,22 +226,28 @@ function indexAddNote(mode, note){
 }
 
 
-// element: jquery div.noterow#key
-function indexFillNote(element) {        
-    
-    var key = element.attr("id");
+// element: jquery div.noterow#key or note object
+function indexFillNote(elementOrNote) {
 
-    // reflowing triggers scrolls
-    if (element.data("requested"))
-        return;
+    if (elementOrNote.key) {//note        
+        indexFillNoteReqComplete(elementOrNote);
+    } else {
+        var key = elementOrNote.attr("id");
 
-    $('#' + key + "heading").append('<img id="' +key + 'loader" src="images/loader_small.gif"/>');
-    $('#' + key + "heading").attr("align","center");
+        // reflowing triggers scrolls
+        if (elementOrNote.data("requested"))
+            return;
 
-    chrome.extension.sendRequest({
-        action : "note", 
-        key :key
-    }, function(note) {
+        $('#' + key + "heading").append('<img id="' +key + 'loader" src="images/loader_small.gif"/>');
+        $('#' + key + "heading").attr("align","center");
+
+        chrome.extension.sendRequest({ action : "note", key :key}, indexFillNoteReqComplete);
+
+        elementOrNote.data("requested",true);
+    }
+}
+
+function indexFillNoteReqComplete(note) {
         // fields: noteData.key, noteData.text
         
         var $noterow = $('#' + note.key);
@@ -337,7 +259,7 @@ function indexFillNote(element) {
             });
 
         // first line
-        $('#' + key + 'loader').remove();
+        $('#' + note.key + 'loader').remove();
         $noteheading.removeAttr("align");
         $noteheading.append(htmlEncode(lines[0]));
         if (note.deleted == 1) {
@@ -346,12 +268,18 @@ function indexFillNote(element) {
         }
 
         // abstract
-        $abstract.html(htmlEncode(lines.slice(1,Math.min(lines.length,localStorage.abstractlines*1+1))).join("<br/>"));
+        var abstractlines;
+        if (localStorage.option_abstractlines>=0)
+            abstractlines = lines.slice(1,Math.min(lines.length,localStorage.option_abstractlines*1+1));
+        else
+            abstractlines = lines;
+
+        $abstract.html(htmlEncode(abstractlines).join("<br/>"));
                 
         // add dblclick binding
         $noterow.css("height",$noterow.height());
         $noterow.data('origheight',$noterow.height());
-        $noterow.dblclick(maximize);
+        //$noterow.dblclick(maximize);
                 
         // add click binding        
         $noterow.unbind();
@@ -365,8 +293,6 @@ function indexFillNote(element) {
                     action : "update",
                     key : note.key,
                     deleted : 0
-                    }, function() {
-                        showIndex();
                     });
             });
         
@@ -376,11 +302,9 @@ function indexFillNote(element) {
         //$noterow.data('fulltext',noteData.content);
         
         // check new inview, might have changed due to reflow
-        $noterow.data('loaded',true);        
-        checkInView();
-    });
-
-    element.data("requested",true);    
+        $noterow.data('loaded',true);
+        chrome.extension.sendRequest({ action : "notelistener", key : note.key, fn : indexFillNoteReqComplete});
+        checkInView();    
 }
 
 function makeAbstract(lines) {
@@ -409,57 +333,57 @@ function htmlSafe(s) {
     return s.replace(/&(?!\w+([;\s]|$))/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function maximize(event) {
-    var key = this.id;
-    var $this = $(this);
-    var lines = $this.data("fulltext").split("\n");
-    
-    // insert full text into abstract div
-    //$('#' + key + 'abstract').html(htmlEncode(lines.slice(1,lines.length-1)));
-    
-    //$('div.noterow').not($(this)).trigger('mouseleave');
-    //$('div.noterow').not($(this)).stop( true, false );
-    
-    // animate 
-    var $clone = $this.clone().css({
-        height: 'auto', 
-        position: 'absolute', 
-        zIndex: '-9999', 
-        left: '-9999px', 
-        width: $this.width()
-    })
-    .appendTo($this);    
-    $this.animate({
-        height: $clone.height()
-    }, 100);    
-    $clone.detach();
-    
-    $this.unbind('dblclick');
-    $this.dblclick(minimize);
-//$('#' + key).animate( {height:'+=' + (lines*10), duration:500 }, function(){
-//$('#' + key).removeAttr('style');
-//});
-// $('#' + key).slideDown();
+//function maximize(event) {
+//    var key = this.id;
+//    var $this = $(this);
+//    var lines = $this.data("fulltext").split("\n");
+//
+//    // insert full text into abstract div
+//    //$('#' + key + 'abstract').html(htmlEncode(lines.slice(1,lines.length-1)));
+//
+//    //$('div.noterow').not($(this)).trigger('mouseleave');
+//    //$('div.noterow').not($(this)).stop( true, false );
+//
+//    // animate
+//    var $clone = $this.clone().css({
+//        height: 'auto',
+//        position: 'absolute',
+//        zIndex: '-9999',
+//        left: '-9999px',
+//        width: $this.width()
+//    })
+//    .appendTo($this);
+//    $this.animate({
+//        height: $clone.height()
+//    }, 100);
+//    $clone.detach();
+//
+//    $this.unbind('dblclick');
+//    $this.dblclick(minimize);
+////$('#' + key).animate( {height:'+=' + (lines*10), duration:500 }, function(){
+////$('#' + key).removeAttr('style');
+////});
+//// $('#' + key).slideDown();
+//
+////$('html,body').animate({scrollTop: $(this).offset().top}, 100);
+//}
 
-//$('html,body').animate({scrollTop: $(this).offset().top}, 100);
-}
-
-function minimize(event) {
-    var key = this.id;
-    var $this = $(this);
-    var lines = $(this).data("fulltext").split("\n",10).filter(function(line) {
-        return ( line.length > 1 )
-        });
-    
-    //$('#' + key + "abstract").html(makeAbstract(lines.slice(1, 3)));
-        
-    $this.animate({
-        height: $this.data('origheight')
-    }, 50);
-
-    $this.unbind('dblclick');
-    $this.dblclick(maximize);    
-}
+//function minimize(event) {
+//    var key = this.id;
+//    var $this = $(this);
+//    var lines = $(this).data("fulltext").split("\n",10).filter(function(line) {
+//        return ( line.length > 1 )
+//        });
+//
+//    //$('#' + key + "abstract").html(makeAbstract(lines.slice(1, 3)));
+//
+//    $this.animate({
+//        height: $this.data('origheight')
+//    }, 50);
+//
+//    $this.unbind('dblclick');
+//    $this.dblclick(maximize);
+//}
 
 //  ---------------------------------------
 function gettimeadd(s) {
@@ -500,6 +424,7 @@ function showNote(key) {
     // dont work:
     //$('div#note textarea#editor').scrollTop(0);
     //$('div#note textarea#editor').scrollLeft(0);
+    //
     // add note content change (dirty) event listeners
     $('div#note textarea').unbind();
     $('div#note textarea').bind('change keyup paste', function(event) {
@@ -567,12 +492,19 @@ function showNote(key) {
     $('div#note textarea#editor').keydown(function(event) {
         // tab: keyCode: 9
         if (event.keyCode == 9) {
-            $('div#note textarea#editor').insertAtCaret("   ");
-            //event.stopPropagation();
+            $('div#note textarea#editor').insertAtCaret("   ");            
             event.preventDefault();
         }
     });
-  
+    
+
+    if (localStorage.option_editorfont )
+        $("div#note textarea#editor").css("font-family",localStorage.option_editorfont );
+    if (localStorage.option_editorfontsize )
+        $("div#note textarea#editor").css("font-size",localStorage.option_editorfontsize + "px" );
+    if (localStorage.option_editorfontshadow && localStorage.option_editorfontshadow == "true")
+        $("div#note textarea#editor").css("text-shadow","2px 2px 2px #aaa" );
+    
     // get note contents
     if (key === undefined) { // new note
         
@@ -642,7 +574,7 @@ function showNote(key) {
             $('div#note textarea#editor').show();
             $('div#note textarea#editor').focus();
 
-            localStorage.openToNote = note.key;
+            localStorage.opentonotekey = note.key;
         });
     }  
 
@@ -662,7 +594,7 @@ function updateNote(callback) {
     if ($('div#note input#tags').attr("dirty")=="true")
         note.tags = $('div#note input#tags').val().trim().split(" ");
 
-    log("updateNote:callback " + callback);
+    log("updateNote:note:");
     log(note);
     
     if (note.content == '' && key !='')     // existing note emptied -> trash
@@ -679,15 +611,15 @@ function updateNote(callback) {
     if (note.action) {
         log("updateNote:request:");
         log(note);
+        // can do this here because notes are stored for sync anyways
+        $('div#note textarea').removeAttr('dirty');
+        $('div#note input#pinned').removeAttr("dirty");
+        $('div#note input#tags').removeAttr('dirty');
         chrome.extension.sendRequest(note, function(note) {
-            $('div#note textarea').attr('key',note.key);
-            $('div#note textarea').removeAttr('dirty');  
-            $('div#note input#pinned').removeAttr("dirty");
-            $('div#note input#tags').removeAttr('dirty');
-            log("updateNote: request complete");   
+            log("updateNote: request complete");                    
             if (callback)
                 callback();
-        });
+        });        
     }
     
 }
@@ -707,7 +639,7 @@ function backToIndex() {
     $('div#note div#toolbar input').attr('disabled', 'disabled');
     $('div#note textarea').hide();
     $('div#note').hide();
-    localStorage.openToNote = "";
+    localStorage.opentonotekey = "";
     
     showIndex();
 }
@@ -764,18 +696,21 @@ function getViewportOffset() {
 var preLoadFactor = 1/4;
 function checkInView() {
     var elements = $('div.noterow').get(), elementsLength, i = 0, viewportSize, viewportOffset;
-    var allLoaded = true;
-    
+    var allLoaded = true;    
     elements = elements.filter(function (e) {
         return !$(e).data('loaded');
-    });
-    
+    });    
     elementsLength = elements.length;
 
     if (elementsLength) {
         viewportSize   = getViewportSize();
         viewportOffset = getViewportOffset();
 
+        log("checkInView:viewportSize=[" + viewportSize.height + "," + viewportSize.width + "], viewportOffset=[" + viewportOffset.left + "," + viewportOffset.top + "]");
+        // fix a bug on first load, size not initialized
+        if (viewportSize.height == 0 && viewportSize.width == 0) {
+            viewportSize.height = 502; viewportSize.width = 400;
+        }
         
         for (; i<elementsLength; i++) {
 
@@ -788,15 +723,17 @@ function checkInView() {
             loaded        = $element.data('loaded'),
             inview        = false;
 
-            inview = elementOffset.top < viewportOffset.top + viewportSize.height*(1 + preLoadFactor) &&
-            elementOffset.left + elementSize.width > viewportOffset.left &&
-            elementOffset.left < viewportOffset.left + viewportSize.width;
+            log("checkInView:elementSize=[" + elementSize.height + "," + elementSize.width + "], elementOffset=[" + elementOffset.left + "," + elementOffset.top + "]");
+
+            inview = elementOffset.top <= viewportOffset.top + viewportSize.height*(1 + preLoadFactor) &&
+                elementOffset.left + elementSize.width >= viewportOffset.left &&
+                elementOffset.left <= viewportOffset.left + viewportSize.width;
                          
-            //            console.log(i + ": loaded " + loaded + ", inview=" + inview);                                                    
-            //            console.log(elementOffset);
-            //            console.log(elementOffset);
-            //            console.log(viewportSize);    
-            //            console.log(viewportOffset);                
+//            console.log(i + ": loaded " + loaded + ", inview=" + inview);
+//            console.log(elementOffset);
+//            console.log(elementOffset);
+
+            
             allLoaded = allLoaded && loaded;
             if (!loaded && inview) {
                 indexFillNote($element);                
