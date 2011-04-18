@@ -26,7 +26,7 @@ $(document).ready(function() {
       $("#editorfontsize").val(localStorage.option_editorfontsize);
   }
 
-  if (localStorage.option_editorfontshadow == undefined || localStorage.option_editorfontshadow == "true")
+  if (localStorage.option_editorfontshadow != undefined && localStorage.option_editorfontshadow == "true")
     $("#editorfontshadow").attr("checked","true");
 
 });

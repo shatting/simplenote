@@ -232,10 +232,11 @@ function indexAddNote(mode, note){
     var html =  "<div class='noterow' id='" + note.key  + "' >";
 
     html+=          "<span class='notetime' id='" + note.key + "time'>" + (localStorage.option_showdate == "true"?gettimeadd(note.modifydate):"");
+    
+    html+=          "</span>";
     if (note.deleted == 0)
         html+=          "<div class='" + (note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + "' id='" + note.key + "pin'>&nbsp;</div>";
-    html+=          "</span>";
-    html+=          "<div contenteditable='false' class='noteheading' id='" + note.key + "heading'>";
+    html+=          "<div contenteditable='false' class='noteheading' id='" + note.key + "heading'>";    
     html+=          "</div>";
     html+=          "<div contenteditable='false' class='abstract' id='" + note.key + "abstract'>&nbsp;<br>&nbsp;</div>";
     
@@ -534,7 +535,22 @@ function showNote(key) {
             event.preventDefault();
         }
     });
-    
+
+    // bind word wrap           
+    $("div#note input#wordwrap").unbind();
+    $("div#note input#wordwrap").bind('change', function(event) {
+        localStorage.wordwrap = $("#wordwrap").attr("checked");
+        if ($("#wordwrap").attr("checked"))
+            $('div#note textarea#editor').attr("wrap","on");
+        else
+            $('div#note textarea#editor').attr("wrap","off");
+    });
+
+    if (localStorage.wordwrap != undefined && localStorage.wordwrap == "true") {
+        $("div#note input#wordwrap").attr("checked","true");        
+    } else {
+        $("div#note input#wordwrap").attr("checked","");        
+    }
 
     if (localStorage.option_editorfont )
         $("div#note textarea#editor").css("font-family",localStorage.option_editorfont );
@@ -611,7 +627,7 @@ function showNote(key) {
             $('div#note input#tags').show();
             $('div#note textarea#editor').show();
             $('div#note textarea#editor').focus();
-
+                
             localStorage.opentonotekey = note.key;
         });
     }  

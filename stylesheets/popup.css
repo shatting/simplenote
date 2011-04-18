@@ -6,6 +6,7 @@ body {
   height: 500px;
   width: 400px;
   overflow: hidden;
+  background: #4F4F59 url(/images/texture.png);
 }
 
 /* index toolbar */
@@ -26,7 +27,7 @@ div#toolbar {
     outline-color: black;
     -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
     border: 2px solid #F5F6FD;
-    border-radius: 6px;  
+    border-radius: 3px;
 }
 
 div#index div#toolbar select#notetags {
@@ -88,12 +89,12 @@ div#index div#toolbar input#q:focus {
 
 /* index */
 div#notes {  
-    width: 100%;
-    padding-bottom: 2px;        
-    overflow: auto;
+    width: 99%;
+    margin-bottom: 27px;
     position: absolute;
-    top: 37px;
+    top: 40px;
     bottom: 0;
+    overflow-y: scroll;
 }
 
 div#nonotes {
@@ -104,21 +105,19 @@ div#nonotes {
 }
 
 div.noterow {
-    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
-    'background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #ccc),color-stop(1.0, white));
-     -webkit-box-shadow: 0 0px 2px rgba(0,80,128,0.5);
+    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));    
+    -webkit-box-shadow: 0 0px 2px rgba(0,80,128,0.5);
     border: 2px solid #F7F8FF;
     border-radius: 6px;
     margin: 4px;
-    margin-bottom: 8px;
-    padding: 4px;
-    padding-top: 2px;
-    padding-bottom: 4px;
-     
+    margin-bottom: 2px;
+    margin-top: 0px;
+    padding: 2px;
+    padding-bottom: 4px;    
 }
 
 div.noterow:hover { 
-    background:#FFF;    
+    background: rgba(0,80,128,0.5);
     -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
 } 
 
@@ -126,23 +125,25 @@ span.notetime {
     color: #aaa;  
     text-align : left;
     'line-height: 95%;
-    width: 40px;
-    float: left;
+    ''width: 40px;
+    float: right;
 }
 
 div.noteheading, div.abstract {
     cursor: pointer;
-    margin-left: 50px;
-    text-overflow: ellipsis;    
+    text-overflow: ellipsis;
     overflow: hidden;
-    width:85%;
-    margin-right:0px;
+    width: auto;
+    margin-right: 0px;
+    text-wrap: none;
+}
+
+div.noteheading {
 }
 
 div.noteheadingdeleted {
     color: #aaa; 
-    cursor: pointer;
-    margin-left: 50px;
+    cursor: pointer;    
 }
 
 div.noterowdeleted:hover {
@@ -155,30 +156,27 @@ div.pinned:hover {
 div.unpinned:hover {
     -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
 }
-div.pinned {
-    background: transparent url(/images/pinned.png) no-repeat;    
+
+div.pinned, div.unpinned {
     cursor: pointer;
-    'position: relative;
     width: 12px;
-    'top: 26px;
-    'left: 10px;
-    height: 12px;    
+    margin-left: 3px;
+    margin-right: 5px;
+    float: left;
+    margin-top: 3px;
+}
+
+div.pinned {
+    background: transparent url(/images/pinned.png) no-repeat;
 }
 
 div.unpinned {
-    background: transparent url(/images/unpinned.png) no-repeat;
-    cursor: pointer;
-    'position: relative;
-    width: 12px;
-    'top: 26px;
-    'left: 10px;
-    height: 12px;    
+    background: transparent url(/images/unpinned.png) no-repeat;  
 }
 
 .abstract {
-  color: #aaa;  
-  font-size: 10px;
-  padding-left : 10px ;
+  color: #999;
+  font-size: 10px;  
 }
 
 .hidden {
@@ -205,11 +203,11 @@ div.unpinned {
     position: fixed;        
     top:476px;
     width: 98%;
-    height:20px;
+    height:18px;
     border: 1px solid;    
     margin-right: 2px;
     margin-left: 2px;
-    margin-top: 2px;            
+    margin-top: 2px;
     background: white;
     outline-color: black;
     -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
@@ -225,14 +223,15 @@ div#note div#toolbar input#destroy {
 
 #editor {
     padding: 10px;
-    margin-top: 8px;
+    margin-top: 4px;
     height: 452px;
     border-radius: 12px 0px 0px 0px;
     border: 1px solid #999; 
     border: 1px solid rgba(0, 0, 0, 0.3); 
     box-shadow: 0 1px 0 #fff; 
     margin-left: 2px;
-    width: 94%;
+    margin-right: 2px;
+    width: 93.5%;
     resize: none;
     overflow: auto;    
 }
@@ -268,7 +267,7 @@ div#note div#toolbar input#tags:focus {
 ::-webkit-scrollbar {
     width: 15px;
     height: 15px;    
-    background-color: #FFF;    
+    background-color: transparent; 
 }
 
 ::-webkit-scrollbar-track-piece  {
