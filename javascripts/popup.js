@@ -143,6 +143,7 @@ function displayStatusMessage(message) {
     $('#loader').hide();
     $('#toolbar').hide();
     $('#status').html(message);
+    $('body').css("background","#fff");
     links = $('a');
     links.attr('target', '_blank');
     links.click(function() {window.close();});
@@ -301,7 +302,7 @@ function indexFillNoteReqComplete(note) {
         // first line
         $('#' + note.key + 'loader').remove();
         $noteheading.removeAttr("align");
-        $noteheading.append(htmlEncode(lines[0]));
+        $noteheading.html(htmlEncode(lines[0]));
         if (note.deleted == 1) {
             $noteheading.addClass("noteheadingdeleted"); // for text color
             $noterow.addClass("noterowdeleted"); // for undelete image on hover

@@ -1,6 +1,6 @@
 {
   "name": "Simplenote",
-  "version": "1.4",
+  "version": "1.4.1",
   "description": "Access your Simplenote notes",
   "omnibox": { "keyword" : "note" },
   "icons": {
