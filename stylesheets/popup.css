@@ -1,33 +1,37 @@
 body {
   font-family: Verdana, Helvetica, Arial;
-  font-size: 14px;
-  'font: 14px "Lucida Grande", verdana, sans-serif;
+  font-size: 14px;  
   margin: 0;
-  height: 500px;
+  height: 550px;
   width: 400px;
   overflow: hidden;
   background: #4F4F59 url(/images/texture.png);
 }
 
-/* index toolbar */
+/* index */
+
+div#index {    
+    position: absolute;
+    width: 100%;
+    height:100%;
+    left:0px;
+}
+
 div#status {
     
 }
 
 div#toolbar {
-    'margin: 4px;
     margin-right: 2px;
     margin-left: 2px;
     margin-top: 2px;
-    'padding: 5px;
-    'padding-left: 5px;
     background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
-    'background: #CACFDE;
-    background: white;
+    ''background: white;
     outline-color: black;
     -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
     border: 2px solid #F5F6FD;
     border-radius: 3px;
+    width:392px;
 }
 
 div#index div#toolbar select#notetags {
@@ -86,8 +90,6 @@ div#index div#toolbar input#q:focus {
     background-color: #aaaaaa;
 }
 
-
-/* index */
 div#notes {  
     width: 99%;
     margin-bottom: 27px;
@@ -180,10 +182,6 @@ div.unpinned {
   font-size: 10px;  
 }
 
-.hidden {
-  display: none;
-}
-
 #loader {
   background-image: url('/images/loader.gif');
   width: 64px;
@@ -201,11 +199,10 @@ div.unpinned {
 }
 
 #statusbar {
-    position: fixed;        
-    top:476px;
+    position: absolute;
+    top:524px;
     width: 98%;
-    height:18px;
-    border: 1px solid;    
+    height:18px;    
     margin-right: 2px;
     margin-left: 2px;
     margin-top: 2px;
@@ -218,6 +215,11 @@ div.unpinned {
 
 /* note div */
 
+div#note {
+    left:400px;
+    position: absolute;
+}
+
 div#note div#toolbar input#destroy {
   float: right;
 }
@@ -225,7 +227,7 @@ div#note div#toolbar input#destroy {
 #editor {
     padding: 10px;
     margin-top: 4px;
-    height: 452px;
+    height: 460px;
     border-radius: 12px 0px 0px 0px;
     border: 1px solid #999; 
     border: 1px solid rgba(0, 0, 0, 0.3); 

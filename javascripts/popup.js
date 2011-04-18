@@ -50,7 +50,7 @@ chrome.extension.onRequest.addListener(function (request, sender, sendResponse) 
             $("#sync").html("sync started");            
         } else if (request.status == "done") {
             if (request.hadChanges) {
-                showIndex();
+                fillIndex();
                 $("#sync").html("sync done, had changes");
             } else {
                 $("#sync").html("sync done.");
@@ -88,14 +88,12 @@ $(document).ready(function() {
 
                 log("ready listener: requesting sync");
                 chrome.extension.sendRequest({action: "sync", fullsync:true});
-                
 
-                if (localStorage.opentonotekey && localStorage.opentonotekey != "" && localStorage.option_opentonote == "true")
-                    showNote(localStorage.opentonotekey);
-                else {
-                    log("ready listener:calling showIndex");
-                    showIndex();
-                }
+                //if (localStorage.opentonotekey && localStorage.opentonotekey != "" && localStorage.option_opentonote == "true")
+                //    showNote(localStorage.opentonotekey);
+                //else {
+                log("ready listener:calling fillIndex");
+                fillIndex();                
 
                 $('div#index div#toolbar div#add').click(function() {
                     showNote();
@@ -107,8 +105,8 @@ $(document).ready(function() {
     
                 var options = {
                     callback : function() {
-                        log("typewatch:calling showIndex");
-                        showIndex();
+                        log("typewatch:calling fillIndex");
+                        fillIndex();
                     },
                     wait : 250,
                     highlight : false,
@@ -180,29 +178,28 @@ function fillTags(allowedToShowIndex) {
         
         $("#notetags").val(val);
         $("#notetags").change(function(event) {
-            log("notetags changed:calling showIndex");
-            showIndex();
+            log("notetags changed:calling fillIndex");
+            fillIndex();
         });
         if (!stillhavetag && allowedToShowIndex) {
-            log("fillTags:calling showIndex");
-            showIndex();
+            log("fillTags:calling fillIndex");
+            fillIndex();
         }
     });
 }
 
 //  ---------------------------------------
-function showIndex() {
-    log("showIndex: setting listeners");    
+function fillIndex() {
+    log("fillIndex: setting listeners");
 
     var req =               {action : "getnotes", deleted : 0};
     req     = mergeobj(req, {tag : $("#notetags").val()});
     req     = mergeobj(req, {contentquery : $('#q').val()});
     req     = mergeobj(req, {sort:localStorage.option_sortby, sortdirection:localStorage.option_sortbydirection});
 
-    log("showIndex:");
+    log("fillIndex:");
     log(req);
-  
-    $('div#index').show("fast");
+      
     $('div#index div#notes').empty();    
 
     fillTags(false);
@@ -325,8 +322,8 @@ function indexFillNoteReqComplete(note) {
         // add click binding        
         $noterow.unbind();
         if (note.deleted == 0)
-            $noterow.click(function() {
-                showNote(this.id)
+            $noterow.click(note, function(event) {
+                showNote(event.data);
             });
         else
             $noterow.click(function() {
@@ -452,19 +449,28 @@ function pad(i) {
 
 //  ---------------------------------------
 
-function showNote(key) {
+function slideNote(callback) {
+    $('div#index').animate({ left:"-=400" }, {duration: 500, complete: callback});
+    $('div#note').animate({ left:"-=400" }, 500);
+    //$('body').animate({height : "550px"},250);
+}
+
+function slideIndex(callback) {
+    localStorage.opentonotekey = "";
+    $('div#index').animate({ left:"+=400" }, {duration: 500, complete: callback});
+    $('div#note').animate({ left:"+=400" }, 500);
+    //$('body').animate({height : "500px"},250);
+}
+
+function showNote(note) {
     log("showNote");
   
-    $('div#index').hide("fast");  
-    $('#loader').show();  
-    $('div#note').show("fast");
-
-    $('div#note div#toolbar input').removeAttr('disabled');    
-    $("div#note input").removeAttr("dirty");
-    // dont work:
+    //$('div#note div#toolbar input').removeAttr('disabled');
     //$('div#note textarea#editor').scrollTop(0);
     //$('div#note textarea#editor').scrollLeft(0);
-    //
+    
+    $("div#note input").removeAttr("dirty");
+    
     // add note content change (dirty) event listeners
     $('div#note textarea').unbind();
     $('div#note textarea').bind('change keyup paste', function(event) {
@@ -523,9 +529,9 @@ function showNote(key) {
     $('div#note input#backtoindex').click(function() {
         log("back clicked");
         if (isNoteDirty()) 
-            updateNote(backToIndex);
+            updateNote(slideIndex);
         else
-            backToIndex();   
+            slideIndex();
     });
 
     // bind editor    
@@ -561,13 +567,13 @@ function showNote(key) {
         $("div#note textarea#editor").css("text-shadow","2px 2px 2px #aaa" );
     
     // get note contents
-    if (key === undefined) { // new note
+    if (note == undefined) { // new note
         
         // delete button now cancel button
         $('div#note div#toolbar input#destroy').val("Cancel");
         $('div#note input#destroy').unbind();
         $('div#note input#destroy').click(function() {
-            backToIndex();
+            slideIndex();
         });
     
         // insert data
@@ -579,59 +585,55 @@ function showNote(key) {
         $('div#note textarea').data("note",note);
 
         // show/hide elements
-        $('#loader').hide();
+        //$('#loader').hide();
         $("div#note input#pinned").attr("checked","");        
         $('div#note input#tags').val("");
-        $('div#note input#undo').hide();
-        $('div#note textarea').show();
+        $('div#note input#undo').hide();        
         $('div#note textarea').focus();    
-    }
-    else { // existing note, request from server
+
+    } else { // existing note
         
-        // bind delete button
+        // bind TRASH button
         $('div#note div#toolbar input#destroy').val("Delete");
         $('div#note input#destroy').unbind();
         $('div#note input#destroy').click(function() {
             trashNote();
         });
 
-        // bind undo button
+        // bind UNDO button
         $('div#note input#undo').unbind();
-        $('div#note input#undo').click(key,function(event) {            
-            showNote(event.data);
-        });
-        $('div#note input#undo').attr("disabled","true");
-        $('div#note input#undo').show();
-        
-        // request note
-        chrome.extension.sendRequest({
-            action : "note", 
-            key : key
-        }, function(note) {
-            log("showNote: note request complete");
-            // insert data
+        $('div#note input#undo').click(note,function(event) {
             $('div#note textarea').val(note.content);
             $('div#note input#tags').val(note.tags.join(" "));
-            $('div#note textarea').attr('key', key); 
-            $('div#note textarea').data("note",note);
             if (note.systemtags.indexOf("pinned")>=0)
                 $('div#note input#pinned').attr("checked","checked");
             else
                 $('div#note input#pinned').removeAttr("checked");
-            
-            // info div
-            $('div#note div#info').html(note2str(note));
-            // show/hide elements
-            $('#loader').hide();  
-            $('div#note input#pinned').show();
-            $('div#note input#pinned').html("&nbsp;&nbsp;&nbsp;&nbsp;pin");
-            $('div#note input#tags').show();
-            $('div#note textarea#editor').show();
-            $('div#note textarea#editor').focus();
-                
-            localStorage.opentonotekey = note.key;
         });
-    }  
+        $('div#note input#undo').attr("disabled","true");        
+                
+        // insert data
+        $('div#note textarea').val(note.content);
+        $('div#note input#tags').val(note.tags.join(" "));        
+        if (note.systemtags.indexOf("pinned")>=0)
+            $('div#note input#pinned').attr("checked","checked");
+        else
+            $('div#note input#pinned').removeAttr("checked");
+
+        $('div#note textarea').attr('key', note.key);
+        $('div#note textarea').data("note",note);
+        // info div
+        //$('div#note div#info').html(note2str(note));
+        // show/hide elements
+        $('div#note input#pinned').html("&nbsp;&nbsp;&nbsp;&nbsp;pin");
+        
+        $('div#note input#undo').show();
+        localStorage.opentonotekey = note.key;
+    }
+
+    slideNote(function () {
+        $('div#note textarea#editor').focus();
+    });
 
 }
 
@@ -660,7 +662,7 @@ function updateNote(callback) {
     } else if (note.content != '')          // new note, new data -> create
         note.action = "create";
     else                                    // new note, no data -> back to index
-        backToIndex();
+        slideIndex();
     
         
     if (note.action) {
@@ -689,28 +691,13 @@ function isNoteDirty() {
 
 //  ---------------------------------------
 
-function backToIndex() {
-    log("backToIndex");
-    $('div#note div#toolbar input').attr('disabled', 'disabled');
-    $('div#note textarea').hide();
-    $('div#note').hide();
-    localStorage.opentonotekey = "";
-    
-    showIndex();
-}
-
-//  ---------------------------------------
-
 function trashNote() {
     log("trashNote");
     $('div#note div#toolbar input').attr('disabled', 'disabled');
     
-    chrome.extension.sendRequest({
-        action : "update", 
-        key : $('div#note textarea').attr('key'),
-        deleted : 1
-        }, function() {
-        backToIndex();
+    chrome.extension.sendRequest({ action : "update", key : $('div#note textarea').attr('key'), deleted : 1},
+         function() {
+            slideIndex();
     });
 }
 
