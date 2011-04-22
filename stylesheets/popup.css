@@ -127,8 +127,7 @@ div.noterow:hover {
 span.notetime {
     color: #aaa;  
     text-align : left;
-    'line-height: 95%;
-    ''width: 40px;
+    cursor: pointer;
     float: right;
 }
 
@@ -222,7 +221,7 @@ div#note {
     position: absolute;
 }
 
-div#note div#toolbar input#destroy {
+div#note div#toolbar input#destroy, div#note div#toolbar input#undo {
   float: right;
 }
 

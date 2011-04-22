@@ -130,8 +130,8 @@ $(document).ready(function() {
                 };
                 $('div#index div#toolbar input#q').typeWatch(options);                                                
                 
-                if (!isDebug)
-                     $('div#note div#info').hide();
+                //if (!isDebug)
+                //     $('div#note div#info').hide();
             }
             else {
                 log("(ready): login error, message=" + result.message);
@@ -155,7 +155,9 @@ $(document).ready(function() {
  */
 function displayStatusMessage(message) {    
     $('#toolbar').hide();
-    $('#status').html(message);
+    $('#statusbar').hide();
+    //$('#loader').hide();
+    $('#notes').html(message);
     $('body').css("background","#fff");
     links = $('a');
     links.attr('target', '_blank');
@@ -600,10 +602,9 @@ function editorShowNote(note, duration) {
     
         // insert data
         $('div#note textarea').val("");        
-        $('div#note div#info').html("");                        
+        //$('div#note div#info').html("");
 
-        // show/hide elements
-        //$('#loader').hide();
+        // show/hide elements        
         $("div#note input#pinned").attr("checked","");        
         $('div#note input#tags').val("");
         $('div#note input#undo').hide();                
