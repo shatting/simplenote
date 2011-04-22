@@ -4,16 +4,12 @@ function log(s) {
         logGeneral(s,"background.js");
 }
 
-//var isBackgroundSyncEnabled = true;
 function backgroundSync(fullSync, callbackComplete, callbackPartial) {
     if (localStorage.option_email == undefined || localStorage.option_password == undefined) {
-        log("backgroundSync:no credentials, exiting..")
+        log("backgroundSync: no credentials, exiting..")
         return;
     }
-    //if (!isBackgroundSyncEnabled) {
-    //    log("backgroundSync: sync disabled, exiting..");
-    //    return;
-    //}
+
     if (!fullSync && !SimplenoteDB.hadSync())
         fullSync = true;
 
@@ -23,7 +19,7 @@ function backgroundSync(fullSync, callbackComplete, callbackPartial) {
 
     handleRequest({action:"login"}, {}, function(successObj) {        
         if (successObj.success) {
-            log("backgroundSync: login request completed, requesting sync..");
+            log("backgroundSync: login request completed, requesting sync. fullSync=" + fullSync);
             SimplenoteDB.sync(fullSync, function() {
                 //log("backgroundSync: complete, setting timer for partial sync..");
                 if (callbackComplete)
@@ -38,7 +34,6 @@ function backgroundSync(fullSync, callbackComplete, callbackPartial) {
 // sync on browser start
 $(document).ready(function() {
     backgroundSync(true);    
-    //isBackgroundSyncEnabled = false; // only do it once on chrome start, then wait for popup
 });
 
 // add context menus
@@ -183,12 +178,12 @@ function popupClosed() {
         SimplenoteDB.updateNote(saveNote, function(note) {
             localStorage.opentonotekey = note.key;
             saveNote = undefined;
-            log("popupClosed update success");
+            log("popupClosed: update success.");
         });
     else
         SimplenoteDB.createNote(saveNote, function(note) {
             localStorage.opentonotekey = note.key;
             saveNote = undefined;
-            log("popupClosed create success");
+            log("popupClosed: create success.");
         });
 }

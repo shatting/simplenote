@@ -40,8 +40,7 @@ var SimplenoteLS = {
         }
         if (this.haveNote(note.key)) {
             console.log(note);
-            throw "cannot add note, note already in LS"
-            //this.updateNote(note)
+            throw "cannot add note, note already in LS"            
         }
         this.log("addNote, note: ");
         this.log(note);
@@ -53,52 +52,67 @@ var SimplenoteLS = {
         $.storage.set(note.key,note);        
     },
 
-    updateNote : function(note, force) {
+    updateNote : function(inputNote, force) {
 
-        if (!note || !note.key) {
-            console.log(note);
-            throw "cannot update with empty note or note without key"
-        }
-        var storedNote = this.getNote(note.key);
-        if (!storedNote) {
-            console.log(note);
-            throw "cannot update note, note not in LS"
+        if (!inputNote || !inputNote.key) {
+            console.log(inputNote);
+            throw "cannot update with undefined note or note without key"
         }
         
-        this.log("updateNote:stored:");
-        this.log(note2str(storedNote, true));
-        this.log("updateNote:input:");
-        this.log(note2str(note, true));
+        var storedNote = this.getNote(inputNote.key);
 
-        if (storedNote.syncnum < note.syncnum || storedNote.modifydate < note.modifydate || force) {
-            if (storedNote.syncnum < note.syncnum )
-                this.log("updateNote:new note sync version, saving to storage");
+        if (!storedNote) {
+            console.log(inputNote);
+            throw "cannot update note, note not in LS"
+        }
+
+        var changed = false;
+        
+        if (storedNote.syncnum < inputNote.syncnum || storedNote.modifydate < inputNote.modifydate || force) {
+            if (storedNote.syncnum < inputNote.syncnum )
+                this.log("updateNote: new note sync version, saving to storage");
             else
-                this.log("updateNote:newer note modify version, saving to storage");
+                this.log("updateNote: newer note modify version, saving to storage");
 
-            for (var field in note) {
+            this.log("updateNote: stored:");
+            this.log(note2str(storedNote, true));
+            this.log("updateNote: input:");
+            this.log(note2str(inputNote, true));
+            
+            changed = {added:[],changed:[]};
+
+            for (var field in inputNote) {
                 if (storedNote[field] === undefined ) {
+                    changed.added.push(field);
                     this.log("updateNote: new field " + field);
-                } else if ((storedNote[field] instanceof Array) && storedNote[field].join(" ") != note[field].join(" ")) {
+                } else if ((storedNote[field] instanceof Array) && storedNote[field].join(" ") != inputNote[field].join(" ")) {
+                    changed.changed.push(field);
                     this.log("updateNote: changed array field " + field);
-                } else if (!(storedNote[field] instanceof Array) && storedNote[field] != note[field]) {
+                } else if (storedNote[field] != inputNote[field]) {
+                    changed.changed.push(field);
                     this.log("updateNote: changed field " + field);
                 }
             }
 
-            if (note.content == undefined && storedNote.content != undefined) {
-                note.content = storedNote.content;
+            // often, server does not send content (if content wasnt changed eg.)
+            if (inputNote.content == undefined && storedNote.content != undefined) {
+                this.log("updateNote: took .content from stored note");
+                inputNote.content = storedNote.content;
             }
 
-            this.log("updateNote:saving:");
-            this.log(note2str(note, true));
+            // dont want an empty "" tag
+            if (inputNote.tags != undefined && inputNote.tags.length == 1 && inputNote.tags[0] == "")
+                inputNote.tags.pop();
 
-            $.storage.set(note.key,note);
-            //this._fireNoteListener(note.key);
-            chrome.extension.sendRequest({action:"noteupdated", note: note});
+            this.log("updateNote: saving note:");
+            this.log(note2str(inputNote, true));
+
+            $.storage.set(inputNote.key,inputNote);
         } else {
-            this.log("updateNote:not updating note, no new sync or modifydate");
+            //this.log("updateNote:not updating note, no new sync or modifydate");
         }
+
+        return changed;
     },
 
     getNote : function(key) {

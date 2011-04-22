@@ -16,7 +16,7 @@
     <script type="text/javascript" src="javascripts/popup.js"></script>
     <script>
         var _gaq = _gaq || [];
-        _gaq.push(['_setAccount', 'UA-22573090-1']);
+        _gaq.push(['_setAccount', 'UA-22573090-2']);
         _gaq.push(['_trackPageview']);
         
         (function() {
@@ -29,8 +29,8 @@
   <body>
     <div id="index">
         <div id="toolbar">
-          <input type="text" id="q" onsubmit="return false" placeholder="Search notes"/>
-          <select id="notetags"><option></option></select>          
+          <input type="text" id="q" onsubmit="return false" placeholder="Search notes" spellcheck="false"/>
+          <select id="notetags"><option value="#all#"></option></select>
           <div id="add"></div>
         </div>
       <div id="notes"></div>
@@ -42,11 +42,11 @@
           <input type="button" id="undo" value="Undo changes"/>
           <input type="checkbox" id="wordwrap"/> Wrap
           <input type="button" id="destroy" value="Delete"/>                   
-          <input type="text" id="tags" placeholder="Tag this note"/>
+          <input type="text" id="tags" placeholder="Tag this note" spellcheck="false"/>
           <input type="checkbox" id="pinned"/>
           <!--<div id="info"></div>-->
         </div>
-        <textarea id="editor" wrap="off"></textarea>
+        <textarea id="editor" wrap="off" spellcheck="false"></textarea>
     </div>     
     <div id="loader"></div>
     <div id="status"></div>

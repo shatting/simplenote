@@ -83,22 +83,26 @@ var SimplenoteDB = {
         if (!indexData) {
             if (this.syncCallbackFinished)
                 this.syncCallbackFinished(false);
-            this.log("gotIndexChunk:error getting index from server.");
+            this.log("gotIndexChunk: error getting index from server.");
             this.offline(true);
             chrome.extension.sendRequest({event:"sync", status: "error", hadChanges : false});
         } else {
-            var hadChanges;
+            var hadChanges = false, thisHadChanges = false;
             $.each(indexData.data, function(i,note) {
                 if (fullSync)
                     SimplenoteDB._indexKeysTemp.push(note.key);
                 
                 if (!SimplenoteLS.haveNote(note.key)) {
-                    SimplenoteDB.log("gotIndexChunk:found new note in index, saving to storage");
+                    SimplenoteDB.log("gotIndexChunk: found new note in index, saving to storage");
                     hadChanges = true;
                     SimplenoteLS.addNote(note);
                 } else {
-                    SimplenoteDB.log("gotIndexChunk:found known note in index, updating in storage");
-                    SimplenoteLS.updateNote(note);
+                    thisHadChanges = SimplenoteLS.updateNote(note);
+                    if (thisHadChanges != false) {
+                        SimplenoteDB.log("gotIndexChunk: found known note in index, had Changes: ");
+                        SimplenoteDB.log(thisHadChanges);
+                        hadChanges = true;
+                    }                    
                 }
             });
 
@@ -111,11 +115,19 @@ var SimplenoteDB = {
                 
                 if (fullSync) {                    
                     // check for deletions
-                    SimplenoteDB.log("gotIndexChunk:checking for remote deletions.");
+                    var hadDeletions = false;
+                    SimplenoteDB.log("gotIndexChunk: checking for remote deletions.");
                     $.each(SimplenoteLS.getKeys(), function (i,key){
-                        if (SimplenoteDB._indexKeysTemp.indexOf(key)<0)
-                            SimplenoteLS.delNote(key);
+                        if (SimplenoteDB._indexKeysTemp.indexOf(key)<0) {
+                            hadDeletions = true;
+                            SimplenoteLS.delNote(key);                            
+                        }
                     })
+                    if (hadDeletions)
+                        SimplenoteDB.log("gotIndexChunk: had remote deletions.");
+                    else
+                        SimplenoteDB.log("gotIndexChunk: no remote deletions found.");
+
                     delete SimplenoteDB._indexKeysTemp;
                 }
                 if (this.syncCallbackFinished)
@@ -183,24 +195,30 @@ var SimplenoteDB = {
                 success :       function(note) {
                     SimplenoteDB.offline(false);
                     SimplenoteLS.updateNote(note,true);
-                    callback(note);
+                    if (callback)
+                        callback(note);
                 }, 
                 loginInvalid:   function() {
                     SimplenoteDB.offline(false);
+                    if (callback)
+                        callback();
                     alert('background::note::loginInvalid');
                 }, 
                 repeat:         function() {
                     SimplenoteDB.offline(false);
+                    if (callback)
+                        callback();
                     alert('background::note::repeat');
                 },
-                noteNotExists:  function() {
+                noteNotExist:  function() {
                     SimplenoteDB.offline(false);
-                    alert('background::note::noteNotExists');
+                    if (callback)
+                        callback();                    
                 },
                 timeout: function(options) {
                     SimplenoteDB.offline(true);
-                    callback();
-                //todo                    
+                    if (callback)
+                        callback();
                 }                    
             };        
             SimplenoteAPI2.retrieve(key, callbacks);
@@ -220,10 +238,10 @@ var SimplenoteDB = {
             delete data.action;
 
             // client updateable properties:
-            if (data.content) note.content = data.content;
-            if (data.deleted) note.deleted = data.deleted;
-            if (data.tags) note.tags = data.tags;
-            if (data.systemtags) note.systemtags = data.systemtags;
+            if (data.content != undefined)      note.content = data.content;
+            if (data.deleted != undefined)      note.deleted = data.deleted;
+            if (data.tags != undefined)         note.tags = data.tags;
+            if (data.systemtags != undefined)   note.systemtags = data.systemtags;
 
             if (data.content) {
                 note.modifydate = (new Date())/1000;
@@ -234,6 +252,7 @@ var SimplenoteDB = {
 
             SimplenoteLS.updateNote(note, true);
             SimplenoteLS.addToSyncList(note.key);
+            chrome.extension.sendRequest({event:"indexchanged"});
         }
         
         var callbacks = {
@@ -274,7 +293,7 @@ var SimplenoteDB = {
         var tempkey;
         if (!syncmode) {
             note.createdate = (new Date())/1000;
-
+            note.modifydate = note.createdate;
             // set things needed for operation
             tempkey = SimplenoteLS.getCreatedNoteTempKey();
             note.key = tempkey;
@@ -287,6 +306,8 @@ var SimplenoteDB = {
 
             SimplenoteLS.addNote(note);
             SimplenoteLS.addToSyncList(note.key);
+
+            chrome.extension.sendRequest({event:"indexchanged"});
         }
         
         var callbacks = {
@@ -315,7 +336,7 @@ var SimplenoteDB = {
                 alert('background::note::noteNotExists');
             },
             timeout: function(note) { 
-                SimplenoteDB.log("timeout, adding note to sync list");                
+                SimplenoteDB.log("timeout");                
                 SimplenoteDB.offline(true);
                 if (callback)
                     callback();
