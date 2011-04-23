@@ -286,6 +286,7 @@ div#note div#pinwrapper {
     float:right;
     padding: 5px;
     margin-right:5px;
+    cursor: default;
 }
 
 /* scrollbar */

@@ -607,7 +607,8 @@ function editorShowNote(note, duration) {
     // bind editor tab->spaces
     $('div#note textarea#editor').keydown(function(event) {
         // tab: keyCode: 9
-        if (event.keyCode == 9) {
+        console.log(event)
+        if (event.keyCode == 9 && !event.shiftKey) {
             $('div#note textarea#editor').insertAtCaret("   ");            
             event.preventDefault();
         }
