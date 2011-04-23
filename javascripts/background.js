@@ -37,7 +37,11 @@ $(document).ready(function() {
 });
 
 // add context menus
-chrome.contextMenus.create({type:"normal",title:"Create a Simplenote",contexts:['all'],onclick:handleContextMenu})
+// contexts : Legal values are: 'all', 'page', 'selection', 'link', 'editable', 'image', 'video', and 'audio'. Defaults to ['page'].
+chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (URL)",contexts:['page'],onclick:handleContextMenu})
+chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (Selection)",contexts:['selection'],onclick:handleContextMenu})
+chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (Link)",contexts:['link','image'],onclick:handleContextMenu})
+//chrome.contextMenus.create({type:"normal",title:"Insert a Simplenote",contexts:['editable'],onclick:handleContextMenu})
 
 function handleContextMenu(info, tab) {
     var content = "";
