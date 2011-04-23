@@ -88,7 +88,7 @@ var SimplenoteLS = {
                 } else if ((storedNote[field] instanceof Array) && storedNote[field].join(" ") != inputNote[field].join(" ")) {
                     changed.changed.push(field);
                     this.log("updateNote: changed array field " + field);
-                } else if (storedNote[field] != inputNote[field]) {
+                } else if (!(storedNote[field] instanceof Array) && storedNote[field] != inputNote[field]) {
                     changed.changed.push(field);
                     this.log("updateNote: changed field " + field);
                 }
