@@ -228,9 +228,9 @@ div#note div#toolbar input#destroy, div#note div#toolbar input#undo {
   float: right;
 }
 
-#editor {
+#contenteditor {
     padding: 10px;    
-    height: 451px;
+    height: 454px;
     border-radius: 12px 0px 0px 0px;
     border: 1px solid #999; 
     border: 1px solid rgba(0, 0, 0, 0.3); 
@@ -240,10 +240,11 @@ div#note div#toolbar input#destroy, div#note div#toolbar input#undo {
     margin-top: 4px;
     width: 93.5%;
     resize: none;
-    overflow: auto;    
+    overflow: auto;
+    white-space: nowrap;
 }
 
-#editor:focus {
+#contenteditor:focus {
     border: 1px solid #666;
     border: 1px solid rgba(0, 0, 0, 0.4);
     -webkit-box-shadow: 0 0 3px #3c7ecf;
@@ -279,7 +280,7 @@ div#note div#noteeditor {
     -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
     border: 2px solid #F5F6FD;
     border-radius: 3px;
-    width:392px;
+    width:392px;    
 }
 
 div#note div#pinwrapper {

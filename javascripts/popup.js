@@ -19,14 +19,14 @@ addEventListener("unload", function (event) {
         var note = {};
         log("(unload): requesting background save");
                 
-        if ($('div#note textarea').attr("dirty")=="true")
-            note.content = $('div#note textarea').val();        
+        if ($('div#note #contenteditor').attr("dirty")=="true")
+            note.content = getEditorContent();
         if ($('div#note input#pinned').attr("dirty")=="true")
             note.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[]; // todo: "read" systag       
         if ($('div#note input#tags').attr("dirty")=="true")
             note.tags = $('div#note input#tags').val().split(" ");
         
-        note.key = $('div#note textarea').attr('key');
+        note.key = $('div#note #contenteditor').attr('key');
 
         log("(unload): note:");
         log(note);
@@ -411,7 +411,75 @@ function htmlEncode(s)
 
 // make string html safe
 function htmlSafe(s) {
-    return s.replace(/&(?!\w+([;\s]|$))/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    //return s.replace(/&(?!\w+([;\s]|$))/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+//function html2entities(sometext){
+// var re=/[(<>"'&]/g
+// return sometext.replace(re, function(m){return replacechar(m)})
+//}
+//
+//function replacechar(match){
+// if (match=="<")
+//  return "&lt;"
+// else if (match==">")
+//  return "&gt;"
+// else if (match=="\"")
+//  return "&quot;"
+// else if (match=="'")
+//  return "&#039;"
+// else if (match=="&")
+//  return "&amp;"
+//}
+
+
+function htmlUnsafe(s) {
+    return s.replace(/&gt;/gi, ">").replace(/&lt;/gi, "<").replace(/&amp;/gi,"&");
+}
+
+function htmlDecode(s) {
+    return htmlUnsafe(s.replace(/<br>/gi,"\n").replace(/&nbsp;/gi," "));
+}
+
+function getEditorContent() {
+    return elem2txt($('div#note #contenteditor')[0]);
+}
+
+function elem2txt(e) {
+    var s = [];
+    var line = "";
+    var childs;
+    for (var i=0;i<e.children.length;i++) {
+        childs = e.children[i].children;
+        if (childs.length > 0 && !(childs.length == 1 && childs[0].outerHTML == "<br>")) { // pasted
+            var x = e.children[i].children[0];            
+            line = elem2txt(e.children[i]);
+        } else {
+            line = htmlDecode(e.children[i].innerHTML);
+        }
+        if (line=="\n")
+            s.push("");
+        else
+            s.push(line);
+    }
+    //log(s.join("\n"));
+    return s.join("\n");
+}
+
+function setEditorContent(s) {
+    var $editor = $('div#note #contenteditor');    
+    var html = "";
+    var lines = s.split("\n");
+    for (var i=0; i<lines.length; i++) {
+        log("line " + i);
+        log(lines[i]);
+        if (lines[i].length == 0)
+            html += "<div><br></div>";
+        else
+            html += "<div>" + htmlSafe(lines[i]).replace(/\s/gi,"&nbsp;") + "</div>";
+    }
+    $editor.html(html);
 }
 
 //function maximize(event) {
@@ -527,7 +595,7 @@ function slideIndex(callback) {
 function editorShowNote(note, duration) {
     log("showNote");      
     
-    $('div#note textarea').removeAttr('dirty');
+    $('div#note #contenteditor').removeAttr('dirty');
     $('div#note input#pinned').removeAttr("dirty");
     $('div#note input#tags').removeAttr('dirty');
     
@@ -536,17 +604,17 @@ function editorShowNote(note, duration) {
         note = {content:"",tags:[],systemtags:[], key:""};
     
     // add note content change (dirty) event listeners
-    $('div#note textarea').unbind();
-    $('div#note textarea').bind('change keyup paste', note, function(event) {
-        var note=event.data;
+    $('div#note #contenteditor').unbind();
+    $('div#note #contenteditor').bind('change keyup paste cut', note, function(event) {
+        var note=event.data;        
         
-        if (note.content != $(this).val()) {
-            if ($('div#note textarea').attr('dirty') != "true")
+        if (note.content != getEditorContent()) {
+            if ($('div#note #contenteditor').attr('dirty') != "true")
                 log("content dirty now (" + event.type + ")");
-            $('div#note textarea').attr('dirty', 'true');
+            $('div#note #contenteditor').attr('dirty', 'true');
         } else {
             log("content not dirty now (" + event.type + ")");
-            $('div#note textarea').removeAttr('dirty');
+            $('div#note #contenteditor').removeAttr('dirty');
         }
         if (editorIsNoteDirty())
             $('div#note input#undo').removeAttr("disabled");
@@ -556,7 +624,7 @@ function editorShowNote(note, duration) {
     
     // add note tags change (dirty) event listeners
     $('div#note input#tags').unbind();
-    $('div#note input#tags').bind('change keyup paste', note, function(event) {
+    $('div#note input#tags').bind('change keyup paste cut', note, function(event) {
         var note = event.data;
         if (note.tags.join(" ") != $(this).val().trim()) {
             if ($('div#note input#tags').attr('dirty') != "true")
@@ -605,11 +673,10 @@ function editorShowNote(note, duration) {
     });
 
     // bind editor tab->spaces
-    $('div#note textarea#editor').keydown(function(event) {
-        // tab: keyCode: 9
-        console.log(event)
+    $('div#note #contenteditor').keydown(function(event) {
+        // tab: keyCode: 9        
         if (event.keyCode == 9 && !event.shiftKey) {
-            $('div#note textarea#editor').insertAtCaret("   ");            
+            $('div#note #contenteditor').insertAtCaret("   ");
             event.preventDefault();
         }
     });
@@ -618,10 +685,10 @@ function editorShowNote(note, duration) {
     $("div#note input#wordwrap").unbind();
     $("div#note input#wordwrap").bind('change', function(event) {
         localStorage.wordwrap = $("#wordwrap").attr("checked");
-        if ($("#wordwrap").attr("checked"))
-            $('div#note textarea#editor').attr("wrap","on");
+        if ($("div#note input#wordwrap").attr("checked"))
+            $('div#note #contenteditor').css("white-space","normal");
         else
-            $('div#note textarea#editor').attr("wrap","off");
+            $('div#note #contenteditor').css("white-space","nowrap");
     });
 
     if (localStorage.wordwrap != undefined && localStorage.wordwrap == "true") {
@@ -629,13 +696,14 @@ function editorShowNote(note, duration) {
     } else {
         $("div#note input#wordwrap").attr("checked","");        
     }
+    $("div#note input#wordwrap").change();
 
     if (localStorage.option_editorfont )
-        $("div#note textarea#editor").css("font-family",localStorage.option_editorfont );
+        $("div#note #contenteditor").css("font-family",localStorage.option_editorfont );
     if (localStorage.option_editorfontsize )
-        $("div#note textarea#editor").css("font-size",localStorage.option_editorfontsize + "px" );
+        $("div#note #contenteditor").css("font-size",localStorage.option_editorfontsize + "px" );
     if (localStorage.option_editorfontshadow && localStorage.option_editorfontshadow == "true")
-        $("div#note textarea#editor").css("text-shadow","2px 2px 2px #aaa" );
+        $("div#note #contenteditor").css("text-shadow","2px 2px 2px #aaa" );
     
     // get note contents
     if (note.key == "") { // new note
@@ -649,7 +717,7 @@ function editorShowNote(note, duration) {
         });
     
         // insert data
-        $('div#note textarea').val("");        
+        $('div#note #contenteditor').html("");
         //$('div#note div#info').html("");
 
         // show/hide elements        
@@ -670,7 +738,7 @@ function editorShowNote(note, duration) {
         // bind UNDO button
         $('div#note input#undo').unbind();
         $('div#note input#undo').click(note,function(event) {
-            $('div#note textarea').val(note.content);
+            setEditorContent(note.content);
             $('div#note input#tags').val(note.tags.join(" "));
             if (note.systemtags.indexOf("pinned")>=0)
                 $('div#note input#pinned').attr("checked","checked");
@@ -682,7 +750,7 @@ function editorShowNote(note, duration) {
         $('div#note input#undo').attr("disabled","disabled");
                 
         // insert data
-        $('div#note textarea').val(note.content);
+        setEditorContent(note.content);
         $('div#note input#tags').val(note.tags.join(" "));        
         if (note.systemtags.indexOf("pinned")>=0)
             $('div#note input#pinned').attr("checked","checked");
@@ -702,10 +770,10 @@ function editorShowNote(note, duration) {
     $('div#note input#wordwrap').html("&nbsp;&nbsp;&nbsp;&nbsp;Wordwrap")
 
     // needed for background save
-    $('div#note textarea').attr('key',note.key);
+    $('div#note #contenteditor').attr('key',note.key);
 
     slideNote(function () {
-        $('div#note textarea#editor').focus();
+        $('div#note #contenteditor').focus();
     }, duration);
 
 }
@@ -715,8 +783,8 @@ function editorShowNote(note, duration) {
 function editorNoteChanged(key,callback) {
         
     var noteData = {};
-    if ($('div#note textarea').attr("dirty")=="true")
-        noteData.content = $('div#note textarea').val();
+    if ($('div#note #contenteditor').attr("dirty")=="true")
+        noteData.content = getEditorContent();
     if ($('div#note input#pinned').attr("dirty")=="true")
         noteData.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[]; // todo: "read" systag
     if ($('div#note input#tags').attr("dirty")=="true")
@@ -752,7 +820,7 @@ function editorNoteChanged(key,callback) {
 //  ---------------------------------------
 
 function editorIsNoteDirty() {
-    return $('div#note textarea').attr("dirty")=="true" ||
+    return $('div#note #contenteditor').attr("dirty")=="true" ||
         $('div#note input#pinned').attr("dirty")=="true" ||
         $('div#note input#tags').attr("dirty")=="true";
 }
