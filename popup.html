@@ -11,6 +11,7 @@
     <link  href="http://fonts.googleapis.com/css?family=Vollkorn:regular" rel="stylesheet" type="text/css" >
     <script type="text/javascript" src="javascripts/lib/jquery.js"></script>
     <script type="text/javascript" src="javascripts/lib/jquery.typewatch.js"></script>
+    <script type="text/javascript" src="javascripts/lib/jquery.timeago.js"></script>
     <script type="text/javascript" src="javascripts/lib/jquery.data.js"></script>    
     <script type="text/javascript" src="javascripts/common.js"></script>
     <script type="text/javascript" src="javascripts/popup.js"></script>
@@ -29,24 +30,29 @@
   <body>
     <div id="index">
         <div id="toolbar">
-          <input type="text" id="q" onsubmit="return false" placeholder="Search notes" spellcheck="false"/>
-          <select id="notetags"><option value="#all#"></option></select>
-          <div id="add"></div>
+          <input type="text" id="q" onsubmit="return false" placeholder="Search notes" spellcheck="false" title="Type here to search for notes"/>
+          <select id="notetags" title="Show notes by tag"><option value="#all#"></option></select>
+          <div id="add" title="Create a note"></div>
         </div>
       <div id="notes"></div>
       <div id="statusbar"><div id="offline">offline</div><div id="sync"></div></div>
     </div>
     <div id="note">
         <div id="toolbar">
-          <input type="button" id="backtoindex" value="Back"/>          
-          <input type="checkbox" id="wordwrap"/> Wrap
-          <input type="button" id="destroy" value="Delete"/>
-          <input type="button" id="undo" value="Undo changes"/>
-          <input type="text" id="tags" placeholder="Tag this note" spellcheck="false"/>
-          <input type="checkbox" id="pinned"/>
+          <input type="button" id="backtoindex" value="Back" title="Back to notes"/>
+          <input type="checkbox" id="wordwrap" title="Toggle wordwrap"/>
+          <input type="button" id="destroy" value="Trash" title="Send note to trash"/>
+          <input type="button" id="undo" value="Undo changes" title="Revert changes"/>          
           <!--<div id="info"></div>-->
         </div>
-        <textarea id="editor" wrap="off" spellcheck="false"></textarea>
+        <div id="noteeditor">
+            <input type="text" id="tags" placeholder="Tag this note" spellcheck="false" title="Click here to enter tags for this note"/>
+            <div id="pinwrapper">
+                <input type="checkbox" id="pinned" title="Pin this note to always show on top"/>Pin
+            </div>
+            <textarea id="editor" wrap="off" spellcheck="false"></textarea>
+        </div>
+        
     </div>     
     <!--<div id="loader"></div>
     <div id="status"></div>-->

@@ -129,7 +129,26 @@ $(document).ready(function() {
                     captureLength : -1 // needed for empty string ('') capture
                 };
                 $('div#index div#toolbar input#q').typeWatch(options);                                                
-                
+
+                $.timeago.settings.strings= {
+                    prefixAgo: null,
+                    prefixFromNow: null,
+                    suffixAgo: "",
+                    suffixFromNow: "from now",
+                    seconds: "< 1 min",
+                    minute: "1 min",
+                    minutes: "%d min",
+                    hour: "1h",
+                    hours: "%dh",
+                    day: "1d",
+                    days: "%dd",
+                    month: "1 month",
+                    months: "%d months",
+                    year: "1 year",
+                    years: "%d years",
+                    numbers: []
+                }
+
                 //if (!isDebug)
                 //     $('div#note div#info').hide();
             }
@@ -242,12 +261,20 @@ function fillIndex() {
 function indexAddNote(mode, note){
     
     var html =  "<div class='noterow' id='" + note.key  + "' >";
-
-    html+=          "<span class='notetime' id='" + note.key + "time'>" + (localStorage.option_showdate == "true"?gettimeadd(note.modifydate):"");
-    
-    html+=          "</span>";
+    var date, prefix;
+    if (localStorage.option_showdate == "true") {
+        if (localStorage.option_sortby == "createdate") {
+            date = convertDate(note.createdate);
+            prefix = "created: ";
+        } else {
+            date = convertDate(note.modifydate);
+            prefix = "modified: ";
+        }
+        
+        html+=      "<abbr class='notetime' id='" + note.key + "time' title='" + ISODateString(date) + "'>" + prefix + localeDateString(date) + "</abbr>";
+    }
     if (note.deleted == 0)
-        html+=          "<div class='" + (note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + "' id='" + note.key + "pin'>&nbsp;</div>";
+        html+=      "<div class='" + (note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + "' id='" + note.key + "pin'>&nbsp;</div>";
     html+=          "<div contenteditable='false' class='noteheading' id='" + note.key + "heading'>";    
     html+=          "</div>";
     html+=          "<div contenteditable='false' class='abstract' id='" + note.key + "abstract'>&nbsp;<br>&nbsp;</div>";
@@ -260,7 +287,10 @@ function indexAddNote(mode, note){
     } else if (mode=="append") {
         $('#notes').append(html);        
     }
-    
+
+    if (localStorage.option_showdate == "true")
+        $("#" + note.key + "time").timeago();
+
     if (note.deleted != 0)
         return
 
@@ -437,28 +467,44 @@ function htmlSafe(s) {
 //}
 
 //  ---------------------------------------
-function gettimeadd(s) {
-    var now = new Date(Date.now());
-    var mod = convertDate(s);
-  
-    var diff = (now - mod) / 1000 / 60 / 60;
-    var timeadd;
 
-    if (diff < 24) {
-        timeadd = pad(mod.getHours()) + ":" + pad(mod.getMinutes());
-    }
-    else {
-        timeadd = mod.getDate() + "." + (mod.getMonth()+1) + ".";
-    }
-
-    return timeadd;
+function ISODateString(d) {
+    return d.getUTCFullYear()+'-'
+    + pad(d.getUTCMonth()+1)+'-'
+    + pad(d.getUTCDate())+'T'
+    + pad(d.getUTCHours())+':'
+    + pad(d.getUTCMinutes())+':'
+    + pad(d.getUTCSeconds())+'Z'
 }
+
+function localeDateString(d) {
+    //var now = new Date(Date.now());
+    var s = d.toLocaleString();
+    return s.substring(0, s.indexOf("GMT")-1);
+}
+
+//function getTimeDeltaString(s) {
+//    var now = new Date(Date.now());
+//    var mod = convertDate(s);
+//
+//    var diff = (now - mod);
+//
+//    var timeadd;
+//
+//    if (diff < 24) {
+//        timeadd = pad(mod.getHours()) + ":" + pad(mod.getMinutes());
+//    }
+//    else {
+//        timeadd = mod.getDate() + "." + (mod.getMonth()+1) + ".";
+//    }
+//
+//    return timeadd;
+//}
 
 //  ---------------------------------------
 
-function pad(i) {
-    if (i < 10) return "0" + i;
-    else return "" + i;
+function pad(n){
+    return n<10 ? '0'+n : n
 }
 
 //  ---------------------------------------
@@ -466,15 +512,15 @@ function pad(i) {
 function slideNote(callback, duration) {
     if (duration == undefined)
         duration = 500;
-    $('div#index').animate({ left:"-=400" }, {duration: duration, complete: callback});
-    $('div#note').animate({ left:"-=400" }, duration);
+    $('div#index').animate({left:"-=400"}, {duration: duration, complete: callback});
+    $('div#note').animate({left:"-=400"}, duration);
     //$('body').animate({height : "550px"},250);
 }
 
 function slideIndex(callback) {
     localStorage.opentonotekey = "";
-    $('div#index').animate({ left:"+=400" }, {duration: 500, complete: callback});
-    $('div#note').animate({ left:"+=400" }, 500);
+    $('div#index').animate({left:"+=400"}, {duration: 500, complete: callback});
+    $('div#note').animate({left:"+=400"}, 500);
     //$('body').animate({height : "500px"},250);
 }
 
@@ -595,6 +641,7 @@ function editorShowNote(note, duration) {
         
         // delete button now cancel button
         $('div#note div#toolbar input#destroy').val("Cancel");
+        $('div#note div#toolbar input#destroy').attr("title","Dont save note, return to notes");
         $('div#note input#destroy').unbind();
         $('div#note input#destroy').click(function() {
             slideIndex();
@@ -612,7 +659,8 @@ function editorShowNote(note, duration) {
     } else { // existing note
         
         // bind TRASH button
-        $('div#note div#toolbar input#destroy').val("Delete");
+        $('div#note div#toolbar input#destroy').val("Trash");
+        $('div#note div#toolbar input#destroy').attr("title","Send note to trash");
         $('div#note input#destroy').unbind();
         $('div#note input#destroy').click(note,function(event) {
             editorTrashNote(event.data.key);
@@ -649,7 +697,8 @@ function editorShowNote(note, duration) {
     }
 
 
-    $('div#note input#pinned').html("&nbsp;&nbsp;&nbsp;&nbsp;pin");
+    //$('div#note input#pinned').html("&nbsp;&nbsp;&nbsp;&nbsp;pin");
+    $('div#note input#wordwrap').html("&nbsp;&nbsp;&nbsp;&nbsp;Wordwrap")
 
     // needed for background save
     $('div#note textarea').attr('key',note.key);
@@ -713,7 +762,7 @@ function editorTrashNote(key) {
     log("editorTrashNote");
     $('div#note div#toolbar input').attr('disabled', 'disabled');    
     slideIndex();
-    chrome.extension.sendRequest({ action : "update", key : key, deleted : 1},
+    chrome.extension.sendRequest({action : "update", key : key, deleted : 1},
             function() {
                 $('div#note div#toolbar input').removeAttr('disabled');
             });

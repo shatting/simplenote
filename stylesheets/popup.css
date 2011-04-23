@@ -116,17 +116,20 @@ div.noterow {
     margin-bottom: 2px;
     margin-top: 0px;
     padding: 2px;
-    padding-bottom: 4px;    
+    padding-bottom: 4px;
 }
 
 div.noterow:hover { 
     background: rgba(0,80,128,0.5);
     -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
+    color: #ddd;
 } 
 
-span.notetime {
-    color: #aaa;  
-    text-align : left;
+abbr.notetime {
+    min-width: 40px;
+    color: #aaa;
+    text-align : right;
+    padding-right:5px;
     cursor: pointer;
     float: right;
 }
@@ -226,15 +229,15 @@ div#note div#toolbar input#destroy, div#note div#toolbar input#undo {
 }
 
 #editor {
-    padding: 10px;
-    margin-top: 4px;
-    height: 460px;
+    padding: 10px;    
+    height: 451px;
     border-radius: 12px 0px 0px 0px;
     border: 1px solid #999; 
     border: 1px solid rgba(0, 0, 0, 0.3); 
     box-shadow: 0 1px 0 #fff; 
     margin-left: 2px;
     margin-right: 2px;
+    margin-top: 4px;
     width: 93.5%;
     resize: none;
     overflow: auto;    
@@ -247,7 +250,7 @@ div#note div#toolbar input#destroy, div#note div#toolbar input#undo {
     outline: none;    
 }
 
-div#note div#toolbar input#tags {
+div#note input#tags {
     padding: 4px 0px 4px 34px;
     width: 75%;
     color: #33;
@@ -255,16 +258,34 @@ div#note div#toolbar input#tags {
     border-radius: 12px;
     border: 1px solid #999;
     border: 1px solid rgba(0, 0, 0, 0.3);
-    margin-left: 4px;
+    margin-left: 2px;
     box-shadow: 0 1px 0 #fff;
     background: transparent url(/images/tag_dunkel.png) no-repeat 10px 50%;
 }
 
-div#note div#toolbar input#tags:focus {
+div#note input#tags:focus {
     border: 1px solid #666;
     border: 1px solid rgba(0, 0, 0, 0.4);    
     -webkit-box-shadow: 0 0 3px #3c7ecf;
     outline: none;
+}
+
+div#note div#noteeditor {
+    margin-right: 2px;
+    margin-left: 2px;
+    margin-top: 2px;
+    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
+    outline-color: black;
+    -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
+    border: 2px solid #F5F6FD;
+    border-radius: 3px;
+    width:392px;
+}
+
+div#note div#pinwrapper {
+    float:right;
+    padding: 5px;
+    margin-right:5px;
 }
 
 /* scrollbar */

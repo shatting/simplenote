@@ -1,21 +1,25 @@
 {
-  "name": "Simplenote",
-  "version": "1.4.3",
-  "description": "Access your Simplenote notes",
-  "omnibox": { "keyword" : "note" },
+  "name": "Simplenote+",
+  "version": "1.4.4",
+  "description": "Access your Simplenote notes right from your chrome extension bar.",  
   "icons": {
-    "128": "images/logo_big.png"
+    "96": "imanges/logo_96.png",
+    "128": "images/logo_128.png",
+    "16": "images/logo_16.png",
+    "19": "images/logo_19_c.png",
+    "32": "images/logo_32.png",
+    "48": "images/logo_48.png"
   },
   "background_page": "background.html",
   "options_page": "options.html",
   "browser_action": {
-    "default_icon": "images/logo.png",
+    "default_icon": "images/logo_19_c.png",
     "popup": "popup.html"
   },
   "permissions": [
     "https://simple-note.appspot.com/",
-    "contextMenus"
-  ],
-  "update_url": "http://dl.dropbox.com/u/14742040/simplenote.xml"
+    "contextMenus",
+    "unlimitedStorage"
+  ]
 }
 
