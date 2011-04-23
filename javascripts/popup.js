@@ -379,10 +379,7 @@ function indexFillNoteReqComplete(note) {
             });
         
         //$noterow.hover(maximize,minimize);
-        
-        // save full note
-        //$noterow.data('fulltext',noteData.content);
-        
+                
         // check new inview, might have changed due to reflow
         $noterow.data('loaded',true);        
         checkInView();    
@@ -415,25 +412,6 @@ function htmlSafe(s) {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-//function html2entities(sometext){
-// var re=/[(<>"'&]/g
-// return sometext.replace(re, function(m){return replacechar(m)})
-//}
-//
-//function replacechar(match){
-// if (match=="<")
-//  return "&lt;"
-// else if (match==">")
-//  return "&gt;"
-// else if (match=="\"")
-//  return "&quot;"
-// else if (match=="'")
-//  return "&#039;"
-// else if (match=="&")
-//  return "&amp;"
-//}
-
-
 function htmlUnsafe(s) {
     return s.replace(/&gt;/gi, ">").replace(/&lt;/gi, "<").replace(/&amp;/gi,"&");
 }
@@ -450,11 +428,13 @@ function elem2txt(e) {
     var s = [];
     var line = "";
     var childs;
+    log(e.innerHTML)
     for (var i=0;i<e.children.length;i++) {
         childs = e.children[i].children;
         if (childs.length > 0 && !(childs.length == 1 && childs[0].outerHTML == "<br>")) { // pasted
-            var x = e.children[i].children[0];            
+            console.log(e.children[i])
             line = elem2txt(e.children[i]);
+            console.log(line)
         } else {
             line = htmlDecode(e.children[i].innerHTML);
         }
@@ -462,20 +442,25 @@ function elem2txt(e) {
             s.push("");
         else
             s.push(line);
-    }
-    //log(s.join("\n"));
+    }    
     return s.join("\n");
 }
+
+//function runstuff(href) {
+//    chrome.tabs.create({url:href});
+//}
 
 function setEditorContent(s) {
     var $editor = $('div#note #contenteditor');    
     var html = "";
     var lines = s.split("\n");
     for (var i=0; i<lines.length; i++) {
-        log("line " + i);
-        log(lines[i]);
+        //log("line " + i);
+        //log(lines[i]);
         if (lines[i].length == 0)
             html += "<div><br></div>";
+        //else if (lines[i].match(/https?:\/\//gi))
+        //    html += "<div><a style='cursor:pointer;' onclick='runstuff(this.href);' target='_blank' href='" + lines[i] + "'>" +lines[i]+ "</a></div>";
         else
             html += "<div>" + htmlSafe(lines[i]).replace(/\s/gi,"&nbsp;") + "</div>";
     }
@@ -550,24 +535,6 @@ function localeDateString(d) {
     var s = d.toLocaleString();
     return s.substring(0, s.indexOf("GMT")-1);
 }
-
-//function getTimeDeltaString(s) {
-//    var now = new Date(Date.now());
-//    var mod = convertDate(s);
-//
-//    var diff = (now - mod);
-//
-//    var timeadd;
-//
-//    if (diff < 24) {
-//        timeadd = pad(mod.getHours()) + ":" + pad(mod.getMinutes());
-//    }
-//    else {
-//        timeadd = mod.getDate() + "." + (mod.getMonth()+1) + ".";
-//    }
-//
-//    return timeadd;
-//}
 
 //  ---------------------------------------
 
