@@ -1,6 +1,6 @@
 $(document).ready(function() {
   
-  $("#email").val(localStorage.option_email);
+  $("#username").val(localStorage.option_email);
   $("#password").val(localStorage.option_password);    
   if (localStorage.option_abstractlines == undefined)
     $("#abstractlines").val("3");
@@ -29,21 +29,29 @@ $(document).ready(function() {
   if (localStorage.option_editorfontshadow != undefined && localStorage.option_editorfontshadow == "true")
     $("#editorfontshadow").attr("checked","true");
 
+  $("input, select").change(function(event) {      
+      save_options();
+  });
+
+  $("input[type=text]").bind("keydown paste cut select blur",function(event) {
+      save_options();
+  });
+
 });
 
 /*
  * Saves options to localStorage.
  * @param ms Milliseconds to fade in the status message.
  */
-function save_options(ms) {
+function save_options() {
   var status = $("#status");
-  var email = $("#email").val();
+  var email = $("#username").val();
   
   if (email != localStorage.option_email && (localStorage._syncKeys)) {
           if (!confirm("You are about to switch your Simplenote login!\n\nThere are notes stored locally that have not been synchronized to the server.\n\nIf you switch accounts now, those changes will be lost.\n\nContinue?")) {              
                 status.html("Not saved. Please connect to the internet to synchronize local changes to the server.");
                 status.css("opacity", 1);
-                $("#email").val(localStorage.option_email);
+                $("#username").val(localStorage.option_email);
                 return;
           }
   }
@@ -70,5 +78,5 @@ function save_options(ms) {
   status.css("opacity", 1);
   setTimeout(function() {
     status.css("opacity", 0);
-  }, ms);
+  }, 1500);
 }

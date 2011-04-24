@@ -4,42 +4,78 @@ body {
   display: -webkit-box;
   font-family: Verdana, Helvetica, Arial;	
   font-size: 2em;
-  height: 100%;
+  height: 50%;
   margin: 0;
   padding: 0;
   position: fixed;
-  top: 0;
+  top: 50px;
   width: 100%;
+  cursor:default;
 }
 
-
-button {
-  font-size: inherit;
+.option, .optionheading {
+    margin-top: 8px;
+    margin-bottom: 8px;
+    font-size: 22px;
+    border-radius:4px;
+    background:#EEE;
+    color:#000;
+    margin:7px 0;
+    padding:2px 2px 5px 6px;
+    padding:6px;
+    -webkit-box-shadow: 0 10px 5px rgba(0,0,0,0.2);
+    border-top: 1px solid #FFF;
+}
+.optionheading {
+    font-size:28px;
+    font-weight: bold;
+    text-align: center;
+    padding:10px;
 }
 
-#donate {
-    border-style: hidden;
-    border-width: 0px;
-    font-size: medium;    
-    width: auto;
-    display:inline;
-    ''float:right;
+.tip {
+  font-size:small;
+  color:#666;  
 }
 
+.option input[type=checkbox] {
+        border: 1px solid #555;
+        padding: 0.5em;        
+        line-height: 1.2em;
+        width: 80%;
+        background: #fff;
+        background: -webkit-gradient(linear, left top, left bottom, from(#fff), to(#ccc));
+        -webkit-appearance: none;
+        -webkit-box-shadow: 1px 1px 3px #fff;
+        -webkit-border-radius: 0.5em;
+     display: inline-block;
+     font-size: 15px;
+     line-height: 1em;     
+     padding: 0;
+     width: 1.25em;
+     height: 1.25em;
+     border-radius: 0.25em;
+     vertical-align: text-top;
+     cursor:pointer;
+}
+
+.option input[type=checkbox]:checked {
+	background: url("data:image/png,%89PNG%0D%0A%1A%0A%00%00%00%0DIHDR%00%00%008%00%00%008%08%02%00%00%00'%E4%ACI%00%00%00%19tEXtSoftware%00Adobe%20ImageReadyq%C9e%3C%00%00%04DIDATx%DA%EC%98%B9J%2CA%14%86%EF%F4%AC%8E%5B%24%F8%00%93%BA%83%89%89%A1%22n%A1%81%89%B8%22%82%2B%06%A2%E2%82%B8%20%1A%A9(%B8%BC%87%8F%E0%12%09%3E%82K%AA%20%EAu%EEo%FFw%0EEuO%2F3%A3%5C%2F%FD%07E%F5Lu%F7%D7%FF9u%BA%BA%22%A9T%EA%D7O%90%F1%EB%87(%00%0D%40%03%D0%004%00%0D%40%03%D0%FF%1B4%F2%3D%B7I%A7%D3%B6%BF%87B%A1%7F%05T%105V%22%F2G%2F%B8%91oC%D4%40qH%3E%B4%D2w%CA%D1%D0%D7H%F3%89%94%86aloo%0F%0C%0C%D8%BA%EB%7C%C1H8%1C%FE%22%2F%D3%19%FD%B5%C40677%BB%BB%BB%D1%8F%C5b%7B%7B%7B%B6%8F%975%F4%BE%40%ADs%C2zu%8D%F2%E3%E3%03-%EE%B2%B1%B1AJhjj%0A'%EE%EF%EF%A3%C5%03xa%8D%409%F09g%95%20B%18%06%CA%F5%F5u%A1%A4%26''qk%F8%8A%7FU%DC%AC%A0%D1h%D4c%1C%1D%1C%95%1Bp%00%11y%08%8E%B5%B5%B5%AE%AE.%EB%95%9B%9A%9A%8E%8F%8F1Re%CD%11T%8B%23%95L%26%CB%CA%CA%EE%EE%EE%D4y%23%E5F%CCF%07%9E%AD%AC%ACtvvZ%AF%7Cyy944%04J%8C%01%A8%9A%00%F6%A0%C8kWJ%E6%19%DBD%22%B1%BB%BB%5BYY988x%7F%7FouB%BCD%BB%B4%B4%D4%D1%D1a%BD%F2%C5%C5%C5%F0%F0%F0%EB%EB%2Bl%22(Mu%02upT%9D%10%BC%7D%3C%1E%DF%D9%D9%A9%A9%A9A%FF%F0%F0%10%96%3C%3C%3C%A8%09%A0V%C7%E5%E5%E5%F6%F6v%5BJ%3C%E4%DB%DB%1B))W%D0P%5B%5B%9B%83%9DD%FCm%0A%DEommUWW%CB%18D%1F%C6%3C%3E%3E%8A%A98%0B%23%D1.%2C%2C%B4%B6%B6%3AP%C6LEM1%F4%CE%F3)%A4MF%DB%99%FB%FE%FE%8E_%40YUU%A5%0DSY%25%EE%F3%F3%F3---%0E%94%88%8C%80%D2Q%D7%1C5bn%E2%85%00%7D%7D%7Dm%3D%1F%C9zppPQQA%D7%F1%0B%BC%CCF%89T%C1%18d9%40%13%A6%E2%A6x%23%B5oU%B8%BE%BE%3E%9CEj8%00zuu%05%C3jkk5%82%92%92%92%E6%E6%E6%F3%F3%F3%A7%A7%A7%C5%C5E%5BJ%CC%F1%91%91%11P%0A%A2J%C9%04%90d%B5U%04C%B3%85%9Eqg%9A%F3%F0%EC%EC%0Cm__%9F%D5%D7%A3%A3%A3%DB%DB%5B%10%5B%2F%85'%1C%1D%1De%5DSm%23%9Cj%87S%1D%CDV%9E%98%A3%F0%80%C9%C7%FC%C3%E1%E9%E9)%3A%FD%FD%FDVV%C8%96rll%0C%97*..%8Eg%24%94%5E*%A8%0FP%89%3E%7D%3D99A%07%8B%20%D7w%2F%D2z%7C%7C%9C%94%92%9A%DAd%F7B%F9%09%EA%10zb%81U%EA%9C%FC%05_%D1qf%05%E5%C4%C4%04%93X%CDK%A1t%AD%9D%3E%0A%3EA%ADi%84%16%ACh%AD9%40%DD%DC%DC%90%12yYd%8A%94%B4%D3%2F%A5K%E8%A5%E0%AB%F3%D1%C8%88%AC%A8%FF%8D%8D%8D%DA%B9%CF%CF%CF%B3%B3%B3%18%03%3E%82%D2N%EB%04%F2%FE%D9%94%D5Qu9%C2%9A%2F%AC2%09%A0%E9%E9i%BCT%1B%1A%1AT%CA%9E%9E%9E%97%97%17D%5C%B33gJ%F7%D0%0B%2B%86%91U%2Bu8%9C%99%99%C1%07F%5D%5D%1D)%7B%7B%7B%B1%DA(--M%9AR%83.1%F1K%E9%BEpVYU8%E2%A2%C5%03%80%60nn%0EK%E3T*%85%E9%85%E7%C1%22%B0(%23%A1T%8B%91_JO%9F%22%C2%AA%BD%B1%84%18%10x%7D%AF%AE%AE%82%09%C3%CA%CB%CB%B5%D7%8FV%8Cr%A0%F4%FA%CD%24%AC%E4c%2B%8E%22%D0p%91%8B%26%D4K%B1Y%DE%40%EA%8A37%CAOP%2F%A7%C9BS-Ob*PdE%A2%FEH%E2%82P%FA%D8%80%10Vy%A3%0A%2Bhh'%07%A8%95A%94'%A5%BF%9D%12%8D%95%1D%88%B5V6g%C8*%E5%B6%20%94%BE%B7tlY%85R%C6%C8%87T%3E%B3'%DF%BD'%8D%953L%FD%92%B6%EE%EA%E4O%99%E3%26%99%F6%11%E7%BC%7DR%10%CA%DCw%F3%D4%95%94-J%A1%F8%0A%B6%EDXp%A0%60%0F%3F%00%0D%40%03%D0%00%F4k%F4G%80%01%00%E2%BB%B3%8D%BD%BE%0E%DE%00%00%00%00IEND%AEB%60%82") no-repeat center center;
+	-webkit-background-size: 28px 28px;
+}
 input[type=text], input[type=checkbox], select {
   border-color: #8D8D8D;
   border-radius: 2px;
   border-style: solid;
   border-width: 1px;
   font-size: inherit;
-  padding: 8px;  
+  padding: 4px;
 }
-input[type=text] {
+/*input[type=text] {
     width: 30px;
-    ''text-align: right;
-}
+}*/
 
-input#email, input#password {
+input#username, input#password {
   border-color: #8D8D8D;
   border-radius: 2px;
   border-style: solid;
@@ -49,18 +85,6 @@ input#email, input#password {
   width: 18em;
 }
 
-input[type=checkbox] {
-    width:20px;
-    display:inline;
-}
-
-.cbtext {
-    ''display:inline;
-    margin-top: 8px;
-    margin-bottom: 8px;
-    font-size: 22px;
-}
-
 #content {
   background: -webkit-gradient(linear, left top, left bottom, from(#F8F8F8), to(#E2E2E2));
   border: 2px solid #8D8D8D;
@@ -68,26 +92,8 @@ input[type=checkbox] {
   -webkit-box-orient: vertical;
   -webkit-box-shadow: 3px 3px 8px #A7A7A7;
   padding: .5em;
-  max-width: 18.5em;  
-}
-
-#content div {
-  width: 100%;
-}
-
-#inputs {
-  padding-bottom: .5em;
-}
-
-#instructions {
-  padding-bottom: .5em;
-  font-weight: bold;
-  font-size: 105%;
-}
-#options {
-  padding-top: 0.5em;
-  font-weight: bold;
-  font-size: 105%;
+  max-width: 18.5em;
+  background: #4F4F59 url(/images/texture.png);
 }
 
 #message {
@@ -100,8 +106,10 @@ input[type=checkbox] {
   -webkit-transition: opacity .5s linear;
 }
 
-div.tips {
-  font-size:small;
-  color:#666;
-  margin-top: 22px;
+#donate {
+    border-style: hidden;
+    border-width: 0px;
+    font-size: medium;
+    width: auto;
+    display:inline;
 }
