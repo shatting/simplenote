@@ -4,7 +4,7 @@
 
 var SimplenoteDB = {    
     offlineKey : "_offline",
-   
+
     isDebug : true,
     
     log : function(s) {
@@ -30,12 +30,21 @@ var SimplenoteDB = {
         $.storage.set(this.offlineKey,isOffline==true);
         chrome.extension.sendRequest({event:"offline", isOffline:isOffline});
     },
+
+    isSyncInProgress : false,
     // jsut to detect whether we actually had a sync
     hadSync : function() {
         return localStorage[SimplenoteLS.indexTimeKey] != undefined;
     },
    
     sync : function(fullSync, callbackFinished, callbackChunk) {
+        if (this.isSyncInProgress) {
+            log("sync: sync already in progress, returning");
+            //if (this.isDebug)
+            //    alert("syncinprogress");
+            return;
+        }
+        this.isSyncInProgress = true;
         var syncKeys = SimplenoteLS.getSyncKeys();
         var note;
         
@@ -100,7 +109,8 @@ var SimplenoteDB = {
                     thisHadChanges = SimplenoteLS.updateNote(note);
                     if (thisHadChanges != false) {
                         SimplenoteDB.log("gotIndexChunk: found known note in index, had Changes: ");
-                        SimplenoteDB.log(thisHadChanges);
+                        SimplenoteDB.log("added:   " + thisHadChanges.added.join(", "));
+                        SimplenoteDB.log("changed: " + thisHadChanges.changed.join(", "));
                         hadChanges = true;
                     }                    
                 }
@@ -132,6 +142,7 @@ var SimplenoteDB = {
                 }
                 if (this.syncCallbackFinished)
                     this.syncCallbackFinished(true);
+                this.isSyncInProgress = false;
                 chrome.extension.sendRequest({event:"sync", status: "done", hadChanges : hadChanges});
             } 
         }

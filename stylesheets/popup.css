@@ -12,7 +12,7 @@ body {
 
 div#index {    
     position: absolute;
-    width: 100%;
+    width: 400px;
     height:100%;
     left:0px;
 }
@@ -179,6 +179,30 @@ div.unpinned {
     background: transparent url(/images/unpinned.png) no-repeat;  
 }
 
+div.unpublished {
+    display:none;
+}
+
+div.published, div.shared {
+    display:inline;
+    position: relative;
+    left: 1px;
+    top: 2px;
+    width: 12px;
+    height: 12px;
+    margin-right: 5px;
+    float:left;
+    cursor:pointer;    
+}
+
+div.published {
+    background: transparent url(/images/published.png) no-repeat;
+}
+
+div.shared {
+    background: transparent url(/images/shared.png) no-repeat;
+}
+
 .abstract {
   color: #999;
   font-size: 10px;  
@@ -224,11 +248,18 @@ div#note {
     position: absolute;
 }
 
+div#note2 {
+    left:800px;
+    top:67px;
+    position: absolute;
+    width:400px;
+}
+
 div#note div#toolbar input#destroy, div#note div#toolbar input#undo {
   float: right;
 }
 
-#contenteditor {
+#contenteditor, #contenteditor2 {
     padding: 10px;    
     height: 454px;
     border-radius: 12px 0px 0px 0px;
@@ -241,17 +272,23 @@ div#note div#toolbar input#destroy, div#note div#toolbar input#undo {
     width: 93.5%;
     resize: none;
     overflow: auto;
+}
+
+#contenteditor a:visited{
+    color: blue;
+}
+#contenteditor {
     white-space: nowrap;
 }
 
-#contenteditor:focus {
+#contenteditor:focus, #contenteditor2:focus {
     border: 1px solid #666;
     border: 1px solid rgba(0, 0, 0, 0.4);
     -webkit-box-shadow: 0 0 3px #3c7ecf;
     outline: none;    
 }
 
-div#note input#tags {
+div#note input#tags, div#note input#tags2 {
     padding: 4px 0px 4px 34px;
     width: 75%;
     color: #33;
@@ -264,14 +301,14 @@ div#note input#tags {
     background: transparent url(/images/tag_dunkel.png) no-repeat 10px 50%;
 }
 
-div#note input#tags:focus {
+div#note input#tags:focus, div#note input#tags2:focus {
     border: 1px solid #666;
     border: 1px solid rgba(0, 0, 0, 0.4);    
     -webkit-box-shadow: 0 0 3px #3c7ecf;
     outline: none;
 }
 
-div#note div#noteeditor {
+div#note div#noteeditor, div#note div#noteeditor2 {
     margin-right: 2px;
     margin-left: 2px;
     margin-top: 2px;
@@ -283,7 +320,11 @@ div#note div#noteeditor {
     width:392px;    
 }
 
-div#note div#pinwrapper {
+div#note div#noteeditor2{
+    left : 800px;
+}
+
+div#note div#pinwrapper, div#note div#pinwrapper2 {
     float:right;
     padding: 5px;
     margin-right:5px;

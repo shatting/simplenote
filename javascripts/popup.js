@@ -261,7 +261,7 @@ function fillIndex() {
 function indexAddNote(mode, note){
     
     var html =  "<div class='noterow' id='" + note.key  + "' >";
-    var date, prefix;
+    var date, prefix, shareds = [];
     if (localStorage.option_showdate == "true") {
         if (localStorage.option_sortby == "createdate") {
             date = convertDate(note.createdate);
@@ -273,11 +273,20 @@ function indexAddNote(mode, note){
         
         html+=      "<abbr class='notetime' id='" + note.key + "time' title='" + ISODateString(date) + "'>" + prefix + localeDateString(date) + "</abbr>";
     }
-    if (note.deleted == 0)
-        html+=      "<div class='" + (note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + "' id='" + note.key + "pin'>&nbsp;</div>";
-    html+=          "<div contenteditable='false' class='noteheading' id='" + note.key + "heading'>";    
+    if (note.deleted == 0) {
+        html+=      "<div title='Click to pin/unpin' class='" + (note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + "' id='" + note.key + "pin'>&nbsp;</div>";
+        html+=      "<div title='Click to view published version of this note' class='" + (note.publishkey != undefined?"published":"unpublished") + "' id='" + note.key + "published'>&nbsp;</div>";
+        $.each(note.tags, function (i,tag) {
+            if (validateEmail(tag)) {
+                shareds.push(tag);                
+            }
+        });
+        if (note.sharekey != undefined)
+            html+= "<div class='shared' id='" + note.key + "shared' title='Shared with " + shareds.join(", ") + "'>&nbsp;</div>";
+    }
+    html+=          "<div class='noteheading' id='" + note.key + "heading'>";    
     html+=          "</div>";
-    html+=          "<div contenteditable='false' class='abstract' id='" + note.key + "abstract'>&nbsp;<br>&nbsp;</div>";
+    html+=          "<div class='abstract' id='" + note.key + "abstract'>&nbsp;<br>&nbsp;</div>";
     
     html+=      "</div>";        
     
@@ -302,8 +311,14 @@ function indexAddNote(mode, note){
             chrome.extension.sendRequest({action:"update",key:event.data,systemtags:tag}, function (note) {
                 $("#" + note.key +"pin").attr("class",note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned");                
             });
+        });
+    if (note.publishkey) {
+        $("#" + note.key +"published").unbind();
+        $("#" + note.key +"published").click(note.publishkey,function(event) {            
+            event.stopPropagation();
+            runstuff("http://simp.ly/publish/"+event.data);
         }); 
-    
+    }
     //$('div.noterow#' + note.key).data("modify",note.modifydate);
 }
 
@@ -420,6 +435,12 @@ function htmlDecode(s) {
     return htmlUnsafe(s.replace(/<br>/gi,"\n").replace(/&nbsp;/gi," "));
 }
 
+function validateEmail(email) 
+{ 
+ var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+ return email.match(re) 
+}
+
 function getEditorContent() {
     return elem2txt($('div#note #contenteditor')[0]);
 }
@@ -436,7 +457,7 @@ function elem2txt(e) {
             line = elem2txt(e.children[i]);
             console.log(line)
         } else {
-            line = htmlDecode(e.children[i].innerHTML);
+            line = htmlDecode(e.children[i].innerHTML.replace("<br>",""));
         }
         if (line=="\n")
             s.push("");
@@ -446,12 +467,29 @@ function elem2txt(e) {
     return s.join("\n");
 }
 
-//function runstuff(href) {
-//    chrome.tabs.create({url:href});
-//}
+function runstuff(href) {
+    chrome.tabs.create({url:href});
+}
+
+function parseUrl2(data) {
+    var e=/((http|https):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+\.[^#?\s]+)(#[\w\-]+)?/;
+
+    if (data.match(e)) {
+        return  {url: RegExp['$&'],
+                protocol: RegExp.$2,
+                host:RegExp.$3,
+                path:RegExp.$4,
+                file:RegExp.$6,
+                hash:RegExp.$7};
+    }
+    else {
+        return  {url:"", protocol:"",host:"",path:"",file:"",hash:""};
+    }
+}
 
 function setEditorContent(s) {
-    var $editor = $('div#note #contenteditor');    
+    var $editor = $('div#note #contenteditor');
+    $("#contenteditor2").val(s);
     var html = "";
     var lines = s.split("\n");
     for (var i=0; i<lines.length; i++) {
@@ -459,9 +497,10 @@ function setEditorContent(s) {
         //log(lines[i]);
         if (lines[i].length == 0)
             html += "<div><br></div>";
-        //else if (lines[i].match(/https?:\/\//gi))
-        //    html += "<div><a style='cursor:pointer;' onclick='runstuff(this.href);' target='_blank' href='" + lines[i] + "'>" +lines[i]+ "</a></div>";
-        else
+        else if (lines[i].match(/https?:\/\/[^:\/\s]+[^\s\(\)\[\]]*/gi)) {
+            url = RegExp['$&'];
+            html += "<div>" + htmlSafe(lines[i]).replace(url, "<a style='cursor:pointer;' onclick='runstuff(this.href);' target='_blank' href='" + url + "'>" + url+ "</a>") + "</div>";
+        } else
             html += "<div>" + htmlSafe(lines[i]).replace(/\s/gi,"&nbsp;") + "</div>";
     }
     $editor.html(html);
@@ -544,11 +583,15 @@ function pad(n){
 
 //  ---------------------------------------
 
-function slideNote(callback, duration) {
+function slideEditor(callback, duration) {
     if (duration == undefined)
         duration = 500;
     $('div#index').animate({left:"-=400"}, {duration: duration, complete: callback});
     $('div#note').animate({left:"-=400"}, duration);
+    if (isDebug) {
+        $('div#note2').animate({left:"-=400"}, duration);
+        $('body').animate({width:"+=400"}, duration);
+    }
     //$('body').animate({height : "550px"},250);
 }
 
@@ -556,7 +599,10 @@ function slideIndex(callback) {
     localStorage.opentonotekey = "";
     $('div#index').animate({left:"+=400"}, {duration: 500, complete: callback});
     $('div#note').animate({left:"+=400"}, 500);
-    //$('body').animate({height : "500px"},250);
+    if (isDebug) {
+        $('div#note2').animate({left:"+=400"}, 500);
+        $('body').animate({width : "-=400"},250);
+    }
 }
 
 function editorShowNote(note, duration) {
@@ -574,7 +620,9 @@ function editorShowNote(note, duration) {
     $('div#note #contenteditor').unbind();
     $('div#note #contenteditor').bind('change keyup paste cut', note, function(event) {
         var note=event.data;        
+        $("#contenteditor2").val(elem2txt($('div#note #contenteditor')[0]));
         
+
         if (note.content != getEditorContent()) {
             if ($('div#note #contenteditor').attr('dirty') != "true")
                 log("content dirty now (" + event.type + ")");
@@ -666,11 +714,11 @@ function editorShowNote(note, duration) {
     $("div#note input#wordwrap").change();
 
     if (localStorage.option_editorfont )
-        $("div#note #contenteditor").css("font-family",localStorage.option_editorfont );
+        $("div#note #contenteditor, div#note2 #contenteditor2").css("font-family",localStorage.option_editorfont );
     if (localStorage.option_editorfontsize )
-        $("div#note #contenteditor").css("font-size",localStorage.option_editorfontsize + "px" );
+        $("div#note #contenteditor, div#note2 #contenteditor2").css("font-size",localStorage.option_editorfontsize + "px" );
     if (localStorage.option_editorfontshadow && localStorage.option_editorfontshadow == "true")
-        $("div#note #contenteditor").css("text-shadow","2px 2px 2px #aaa" );
+        $("div#note #contenteditor, div#note2 #contenteditor2").css("text-shadow","2px 2px 2px #aaa" );
     
     // get note contents
     if (note.key == "") { // new note
@@ -717,7 +765,7 @@ function editorShowNote(note, duration) {
         $('div#note input#undo').attr("disabled","disabled");
                 
         // insert data
-        setEditorContent(note.content);
+        setEditorContent(note.content);        
         $('div#note input#tags').val(note.tags.join(" "));        
         if (note.systemtags.indexOf("pinned")>=0)
             $('div#note input#pinned').attr("checked","checked");
@@ -725,7 +773,7 @@ function editorShowNote(note, duration) {
             $('div#note input#pinned').removeAttr("checked");
         
         // info div
-        //$('div#note div#info').html(note2str(note));
+        $('div#note2 div#info').html(note2str(note));
         // show/hide elements
         
         $('div#note input#undo').show();
@@ -738,8 +786,17 @@ function editorShowNote(note, duration) {
 
     // needed for background save
     $('div#note #contenteditor').attr('key',note.key);
+    $('div#note #contenteditor').scroll(function(event) {        
+        $('div#note2 #contenteditor2').scrollTop($(this).scrollTop());
+        $('div#note2 #contenteditor2').scrollLeft($(this).scrollLeft());
+    });
+    $('div#note2 #contenteditor2').scroll(function(event) {
+        $('div#note #contenteditor').scrollTop($(this).scrollTop());
+        $('div#note #contenteditor').scrollLeft($(this).scrollLeft());
+    });
 
-    slideNote(function () {
+
+    slideEditor(function () {
         $('div#note #contenteditor').focus();
     }, duration);
 
