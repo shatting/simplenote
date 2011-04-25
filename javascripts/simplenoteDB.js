@@ -25,13 +25,13 @@ var SimplenoteDB = {
         
         if (isOffline != oldIsOffline) {
             this.log("offline:mode change to offline=" + isOffline);
-        }
-        
-        $.storage.set(this.offlineKey,isOffline==true);
-        chrome.extension.sendRequest({event:"offline", isOffline:isOffline});
+            chrome.extension.sendRequest({event:"offline", isOffline:isOffline});
+            $.storage.set(this.offlineKey,isOffline==true);
+        }              
     },
 
     isSyncInProgress : false,
+    
     // jsut to detect whether we actually had a sync
     hadSync : function() {
         return localStorage[SimplenoteLS.indexTimeKey] != undefined;
@@ -39,9 +39,7 @@ var SimplenoteDB = {
    
     sync : function(fullSync, callbackFinished, callbackChunk) {
         if (this.isSyncInProgress) {
-            log("sync: sync already in progress, returning");
-            //if (this.isDebug)
-            //    alert("syncinprogress");
+            log("sync: sync already in progress, returning");            
             return;
         }
         this.isSyncInProgress = true;
@@ -78,6 +76,8 @@ var SimplenoteDB = {
         if (fullSync)
             this._indexKeysTemp = [];
         
+        this._indexKeysChanged = {added:[],changed:[],deleted:[]};
+
         chrome.extension.sendRequest({event:"sync", status: "started", hadChanges : false});
         
         this.getIndex(apioptions, fullSync);
@@ -92,59 +92,72 @@ var SimplenoteDB = {
         if (!indexData) {
             if (this.syncCallbackFinished)
                 this.syncCallbackFinished(false);
-            this.log("gotIndexChunk: error getting index from server.");
+            this.log("_gotIndexChunk: error getting index from server.");
             this.offline(true);
-            chrome.extension.sendRequest({event:"sync", status: "error", hadChanges : false});
+            this.isSyncInProgress = false;
+            chrome.extension.sendRequest({event:"sync", status: "error", changes : this._indexKeysChanged});
         } else {
-            var hadChanges = false, thisHadChanges = false;
-            $.each(indexData.data, function(i,note) {
-                if (fullSync)
-                    SimplenoteDB._indexKeysTemp.push(note.key);
+            var thisHadChanges = false, note;
+            
+            for (var i=0; i<indexData.data.length; i++) {
+                note = indexData.data[i];
                 
-                if (!SimplenoteLS.haveNote(note.key)) {
-                    SimplenoteDB.log("gotIndexChunk: found new note in index, saving to storage");
-                    hadChanges = true;
+                if (fullSync)
+                    this._indexKeysTemp.push(note.key);
+                
+                if (!SimplenoteLS.haveNote(note.key)) {                                                            
                     SimplenoteLS.addNote(note);
+                    this._indexKeysChanged.added.push(note.key);
                 } else {
-                    thisHadChanges = SimplenoteLS.updateNote(note);
-                    if (thisHadChanges != false) {
-                        SimplenoteDB.log("gotIndexChunk: found known note in index, had Changes: ");
-                        SimplenoteDB.log("added:   " + thisHadChanges.added.join(", "));
-                        SimplenoteDB.log("changed: " + thisHadChanges.changed.join(", "));
-                        hadChanges = true;
-                    }                    
+                    thisHadChanges = SimplenoteLS.updateNote(note,"index");
+                    if (thisHadChanges.hadChanges) {
+                        this._indexKeysChanged.changed.push(note.key);                        
+                    }
                 }
-            });
+            }
 
             if (this.syncCallbackChunk)
                 this.syncCallbackChunk(indexData);
 
             if (!havemore) {                
-                if (indexData.data.length > 0)
+                if (indexData.data.length > 0) // check for indextime sync, most often we get 0 back
                     SimplenoteLS.indexTime(indexData.time);
                 
                 if (fullSync) {                    
                     // check for deletions
-                    var hadDeletions = false;
-                    SimplenoteDB.log("gotIndexChunk: checking for remote deletions.");
-                    $.each(SimplenoteLS.getKeys(), function (i,key){
-                        if (SimplenoteDB._indexKeysTemp.indexOf(key)<0) {
-                            hadDeletions = true;
-                            SimplenoteLS.delNote(key);                            
+                    var lskeys = SimplenoteLS.getKeys(), key;
+                    this.log("_gotIndexChunk: checking for remote deletions (got " + SimplenoteDB._indexKeysTemp.length + " notes, have " + SimplenoteLS.getKeys().length + ")");
+                    for (i=0; i<lskeys.length;i++) {
+                        key = lskeys[i];
+                        if (this._indexKeysTemp.indexOf(key)<0) {
+                            SimplenoteLS.delNote(key);
+                            this._indexKeysChanged.deleted.push(key);
                         }
-                    })
-                    if (hadDeletions)
-                        SimplenoteDB.log("gotIndexChunk: had remote deletions.");
+                    }
+                    if (this._indexKeysChanged.deleted.length > 0)
+                        this.log("_gotIndexChunk: had remote deletions.");
                     else
-                        SimplenoteDB.log("gotIndexChunk: no remote deletions found.");
+                        this.log("_gotIndexChunk: no remote deletions.");
 
-                    delete SimplenoteDB._indexKeysTemp;
+                    delete this._indexKeysTemp;
                 }
+
                 if (this.syncCallbackFinished)
                     this.syncCallbackFinished(true);
+                
                 this.isSyncInProgress = false;
-                chrome.extension.sendRequest({event:"sync", status: "done", hadChanges : hadChanges});
+                
+                chrome.extension.sendRequest({event:"sync", status: "done", changes : this._indexKeysChanged});
             } 
+        }
+
+        if (!havemore) {
+            if (this._indexKeysChanged.added.length > 0)
+                this.log("_gotIndexChunk: added " + this._indexKeysChanged.added.length);
+            if (this._indexKeysChanged.changed.length > 0)
+                this.log("_gotIndexChunk: changed " + this._indexKeysChanged.changed.length);
+            if (this._indexKeysChanged.deleted.length > 0)
+                this.log("_gotIndexChunk: deleted " + this._indexKeysChanged.deleted.length);
         }
     },
 
@@ -163,7 +176,7 @@ var SimplenoteDB = {
                 
                 SimplenoteDB.log("getIndex:success:got " + indexData.count + " keys from server.");
 
-                if (indexData.mark) {
+                if (indexData.mark != undefined) {
                     SimplenoteDB.log("getIndex:success:have mark, getting more.");
                     apioptions.mark = indexData.mark;
                     SimplenoteDB._gotIndexChunk(indexData, true, fullSync);
@@ -175,14 +188,13 @@ var SimplenoteDB = {
                     SimplenoteDB._gotIndexChunk(indexData, false, fullSync);
                 }
             }, 
-            loginInvalid:   function()          {
+            loginInvalid:   function() {
                 SimplenoteDB._gotIndexChunk(undefined, false);                
             }, 
-            repeat:         function()      
-            {
+            repeat:         function() {
                 SimplenoteDB._gotIndexChunk(undefined, false);                
             },
-            timeout: function() {
+            timeout:        function() {
                 SimplenoteDB._gotIndexChunk(undefined, false);
             }
         };
@@ -205,7 +217,7 @@ var SimplenoteDB = {
             var callbacks = {
                 success :       function(note) {
                     SimplenoteDB.offline(false);
-                    SimplenoteLS.updateNote(note,true);
+                    SimplenoteLS.updateNote(note,"getnote");
                     if (callback)
                         callback(note);
                 }, 
@@ -237,11 +249,11 @@ var SimplenoteDB = {
     },
     
     updateNote : function(data,callback,syncmode) {
-        this.log("updateNote, update data:");
-        this.log(data);        
-        // get local note version
+        this.log("updateNote, syncMode = " + syncmode + " update data:");
+        this.log(data);
+        
         if (!syncmode) {
-
+            // get local note version
             var note = SimplenoteLS.getNote(data.key);
             if (!note)
                 throw "unknown or missing note, cannot update";
@@ -261,16 +273,17 @@ var SimplenoteDB = {
                 data.version = note.version;
             }
 
-            SimplenoteLS.updateNote(note, true);
+            var changed = SimplenoteLS.updateNote(note, "local");
             SimplenoteLS.addToSyncList(note.key);
-            chrome.extension.sendRequest({event:"indexchanged"});
+            chrome.extension.sendRequest({event:"noteupdated", note:note, changed:changed});
         }
         
         var callbacks = {
             success :       function(note) {
                 SimplenoteDB.offline(false);
-                SimplenoteLS.updateNote(note);
+                var changed = SimplenoteLS.updateNote(note,"updateresponse");
                 SimplenoteLS.removeFromSyncList(note.key);
+                //chrome.extension.sendRequest({event:"noteupdated", note:note, changed:changed});
                 if (callback)
                     callback(note);
             }, 

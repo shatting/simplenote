@@ -69,7 +69,8 @@ chrome.extension.onRequest.addListener(function (event, sender, sendResponse) {
 
     } else if (event.event == "noteupdated") {
         log("EventListener:" + event.event);
-        // request.note
+        indexAddNote("replace", event.note);
+        indexFillNote(event.note);
     } else if (event.event == "notedeleted") {
         log("EventListener:" + event.event);
         // request.key
@@ -97,14 +98,14 @@ $(document).ready(function() {
                 chrome.extension.sendRequest({action: "sync", fullsync:true});
 
                 if (localStorage.opentonotekey && localStorage.opentonotekey != "" && localStorage.option_opentonote == "true") {
-                    log("(ready):sending request for open to note");
+                    log("(ready): sending request for open to note");
                     chrome.extension.sendRequest({action:"note",key:localStorage.opentonotekey}, function(note) {
                         fillTags(true);
                         if (note)
                             editorShowNote(note,0);
                     });                    
                 } else {
-                    log("(ready):calling fillTags");
+                    log("(ready): calling fillTags");
                     fillTags(true);
                 }
 
@@ -121,7 +122,7 @@ $(document).ready(function() {
                 // bind SEARCH field
                 var options = {
                     callback : function() {
-                        log("typewatch:calling fillIndex");
+                        log("typewatch: calling fillIndex");
                         fillIndex();
                     },
                     wait : 250,
@@ -257,10 +258,12 @@ function fillIndex() {
   
 }
 
-//mode: delteAndPrepend, append
+//mode: delteAndPrepend, append, replace
 function indexAddNote(mode, note){
     
-    var html =  "<div class='noterow' id='" + note.key  + "' >";
+    var html =  "";
+    if (mode!= "replace")
+        html = "<div class='noterow' id='" + note.key  + "' >";
     var date, prefix, shareds = [];
     if (localStorage.option_showdate == "true") {
         if (localStorage.option_sortby == "createdate") {
@@ -287,15 +290,17 @@ function indexAddNote(mode, note){
     html+=          "<div class='noteheading' id='" + note.key + "heading'>";    
     html+=          "</div>";
     html+=          "<div class='abstract' id='" + note.key + "abstract'>&nbsp;<br>&nbsp;</div>";
-    
-    html+=      "</div>";        
+
+    if (mode!="replace")
+        html+=      "</div>";
     
     if (mode=="delteAndPrepend") {
         $('div.noterow#' + note.key).remove();
         $('#notes').prepend(html);                
     } else if (mode=="append") {
         $('#notes').append(html);        
-    }
+    } else if (mode="replace")
+        $('div.noterow#' + note.key).html(html);
 
     if (localStorage.option_showdate == "true")
         $("#" + note.key + "time").timeago();
@@ -448,14 +453,13 @@ function getEditorContent() {
 function elem2txt(e) {
     var s = [];
     var line = "";
-    var childs;
-    log(e.innerHTML)
+    var childs;    
     for (var i=0;i<e.children.length;i++) {
         childs = e.children[i].children;
         if (childs.length > 0 && !(childs.length == 1 && childs[0].outerHTML == "<br>")) { // pasted
-            console.log(e.children[i])
+            //console.log(e.children[i])
             line = elem2txt(e.children[i]);
-            console.log(line)
+            //console.log(line)
         } else {
             line = htmlDecode(e.children[i].innerHTML.replace("<br>",""));
         }

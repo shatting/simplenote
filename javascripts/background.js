@@ -1,4 +1,4 @@
-var isDebug = true;
+var isDebug = false;
 function log(s) {
     if (isDebug)
         logGeneral(s,"background.js");
@@ -99,7 +99,7 @@ function handleRequest(request, sender, sendResponse) {
 
     // first run
     if (!SimplenoteDB.hadSync() && request.action != "login") {
-        //isBackgroundSyncEnabled = true;
+        
         log("handleRequest:starting initial sync.");
         backgroundSync(true, function() {
             log("handleRequest:initial sync done.");

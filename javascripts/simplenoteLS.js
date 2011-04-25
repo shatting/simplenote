@@ -52,7 +52,8 @@ var SimplenoteLS = {
         $.storage.set(note.key,note);        
     },
 
-    updateNote : function(inputNote, force) {
+    // source: local, getnote, updateresponse, index
+    updateNote : function(inputNote, source) {
 
         if (!inputNote || !inputNote.key) {
             console.log(inputNote);
@@ -66,51 +67,54 @@ var SimplenoteLS = {
             throw "cannot update note, note not in LS"
         }
 
-        var changed = false;
-        
-        if (storedNote.syncnum < inputNote.syncnum || storedNote.modifydate < inputNote.modifydate || force) {
-            if (storedNote.syncnum < inputNote.syncnum )
-                this.log("updateNote: new note sync version, saving to storage");
-            else
-                this.log("updateNote: newer note modify version, saving to storage");
+        // simplenote api bug: publishing does not increase syncnum        
+        var changed = {added:[],changed:[], deleted:[]};
+        var inputFields = [];
 
-            this.log("updateNote: stored:");
-            this.log(note2str(storedNote, true));
-            this.log("updateNote: input:");
-            this.log(note2str(inputNote, true));
-            
-            changed = {added:[],changed:[]};
+        // look at inputNote, compare fields to storedNote
+        for (var inputField in inputNote) {
+            inputFields.push(inputField);
 
-            for (var field in inputNote) {
-                if (storedNote[field] === undefined ) {
-                    changed.added.push(field);
-                    this.log("updateNote: new field " + field);
-                } else if ((storedNote[field] instanceof Array) && storedNote[field].join(" ") != inputNote[field].join(" ")) {
-                    changed.changed.push(field);
-                    this.log("updateNote: changed array field " + field);
-                } else if (!(storedNote[field] instanceof Array) && storedNote[field] != inputNote[field]) {
-                    changed.changed.push(field);
-                    this.log("updateNote: changed field " + field);
-                }
+            if (storedNote[inputField] === undefined ) {
+                changed.added.push(inputField);                
+            } else if ((storedNote[inputField] instanceof Array) && storedNote[inputField].join(" ") != inputNote[inputField].join(" ")) {
+                changed.changed.push(inputField);                
+            } else if (!(storedNote[inputField] instanceof Array) && storedNote[inputField] != inputNote[inputField]) {
+                changed.changed.push(inputField);                
             }
-
-            // often, server does not send content (if content wasnt changed eg.)
-            if (inputNote.content == undefined && storedNote.content != undefined) {
-                this.log("updateNote: took .content from stored note");
-                inputNote.content = storedNote.content;
-            }
-
-            // dont want an empty "" tag
-            if (inputNote.tags != undefined && inputNote.tags.length == 1 && inputNote.tags[0] == "")
-                inputNote.tags.pop();
-
-            this.log("updateNote: saving note:");
-            this.log(note2str(inputNote, true));
-
-            $.storage.set(inputNote.key,inputNote);
-        } else {
-            //this.log("updateNote:not updating note, no new sync or modifydate");
         }
+        // see whether all fields are still there
+        for (var storedField in storedNote) {
+            if (inputFields.indexOf(storedField)<0 && storedField != "content") {
+                changed.deleted.push(storedField);                
+            }
+        }
+        changed.hadChanges = changed.added.length > 0 || changed.changed.length > 0 || changed.deleted.length > 0;
+
+        var haveStored = false;        
+        if (source == "local" || source == "getnote") {            
+            haveStored = true;
+            $.storage.set(inputNote.key,inputNote);
+        } else if (source == "updateresponse" || source == "index") {
+            if (changed.hadChanges) {
+                if (inputNote.version == storedNote.version && inputNote.content == undefined && storedNote.content != undefined) {
+                    this.log("updateNote: taking .content from stored note");
+                    inputNote.content = storedNote.content;
+                }
+                haveStored = true;
+                $.storage.set(inputNote.key,inputNote);
+            }
+        }
+
+        if (haveStored) {
+            this.log("updateNote: stored from source=" + source);
+        }
+        if (changed.added.length > 0)
+            this.log("updateNote: added: " + changed.added.join(", "));
+        if (changed.changed.length > 0)
+            this.log("updateNote: changed: " + changed.changed.join(", "));
+        if (changed.deleted.length > 0)
+            this.log("updateNote: deleted: " + changed.deleted.join(", "));
 
         return changed;
     },

@@ -26,7 +26,7 @@ $.ajaxSetup({
 var SimplenoteAPI2 = {
     
     // toggle debug output
-    isDebug : true,
+    isDebug : false,
     
     log : function(s) {
         if (this.isDebug) 
