@@ -37,45 +37,52 @@ addEventListener("unload", function (event) {
         log("(unload): no background save");
 }, true);
 
-
-chrome.extension.onRequest.addListener(function (event, sender, sendResponse) {
-    if (event.event == "sync") {
+// {name:"sync", status: "started|done|error", changes : {hadchanges: false|true, added:[keys],changed:[keys],deleted:[keys]}}
+// {name:"noteadded", note:{note}}
+// {name:"notedeleted", key: key}
+// {name:"noteupdated", newnote:{note}, oldnote: {note}, changes:{hadChanges: false|true, added:[fields],changed:[fields], deleted:[fields]}}
+// {name:"offlinechanged", status:true|false}
+// {name:"synclistchanged", added|removed:key}
+chrome.extension.onRequest.addListener(function (eventData, sender, sendResponse) {
         
-        log("EventListener:sync:" + event.status + ", hadChanges=" + event.hadChanges );
+    if (eventData.name == "sync") {
+        
+        log("EventListener:sync:" + eventData.status + ", hadChanges=" + eventData.changes.hadchanges );
 
-        if (event.status == "started") {
+        if (eventData.status == "started") {
             $("#sync").html("syncing..");
-        } else if (event.status == "done") {
-            if (event.hadChanges) {
+        } else if (eventData.status == "done") {
+            if (eventData.changes.hadchanges) {
                 fillTags(true);
                 $("#sync").html("sync done, had changes");
             } else {
                 $("#sync").html("sync done");
             }            
-        } else if (event.status == "error") {
+        } else if (eventData.status == "error") {
             $("#sync").html("sync error");
         }
 
-    } else if (event.event == "indexchanged") {
-        log("EventListener:" + event.event);
+    } else if (eventData.name == "noteadded") {
+        log("EventListener:" + eventData.name);
         fillTags(true);
-
-    } else if (event.event == "offline") {
-        log("EventListener:offline:" + event.isOffline);
-        if (event.isOffline)
+    } else if (eventData.name == "noteupdated") {
+        log("EventListener:" + eventData.name);
+        indexAddNote("replace", eventData.newnote);
+        indexFillNote(eventData.newnote);
+    } else if (eventData.name == "offlinechanged") {
+        log("EventListener:offline:" + eventData.status);
+        if (eventData.status)
             $("#offline").html("offline mode");
         else
             $("#offline").html("");
-
-    } else if (event.event == "noteupdated") {
-        log("EventListener:" + event.event);
-        indexAddNote("replace", event.note);
-        indexFillNote(event.note);
-    } else if (event.event == "notedeleted") {
-        log("EventListener:" + event.event);
-        // request.key
+    } else if (eventData.name == "synclistchanged") {
+        log("EventListener:" + eventData.name);
+        if (eventData.added)
+            $('div.noteheading#' + eventData.added + "heading").css("background-color","#ccc");
+        if (eventData.removed)
+            $('div.noteheading#' + eventData.removed + "heading").css("background-color","");
     } else {
-        log("EventListener:" + event.event);
+        log("EventListener:" + eventData.name);
     }
 });
 
@@ -83,7 +90,9 @@ chrome.extension.onRequest.addListener(function (event, sender, sendResponse) {
 $(document).ready(function() {
     
     log("---------------- popup opened ---------------------");
-
+    if (!isDebug)
+        $('div#note2').hide();
+    
     var signUpLink =  "<a href='https://simple-note.appspot.com/create/'>signup</a>";
     var optionsLink = "<a href='options.html'>options page</a>";
     
@@ -100,15 +109,15 @@ $(document).ready(function() {
                 if (localStorage.opentonotekey && localStorage.opentonotekey != "" && localStorage.option_opentonote == "true") {
                     log("(ready): sending request for open to note");
                     chrome.extension.sendRequest({action:"note",key:localStorage.opentonotekey}, function(note) {
-                        fillTags(true);
+                        //fillTags(true);
                         if (note)
                             editorShowNote(note,0);
                     });                    
-                } else {
-                    log("(ready): calling fillTags");
-                    fillTags(true);
-                }
+                } 
 
+                log("(ready): calling fillTags");
+                fillTags(true);
+                
                 // bind ADD button
                 $('div#index div#toolbar div#add').click(function() {
                     editorShowNote();
@@ -156,7 +165,7 @@ $(document).ready(function() {
             else {
                 log("(ready): login error, message=" + result.message);
                 if (!result.message)
-                    result.message = "Login failed, please check your username and password on the " + optionsLink + "!";
+                    result.message = "Login for email '" + localStorage.option_email + "' failed, please check your Simplenote email address and password on the " + optionsLink + "!";
                 else
                     result.message += "<br><br>Alternatively you can try to correct your username and password on the " + optionsLink + "!";
                 displayStatusMessage(result.message);
@@ -299,7 +308,7 @@ function indexAddNote(mode, note){
         $('#notes').prepend(html);                
     } else if (mode=="append") {
         $('#notes').append(html);        
-    } else if (mode="replace")
+    } else if (mode=="replace")
         $('div.noterow#' + note.key).html(html);
 
     if (localStorage.option_showdate == "true")
@@ -321,7 +330,7 @@ function indexAddNote(mode, note){
         $("#" + note.key +"published").unbind();
         $("#" + note.key +"published").click(note.publishkey,function(event) {            
             event.stopPropagation();
-            runstuff("http://simp.ly/publish/"+event.data);
+            openURLinTab("http://simp.ly/publish/"+event.data);
         }); 
     }
     //$('div.noterow#' + note.key).data("modify",note.modifydate);
@@ -405,13 +414,13 @@ function indexFillNoteReqComplete(note) {
         checkInView();    
 }
 
-function makeAbstract(lines) {
-    var abstracttext = lines.map(function(element) { 
-        var shorttext = element.substr(0, 45); 
-        return shorttext.length + 3 < element.length ? shorttext + "..." : element;
-    });
-    return htmlEncode(abstracttext).join("<br />");
-}
+//function makeAbstract(lines) {
+//    var abstracttext = lines.map(function(element) {
+//        var shorttext = element.substr(0, 45);
+//        return shorttext.length + 3 < element.length ? shorttext + "..." : element;
+//    });
+//    return htmlEncode(abstracttext).join("<br />");
+//}
 
 // encode string or string array into html equivalent
 function htmlEncode(s)
@@ -440,60 +449,44 @@ function htmlDecode(s) {
     return htmlUnsafe(s.replace(/<br>/gi,"\n").replace(/&nbsp;/gi," "));
 }
 
-function validateEmail(email) 
-{ 
- var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
- return email.match(re) 
-}
-
 function getEditorContent() {
     return elem2txt($('div#note #contenteditor')[0]);
 }
 
 function elem2txt(e) {
-    var s = [];
-    var line = "";
-    var childs;    
-    for (var i=0;i<e.children.length;i++) {
-        childs = e.children[i].children;
-        if (childs.length > 0 && !(childs.length == 1 && childs[0].outerHTML == "<br>")) { // pasted
-            //console.log(e.children[i])
-            line = elem2txt(e.children[i]);
-            //console.log(line)
-        } else {
-            line = htmlDecode(e.children[i].innerHTML.replace("<br>",""));
-        }
-        if (line=="\n")
-            s.push("");
-        else
-            s.push(line);
-    }    
-    return s.join("\n");
-}
-
-function runstuff(href) {
-    chrome.tabs.create({url:href});
-}
-
-function parseUrl2(data) {
-    var e=/((http|https):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+\.[^#?\s]+)(#[\w\-]+)?/;
-
-    if (data.match(e)) {
-        return  {url: RegExp['$&'],
-                protocol: RegExp.$2,
-                host:RegExp.$3,
-                path:RegExp.$4,
-                file:RegExp.$6,
-                hash:RegExp.$7};
-    }
-    else {
-        return  {url:"", protocol:"",host:"",path:"",file:"",hash:""};
-    }
+    if (e.innerText.length == 0)
+        return "";
+    
+    if (e.innerText[e.innerText.length-1] == "\n") // innertext doubles trailing \n
+        return e.innerText.substring(0, e.innerText.length-1);
+    else
+        return e.innerText;
+    
+//    var s = [];
+//    var line = "";
+//    var childs;
+//    for (var i=0;i<e.children.length;i++) {
+//        childs = e.children[i].children;
+//        if (childs.length > 0 && !(childs.length == 1 && childs[0].outerHTML == "<br>")) { // pasted
+//            //console.log(e.children[i])
+//            line = elem2txt(e.children[i]);
+//            //console.log(line)
+//        } else {
+//            line = htmlDecode(e.children[i].innerHTML.replace("<br>",""));
+//        }
+//        if (line=="\n")
+//            s.push("");
+//        else
+//            s.push(line);
+//    }
+//    return s.join("\n");
 }
 
 function setEditorContent(s) {
     var $editor = $('div#note #contenteditor');
     $("#contenteditor2").val(s);
+    $('div#note #contenteditor').attr("contenteditable","false");
+    $('div#note #contenteditor').empty();
     var html = "";
     var lines = s.split("\n");
     for (var i=0; i<lines.length; i++) {
@@ -503,11 +496,12 @@ function setEditorContent(s) {
             html += "<div><br></div>";
         else if (lines[i].match(/https?:\/\/[^:\/\s]+[^\s\(\)\[\]]*/gi)) {
             url = RegExp['$&'];
-            html += "<div>" + htmlSafe(lines[i]).replace(url, "<a style='cursor:pointer;' onclick='runstuff(this.href);' target='_blank' href='" + url + "'>" + url+ "</a>") + "</div>";
+            html += "<div>" + htmlSafe(lines[i]).replace(url, "<a style='cursor:pointer;' onclick='openURLinTab(this.href);' href='" + url + "'>" + url+ "</a>") + "</div>";
         } else
             html += "<div>" + htmlSafe(lines[i]).replace(/\s/gi,"&nbsp;") + "</div>";
     }
-    $editor.html(html);
+    $editor.html("<div>" + html + "</div>");
+    $('div#note #contenteditor').attr("contenteditable","true");
 }
 
 //function maximize(event) {
@@ -581,40 +575,37 @@ function localeDateString(d) {
 
 //  ---------------------------------------
 
-function pad(n){
-    return n<10 ? '0'+n : n
-}
-
-//  ---------------------------------------
-
 function slideEditor(callback, duration) {
     if (duration == undefined)
-        duration = 500;
+        duration = 300;
     $('div#index').animate({left:"-=400"}, {duration: duration, complete: callback});
     $('div#note').animate({left:"-=400"}, duration);
     if (isDebug) {
-        $('div#note2').animate({left:"-=400"}, duration);
-        $('body').animate({width:"+=400"}, duration);
-    }
-    //$('body').animate({height : "550px"},250);
+        $('div#note2').animate({left:"-=400"}, duration);        
+    } else
+        $('div#noteeditor').animate({width:"+=400"}, duration);
+
+    $('body').animate({width:"+=400"}, duration);
 }
 
-function slideIndex(callback) {
+function slideIndex(callback, duration) {
+    if (duration == undefined)
+        duration = 300;
     localStorage.opentonotekey = "";
-    $('div#index').animate({left:"+=400"}, {duration: 500, complete: callback});
-    $('div#note').animate({left:"+=400"}, 500);
+    $('div#index').animate({left:"+=400"}, {duration: duration, complete: callback});
+    $('div#note').animate({left:"+=400"}, duration);
     if (isDebug) {
-        $('div#note2').animate({left:"+=400"}, 500);
-        $('body').animate({width : "-=400"},250);
-    }
+        $('div#note2').animate({left:"+=400"}, duration);
+    } else
+        $('div#noteeditor').animate({width:"-=400"}, duration);
+    
+    $('body').animate({width : "-=400"},duration);
 }
 
 function editorShowNote(note, duration) {
     log("showNote");      
     
-    $('div#note #contenteditor').removeAttr('dirty');
-    $('div#note input#pinned').removeAttr("dirty");
-    $('div#note input#tags').removeAttr('dirty');
+    editorClearDirty();
     
     // new note dummy data
     if (note==undefined)
@@ -626,13 +617,13 @@ function editorShowNote(note, duration) {
         var note=event.data;        
         $("#contenteditor2").val(elem2txt($('div#note #contenteditor')[0]));
         
-
         if (note.content != getEditorContent()) {
             if ($('div#note #contenteditor').attr('dirty') != "true")
                 log("content dirty now (" + event.type + ")");
             $('div#note #contenteditor').attr('dirty', 'true');
         } else {
-            log("content not dirty now (" + event.type + ")");
+            if ($('div#note #contenteditor').attr('dirty') == "true")
+                log("content not dirty now (" + event.type + ")");
             $('div#note #contenteditor').removeAttr('dirty');
         }
         if (editorIsNoteDirty())
@@ -684,7 +675,7 @@ function editorShowNote(note, duration) {
     $('div#note input#backtoindex').click(note,function(event) {        
         if (editorIsNoteDirty()) {
             log("back clicked, note dirty.");
-            editorNoteChanged(event.data.key,slideIndex);
+            editorNoteChanged(event.data.key);
         } else {
             log("back clicked, note not dirty.");
             slideIndex();
@@ -694,9 +685,15 @@ function editorShowNote(note, duration) {
     // bind editor tab->spaces
     $('div#note #contenteditor').keydown(function(event) {
         // tab: keyCode: 9        
-        if (event.keyCode == 9 && !event.shiftKey) {
-            $('div#note #contenteditor').insertAtCaret("   ");
+        if (event.keyCode == 9 && !event.shiftKey) {            
             event.preventDefault();
+            indentSelection(4);
+            //insertHtmlAtCursor("&nbsp;&nbsp;&nbsp;&nbsp;")
+            //$('div#note #contenteditor').focus();
+        } else if (event.keyCode == 9 && event.shiftKey) {
+            event.preventDefault();
+            indentSelection(-4);
+            this.focus();
         }
     });
 
@@ -717,6 +714,7 @@ function editorShowNote(note, duration) {
     }
     $("div#note input#wordwrap").change();
 
+    // set editor style
     if (localStorage.option_editorfont )
         $("div#note #contenteditor, div#note2 #contenteditor2").css("font-family",localStorage.option_editorfont );
     if (localStorage.option_editorfontsize )
@@ -765,6 +763,7 @@ function editorShowNote(note, duration) {
                 $('div#note input#pinned').removeAttr("checked");
 
             $('div#note input#undo').attr("disabled","disabled");
+            editorClearDirty();
         });
         $('div#note input#undo').attr("disabled","disabled");
                 
@@ -784,12 +783,13 @@ function editorShowNote(note, duration) {
         localStorage.opentonotekey = note.key;
     }
 
-
     //$('div#note input#pinned').html("&nbsp;&nbsp;&nbsp;&nbsp;pin");
     $('div#note input#wordwrap').html("&nbsp;&nbsp;&nbsp;&nbsp;Wordwrap")
 
     // needed for background save
     $('div#note #contenteditor').attr('key',note.key);
+
+    // synchronize both editors
     $('div#note #contenteditor').scroll(function(event) {        
         $('div#note2 #contenteditor2').scrollTop($(this).scrollTop());
         $('div#note2 #contenteditor2').scrollLeft($(this).scrollLeft());
@@ -808,13 +808,13 @@ function editorShowNote(note, duration) {
 
 //  ---------------------------------------
 
-function editorNoteChanged(key,callback) {
+function editorNoteChanged(key) {
         
     var noteData = {};
     if ($('div#note #contenteditor').attr("dirty")=="true")
         noteData.content = getEditorContent();
     if ($('div#note input#pinned').attr("dirty")=="true")
-        noteData.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[]; // todo: "read" systag
+        noteData.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[];
     if ($('div#note input#tags').attr("dirty")=="true")
         noteData.tags = $('div#note input#tags').val().trim().split(" ");
 
@@ -828,18 +828,14 @@ function editorNoteChanged(key,callback) {
         noteData.action = "update";
     } else if (noteData.content != '')          // new note, new data -> create
         noteData.action = "create";
-    else                                    // new note, no data -> back to index
-        slideIndex();
-    
-        
+
+    editorClearDirty();
+    slideIndex();
+       
     if (noteData.action) {
-        log("editorNoteChanged:request:");
-        log(noteData);
-        // can do this here because notes are stored for sync anyways
+        
         chrome.extension.sendRequest(noteData, function(note) {
-            log("editorNoteChanged: request complete");
-            if (callback)
-                callback();
+            log("editorNoteChanged: request complete");            
         });        
     }
     
@@ -853,11 +849,18 @@ function editorIsNoteDirty() {
         $('div#note input#tags').attr("dirty")=="true";
 }
 
+function editorClearDirty() {
+    log("editorClearDirty");
+    $('div#note #contenteditor').removeAttr('dirty');
+    $('div#note input#pinned').removeAttr("dirty");
+    $('div#note input#tags').removeAttr('dirty');
+}
+
 //  ---------------------------------------
 
 function editorTrashNote(key) {
     log("editorTrashNote");
-    $('div#note div#toolbar input').attr('disabled', 'disabled');    
+    $('div#note div#toolbar input').attr('disabled', 'disabled');
     slideIndex();
     chrome.extension.sendRequest({action : "update", key : key, deleted : 1},
             function() {

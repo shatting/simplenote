@@ -25,7 +25,7 @@ var SimplenoteDB = {
         
         if (isOffline != oldIsOffline) {
             this.log("offline:mode change to offline=" + isOffline);
-            chrome.extension.sendRequest({event:"offline", isOffline:isOffline});
+            uiEvent("offlinechanged", {status:isOffline});
             $.storage.set(this.offlineKey,isOffline==true);
         }              
     },
@@ -76,9 +76,9 @@ var SimplenoteDB = {
         if (fullSync)
             this._indexKeysTemp = [];
         
-        this._indexKeysChanged = {added:[],changed:[],deleted:[]};
+        this._indexKeysChanged = {hadchanges: false, added:[],changed:[],deleted:[]};
 
-        chrome.extension.sendRequest({event:"sync", status: "started", hadChanges : false});
+        uiEvent("sync", {status: "started", changes : this._indexKeysChanged});
         
         this.getIndex(apioptions, fullSync);
 
@@ -95,7 +95,7 @@ var SimplenoteDB = {
             this.log("_gotIndexChunk: error getting index from server.");
             this.offline(true);
             this.isSyncInProgress = false;
-            chrome.extension.sendRequest({event:"sync", status: "error", changes : this._indexKeysChanged});
+             uiEvent("sync", { status: "error", changes : this._indexKeysChanged});
         } else {
             var thisHadChanges = false, note;
             
@@ -107,10 +107,12 @@ var SimplenoteDB = {
                 
                 if (!SimplenoteLS.haveNote(note.key)) {                                                            
                     SimplenoteLS.addNote(note);
+                    this._indexKeysChanged.hadchanges = true;
                     this._indexKeysChanged.added.push(note.key);
                 } else {
                     thisHadChanges = SimplenoteLS.updateNote(note,"index");
                     if (thisHadChanges.hadChanges) {
+                        this._indexKeysChanged.hadchanges = true;
                         this._indexKeysChanged.changed.push(note.key);                        
                     }
                 }
@@ -131,6 +133,7 @@ var SimplenoteDB = {
                         key = lskeys[i];
                         if (this._indexKeysTemp.indexOf(key)<0) {
                             SimplenoteLS.delNote(key);
+                            this._indexKeysChanged.hadchanges = true;
                             this._indexKeysChanged.deleted.push(key);
                         }
                     }
@@ -147,7 +150,7 @@ var SimplenoteDB = {
                 
                 this.isSyncInProgress = false;
                 
-                chrome.extension.sendRequest({event:"sync", status: "done", changes : this._indexKeysChanged});
+                uiEvent("sync", {status: "done", changes : this._indexKeysChanged});
             } 
         }
 
@@ -189,12 +192,18 @@ var SimplenoteDB = {
                 }
             }, 
             loginInvalid:   function() {
+                SimplenoteDB.log("getIndex:loginInvalid");
+                alert("SimplenoteDB::getIndex:loginInvalid");
                 SimplenoteDB._gotIndexChunk(undefined, false);                
             }, 
             repeat:         function() {
+                SimplenoteDB.log("getIndex:repeat");
+                alert("SimplenoteDB::getIndex:repeat");
                 SimplenoteDB._gotIndexChunk(undefined, false);                
             },
             timeout:        function() {
+                SimplenoteDB.log("getIndex:timeout");
+                alert("SimplenoteDB::getIndex:timeout");
                 SimplenoteDB._gotIndexChunk(undefined, false);
             }
         };
@@ -223,23 +232,29 @@ var SimplenoteDB = {
                 }, 
                 loginInvalid:   function() {
                     SimplenoteDB.offline(false);
+                    SimplenoteDB.log('getNote::loginInvalid');
+                    alert('SimplenoteDB::getNote::loginInvalid');
                     if (callback)
                         callback();
-                    alert('background::note::loginInvalid');
                 }, 
                 repeat:         function() {
                     SimplenoteDB.offline(false);
+                    SimplenoteDB.log('getNote::repeat');
+                    alert('SimplenoteDB::getNote::repeat');
                     if (callback)
-                        callback();
-                    alert('background::note::repeat');
+                        callback();                    
                 },
                 noteNotExist:  function() {
                     SimplenoteDB.offline(false);
+                    SimplenoteDB.log('getNote::noteNotExists');
+                    alert('SimplenoteDB::getNote::noteNoteExist');
                     if (callback)
                         callback();                    
                 },
                 timeout: function(options) {
                     SimplenoteDB.offline(true);
+                    SimplenoteDB.log('getNote::timeout');
+                    alert('SimplenoteDB::getNote::timeout');
                     if (callback)
                         callback();
                 }                    
@@ -273,35 +288,37 @@ var SimplenoteDB = {
                 data.version = note.version;
             }
 
-            var changed = SimplenoteLS.updateNote(note, "local");
+            SimplenoteLS.updateNote(note, "local");            
             SimplenoteLS.addToSyncList(note.key);
-            chrome.extension.sendRequest({event:"noteupdated", note:note, changed:changed});
         }
         
         var callbacks = {
             success :       function(note) {
                 SimplenoteDB.offline(false);
-                var changed = SimplenoteLS.updateNote(note,"updateresponse");
+                SimplenoteLS.updateNote(note,"updateresponse");
                 SimplenoteLS.removeFromSyncList(note.key);
-                //chrome.extension.sendRequest({event:"noteupdated", note:note, changed:changed});
                 if (callback)
                     callback(note);
             }, 
             loginInvalid:   function() {
                 SimplenoteDB.offline(false);
-                alert('background::note::loginInvalid');
+                SimplenoteDB.log('updateNote::loginInvalid');
+                alert('SimplenoteDB::updateNote::loginInvalid');
             }, 
             repeat:         function() {
                 SimplenoteDB.offline(false);
-                alert('background::note::repeat');
+                SimplenoteDB.log('updateNote::repeat');
+                alert('SimplenoteDB::updateNote::repeat');
             },
             noteNotExists:  function() {
                 SimplenoteDB.offline(false);
-                alert('background::note::noteNotExists');
+                SimplenoteDB.log('updateNote::noteNoteExists');
+                alert('SimplenoteDB::updateNote::noteNoteExists');
             },
-            timeout: function(note) { 
-                SimplenoteDB.log("timeout");                
-                SimplenoteDB.offline(true);    
+            timeout: function(note) {                                 
+                SimplenoteDB.offline(true);
+                SimplenoteDB.log('updateNote::timeout');
+                alert('SimplenoteDB::updateNote::timeout');
                 if (callback)
                     callback(note);
             }                    
@@ -328,10 +345,8 @@ var SimplenoteDB = {
                 note.systemtags = [];
 
 
-            SimplenoteLS.addNote(note);
+            SimplenoteLS.addNote(note);            
             SimplenoteLS.addToSyncList(note.key);
-
-            chrome.extension.sendRequest({event:"indexchanged"});
         }
         
         var callbacks = {
@@ -349,19 +364,23 @@ var SimplenoteDB = {
             }, 
             loginInvalid:   function() {
                 SimplenoteDB.offline(false);
-                alert('background::note::loginInvalid');
+                SimplenoteDB.log("createNote::loginInvalid")
+                alert('SimplenoteDB::createNote::loginInvalid');                
             }, 
             repeat:         function() {
                 SimplenoteDB.offline(false);
-                alert('background::note::repeat');
+                SimplenoteDB.log("createNote::repeat")
+                alert('SimplenoteDB::createNote::repeat');
             },
             noteNotExists:  function() {
                 SimplenoteDB.offline(false);
-                alert('background::note::noteNotExists');
+                SimplenoteDB.log("createNote::noteNotExists")
+                alert('SimplenoteDB::createNote::noteNotExists');
             },
-            timeout: function(note) { 
-                SimplenoteDB.log("timeout");                
+            timeout: function(note) {             
                 SimplenoteDB.offline(true);
+                SimplenoteDB.log("createNote::timeout")
+                alert('SimplenoteDB::createNote::timeout');
                 if (callback)
                     callback();
             }                    
@@ -370,15 +389,6 @@ var SimplenoteDB = {
         SimplenoteAPI2.create(note, callbacks);
     },
     
-    deleteAllRemote : function() {
-        var note;
-        $.each(SimplenoteLS.getKeys(), function(i,key) {
-            note = SimplenoteLS.getNote(key);
-            note.deleted = 1;
-            SimplenoteDB.updateNote(note, function(note) {SimplenoteDB.deleteNote(note.key);}, true);
-        });
-    },
-
     deleteNote : function(key, callback) {
         var callbacks = {
             success :       function(data) {
@@ -389,23 +399,36 @@ var SimplenoteDB = {
             }, 
             loginInvalid:   function() {
                 SimplenoteDB.offline(false);
-                alert('background::note::loginInvalid');
+                SimplenoteDB.log("deleteNote::loginInvalid")
+                alert('SimplenoteDB::deleteNote::loginInvalid');
             }, 
             repeat:         function() {
                 SimplenoteDB.offline(false);
-                alert('background::note::repeat');
+                SimplenoteDB.log("deleteNote::repeat")
+                alert('SimplenoteDB::deleteNote::repeat');
             },
             noteNotExists:  function() {
                 SimplenoteDB.offline(false);
-                alert('background::note::noteNotExists');
+                SimplenoteDB.log("deleteNote::noteNotExists")
+                alert('SimplenoteDB::deleteNote::noteNotExists');
             },
             timeout: function(key) { 
                 SimplenoteDB.offline(true);
-                SimplenoteLS.delNote(key);
+                SimplenoteDB.log("deleteNote::timeout")
+                alert('SimplenoteDB::deleteNote::timeout');
                 if (callback)
                     callback(false);
             }                    
         };        
         SimplenoteAPI2.destroy(key, callbacks);
+    },
+
+    _deleteAllRemote : function() {
+        var note;
+        $.each(SimplenoteLS.getKeys(), function(i,key) {
+            note = SimplenoteLS.getNote(key);
+            note.deleted = 1;
+            SimplenoteDB.updateNote(note, function(note) {SimplenoteDB.deleteNote(note.key);}, true);
+        });
     }
 }

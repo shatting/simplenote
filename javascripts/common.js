@@ -85,34 +85,143 @@ __proto__: Object*/
  */
 function mergeobj(obj1,obj2){
     var obj3 = {};
-    for (attrname in obj1) { obj3[attrname] = obj1[attrname]; }
-    for (attrname in obj2) { obj3[attrname] = obj2[attrname]; }
+    for (attrname in obj1) {obj3[attrname] = obj1[attrname];}
+    for (attrname in obj2) {obj3[attrname] = obj2[attrname];}
     return obj3;
 }
 
 // insert at caret
 jQuery.fn.extend({
-insertAtCaret: function(myValue){
-  return this.each(function(i) {
-    if (document.selection) {
-      this.focus();
-      sel = document.selection.createRange();
-      sel.text = myValue;
-      this.focus();
+    insertAtCaret: function(myValue){
+      return this.each(function(i) {
+        if (document.selection) {
+          this.focus();
+          sel = document.selection.createRange();
+          sel.text = myValue;
+          this.focus();
+        }
+        else if (this.selectionStart || this.selectionStart == '0') {
+          var startPos = this.selectionStart;
+          var endPos = this.selectionEnd;
+          var scrollTop = this.scrollTop;
+          this.value = this.value.substring(0, startPos)+myValue+this.value.substring(endPos,this.value.length);
+          this.focus();
+          this.selectionStart = startPos + myValue.length;
+          this.selectionEnd = startPos + myValue.length;
+          this.scrollTop = scrollTop;
+        } else {
+          this.value += myValue;
+          this.focus();
+        }
+      })
     }
-    else if (this.selectionStart || this.selectionStart == '0') {
-      var startPos = this.selectionStart;
-      var endPos = this.selectionEnd;
-      var scrollTop = this.scrollTop;
-      this.value = this.value.substring(0, startPos)+myValue+this.value.substring(endPos,this.value.length);
-      this.focus();
-      this.selectionStart = startPos + myValue.length;
-      this.selectionEnd = startPos + myValue.length;
-      this.scrollTop = scrollTop;
-    } else {
-      this.value += myValue;
-      this.focus();
-    }
-  })
-}
 });
+
+function indentSelection(indent) {
+    var sel, range;
+    
+    sel = window.getSelection();
+    console.log("selection");
+    console.log(sel);
+    if (sel.getRangeAt && sel.rangeCount) {
+        range = sel.getRangeAt(0);
+
+        console.log("range")
+        console.log(range)
+        console.log("Ancestor: " + range.commonAncestorContainer.id);
+        console.log(range.startContainer.nodeValue);
+        console.log(range.endContainer.nodeValue);
+        if (range.startContainer == range.endContainer) {
+            sel.anchorNode.parentElement.innerHTML = indentHTML(sel.anchorNode.parentElement.innerHTML,indent);            
+        } else {
+            var inrange = false;
+            for (var i=0;i<range.commonAncestorContainer.children.length;i++) {
+                if (range.commonAncestorContainer.children[i] == range.startContainer.parentElement)
+                    inrange = true;
+                else if (range.commonAncestorContainer.children[i-1] == range.endContainer.parentElement)
+                    inrange = false;
+
+                if (inrange)
+                    range.commonAncestorContainer.children[i].innerHTML = indentHTML(range.commonAncestorContainer.children[i].innerHTML,indent);
+            }                
+        }
+        range.setStart(range.startContainer, range.startOffset + indent);
+        range.setEnd(range.endContainer, range.endOffset + indent);
+        range.startContainer.parentElement.focus();
+    }
+
+}
+
+function insertHtmlAtCursor(html) {
+    var range, node;
+    if (window.getSelection && window.getSelection().getRangeAt) {
+        range = window.getSelection().getRangeAt(0);
+        node = range.createContextualFragment(html);
+        x = range.insertNode(node);
+    } else if (document.selection && document.selection.createRange) {
+        document.selection.createRange().pasteHTML(html);
+    }
+}
+
+function indentHTML(html,amount) {
+    
+    if (amount<0) {
+        for (var i=0;i<-amount;i++)
+            if (html.indexOf("&nbsp;") == 0)
+                html=html.substring(6);
+            else
+                break;
+            
+        return html;
+    } else if (amount>0) {
+        var indent = "&nbsp";
+        for (var i=1;i<amount;i++)
+            indent+="&nbsp";
+        return indent + html;
+    }
+    else
+        return html;
+}
+
+function uiEvent(name,data) {
+    if (name == undefined)
+        throw "uiEvent must have name supplied"
+    
+    if (data == undefined || data.name)
+        throw "uiEvent data must not be empty and must not have name field"
+
+    data.name = name;
+    chrome.extension.sendRequest(data);
+}
+
+function validateEmail(email)
+{
+ var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+ return email.match(re)
+}
+
+function openURLinTab(href) {
+    chrome.tabs.create({url:href});
+}
+
+//  ---------------------------------------
+
+function pad(n){
+    return n<10 ? '0'+n : n
+}
+
+//function parseUrl2(data) {
+//    var e=/((http|https):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+\.[^#?\s]+)(#[\w\-]+)?/;
+//
+//    if (data.match(e)) {
+//        return  {url: RegExp['$&'],
+//                protocol: RegExp.$2,
+//                host:RegExp.$3,
+//                path:RegExp.$4,
+//                file:RegExp.$6,
+//                hash:RegExp.$7};
+//    }
+//    else {
+//        return  {url:"", protocol:"",host:"",path:"",file:"",hash:""};
+//    }
+//}

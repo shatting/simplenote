@@ -33,7 +33,7 @@ $(document).ready(function() {
       save_options();
   });
 
-  $("input[type=text]").bind("keydown paste cut select blur",function(event) {
+  $("#username, #password").bind("keyup paste cut select blur",function(event) {
       save_options();
   });
 

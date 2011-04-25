@@ -250,7 +250,7 @@ div#note {
 
 div#note2 {
     left:800px;
-    top:67px;
+    top:0px;
     position: absolute;
     width:400px;
 }
@@ -268,10 +268,10 @@ div#note div#toolbar input#destroy, div#note div#toolbar input#undo {
     box-shadow: 0 1px 0 #fff; 
     margin-left: 2px;
     margin-right: 2px;
-    margin-top: 4px;
-    width: 93.5%;
+    margin-top: 4px;    
     resize: none;
     overflow: auto;
+    -webkit-user-modify: read-write-plaintext-only !important;
 }
 
 #contenteditor a:visited{
@@ -291,7 +291,7 @@ div#note div#toolbar input#destroy, div#note div#toolbar input#undo {
 div#note input#tags, div#note input#tags2 {
     padding: 4px 0px 4px 34px;
     width: 75%;
-    color: #33;
+    color: #333;
     font-size: 13px;    
     border-radius: 12px;
     border: 1px solid #999;
@@ -320,8 +320,13 @@ div#note div#noteeditor, div#note div#noteeditor2 {
     width:392px;    
 }
 
-div#note div#noteeditor2{
-    left : 800px;
+div#note2 div#noteeditor2{
+    position:absolute;
+    top : 67px;
+
+}
+div#note2 #contenteditor2{
+    width:370px;
 }
 
 div#note div#pinwrapper, div#note div#pinwrapper2 {

@@ -49,7 +49,9 @@ var SimplenoteLS = {
         keys.push(note.key);
 
         $.storage.set(this.keysKey,keys);
-        $.storage.set(note.key,note);        
+        $.storage.set(note.key,note);
+
+        uiEvent("noteadded", {note:note});
     },
 
     // source: local, getnote, updateresponse, index
@@ -68,7 +70,7 @@ var SimplenoteLS = {
         }
 
         // simplenote api bug: publishing does not increase syncnum        
-        var changed = {added:[],changed:[], deleted:[]};
+        var changed = {hadChanges: false, added:[],changed:[], deleted:[]};
         var inputFields = [];
 
         // look at inputNote, compare fields to storedNote
@@ -91,13 +93,16 @@ var SimplenoteLS = {
         }
         changed.hadChanges = changed.added.length > 0 || changed.changed.length > 0 || changed.deleted.length > 0;
 
-        var haveStored = false;        
+        var haveStored = false, onlyLocalContent;
         if (source == "local" || source == "getnote") {            
             haveStored = true;
             $.storage.set(inputNote.key,inputNote);
         } else if (source == "updateresponse" || source == "index") {
+            onlyLocalContent = inputNote.content == undefined && storedNote.content != undefined;
             if (changed.hadChanges) {
-                if (inputNote.version == storedNote.version && inputNote.content == undefined && storedNote.content != undefined) {
+                // we will always have onlyLocalcontent in index source -> only take local if versions agree
+                // we might have new content in updateresponse source (merge) -> only take local if we dont have new content
+                if ((source=="updateresponse" && onlyLocalContent) || (source=="index" && inputNote.version==storedNote.version)) {
                     this.log("updateNote: taking .content from stored note");
                     inputNote.content = storedNote.content;
                 }
@@ -115,6 +120,9 @@ var SimplenoteLS = {
             this.log("updateNote: changed: " + changed.changed.join(", "));
         if (changed.deleted.length > 0)
             this.log("updateNote: deleted: " + changed.deleted.join(", "));
+        
+        if (haveStored)
+            uiEvent("noteupdated", {newnote:inputNote, oldnote: storedNote, changes:changed});
 
         return changed;
     },
@@ -133,11 +141,12 @@ var SimplenoteLS = {
      */
     getNotes: function(options) {
         var keys = this.getKeys();
-
+        var syncKeys = this.getSyncKeys();
         var notes = [];
         var add;
         var note;
         var regQuery;
+        
         if (options && options.contentquery && options.contentquery != "")
             regQuery = new RegExp(options.contentquery,"im");
 
@@ -175,8 +184,11 @@ var SimplenoteLS = {
             
             add &= options.systemtag == undefined || note.systemtags.indexOf(options.systemtag)>=0;
 
-            if (add)
+            if (add) {
+                if (syncKeys.indexOf(note.key) >= 0)
+                    note._syncNote = true;
                 notes.push(note);
+            }
         }
 
         // sort with options
@@ -232,7 +244,7 @@ var SimplenoteLS = {
             $.storage.set(this.keysKey,keys);
             $.storage.del(key);
 
-            chrome.extension.sendRequest({action:"notedeleted", key: key});
+            uiEvent("notedeleted", {key: key});
             log("delNote:deleting " + key);
         } else
             log("delNote:cannot delete unknown note " + key);
@@ -290,18 +302,6 @@ var SimplenoteLS = {
         return predeftags.concat(tags);
     },
     
-    clear : function () {
-        $.each(this.getKeys(), function (i,e) {
-            $.storage.del(e);
-        });
-        $.each(this.getSyncKeys(), function (i,e) {
-            $.storage.del(e);
-        });
-        $.storage.del(this.keysKey);
-        $.storage.del(this.syncKeysKey);
-        $.storage.del(this.indexTimeKey);
-    },
-
     getCreatedNoteTempKey : function() {
         var maxnum = 0;
         var matches;   
@@ -324,6 +324,7 @@ var SimplenoteLS = {
             this.log("addToSyncList:"+key);
             keys.push(key);
             $.storage.set(this.syncKeysKey,keys);
+            uiEvent("synclistchanged", {added:key});
         }
     },
 
@@ -337,10 +338,23 @@ var SimplenoteLS = {
                 $.storage.del(this.syncKeysKey)
             else
                 $.storage.set(this.syncKeysKey,keys);
+            uiEvent("synclistchanged", {removed:key});
         }
     },
-  
-    maintain: function () {
+
+    _clear : function () {
+        $.each(this.getKeys(), function (i,e) {
+            $.storage.del(e);
+        });
+        $.each(this.getSyncKeys(), function (i,e) {
+            $.storage.del(e);
+        });
+        $.storage.del(this.keysKey);
+        $.storage.del(this.syncKeysKey);
+        $.storage.del(this.indexTimeKey);
+    },
+
+    _maintain: function () {
         var keys = this.getKeys();
         keys = keys.filter(function(e) {
             var keep = e!=null;
@@ -352,7 +366,7 @@ var SimplenoteLS = {
 
     },
     
-    info : function() {
+    _info : function() {
         var keys = this.getKeys();
         this.log("last index received " + dateAgo(this.indexTime()));
         this.log("LS keys array has " + keys.length + " keys.");
