@@ -67,8 +67,12 @@ chrome.extension.onRequest.addListener(function (eventData, sender, sendResponse
         fillTags(true);
     } else if (eventData.name == "noteupdated") {
         log("EventListener:" + eventData.name);
-        indexAddNote("replace", eventData.newnote);
-        indexFillNote(eventData.newnote);
+        if (eventData.changes.changed.indexOf("deleted")>=0)
+            $('div.noterow#' + eventData.newnote.key).hide()
+        else {
+            indexAddNote("replace", eventData.newnote);
+            indexFillNote(eventData.newnote);
+        }
     } else if (eventData.name == "offlinechanged") {
         log("EventListener:offline:" + eventData.status);
         if (eventData.status)
@@ -78,9 +82,9 @@ chrome.extension.onRequest.addListener(function (eventData, sender, sendResponse
     } else if (eventData.name == "synclistchanged") {
         log("EventListener:" + eventData.name);
         if (eventData.added)
-            $('div.noteheading#' + eventData.added + "heading").css("background-color","#ccc");
+            $('div.noterow#' + eventData.added).css("background","#ccc");
         if (eventData.removed)
-            $('div.noteheading#' + eventData.removed + "heading").css("background-color","");
+            $('div.noterow#' + eventData.removed).css("background","");
     } else {
         log("EventListener:" + eventData.name);
     }
