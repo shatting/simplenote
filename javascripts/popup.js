@@ -20,7 +20,7 @@ addEventListener("unload", function (event) {
         log("(unload): requesting background save");
                 
         if ($('div#note #contenteditor').attr("dirty")=="true")
-            note.content = getEditorContent();
+            note.content = editor.getValue();
         if ($('div#note input#pinned').attr("dirty")=="true")
             note.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[]; // todo: "read" systag       
         if ($('div#note input#tags').attr("dirty")=="true")
@@ -109,7 +109,7 @@ $(document).ready(function() {
             if (result.success) {
                 log("(ready): login success, requesting full sync.");
                 chrome.extension.sendRequest({action: "sync", fullsync:true});
-
+                                
                 if (localStorage.opentonotekey && localStorage.opentonotekey != "" && localStorage.option_opentonote == "true") {
                     log("(ready): sending request for open to note");
                     chrome.extension.sendRequest({action:"note",key:localStorage.opentonotekey}, function(note) {
@@ -454,17 +454,17 @@ function htmlDecode(s) {
 }
 
 function getEditorContent() {
-    return elem2txt($('div#note #contenteditor')[0]);
-}
+//    return elem2txt($('div#note #contenteditor')[0]);
+//}
 
-function elem2txt(e) {
-    if (e.innerText.length == 0)
-        return "";
-    
-    if (e.innerText[e.innerText.length-1] == "\n") // innertext doubles trailing \n
-        return e.innerText.substring(0, e.innerText.length-1);
-    else
-        return e.innerText;
+//function elem2txt(e) {
+//    if (e.innerText.length == 0)
+//        return "";
+//
+//    if (e.innerText[e.innerText.length-1] == "\n") // innertext doubles trailing \n
+//        return e.innerText.substring(0, e.innerText.length-1);
+//    else
+//        return e.innerText;
     
 //    var s = [];
 //    var line = "";
@@ -486,27 +486,27 @@ function elem2txt(e) {
 //    return s.join("\n");
 }
 
-function setEditorContent(s) {
-    var $editor = $('div#note #contenteditor');
-    $("#contenteditor2").val(s);
-    $('div#note #contenteditor').attr("contenteditable","false");
-    $('div#note #contenteditor').empty();
-    var html = "";
-    var lines = s.split("\n");
-    for (var i=0; i<lines.length; i++) {
-        //log("line " + i);
-        //log(lines[i]);
-        if (lines[i].length == 0)
-            html += "<div><br></div>";
-        else if (lines[i].match(/https?:\/\/[^:\/\s]+[^\s\(\)\[\]]*/gi)) {
-            url = RegExp['$&'];
-            html += "<div>" + htmlSafe(lines[i]).replace(url, "<a style='cursor:pointer;' onclick='openURLinTab(this.href);' href='" + url + "'>" + url+ "</a>") + "</div>";
-        } else
-            html += "<div>" + htmlSafe(lines[i]).replace(/\s/gi,"&nbsp;") + "</div>";
-    }
-    $editor.html("<div>" + html + "</div>");
-    $('div#note #contenteditor').attr("contenteditable","true");
-}
+//function setEditorContent(s) {
+//    var $editor = $('div#note #contenteditor');
+//    $("#contenteditor2").val(s);
+//    $('div#note #contenteditor').attr("contenteditable","false");
+//    $('div#note #contenteditor').empty();
+//    var html = "";
+//    var lines = s.split("\n");
+//    for (var i=0; i<lines.length; i++) {
+//        //log("line " + i);
+//        //log(lines[i]);
+//        if (lines[i].length == 0)
+//            html += "<div><br></div>";
+//        else if (lines[i].match(/https?:\/\/[^:\/\s]+[^\s\(\)\[\]]*/gi)) {
+//            url = RegExp['$&'];
+//            html += "<div>" + htmlSafe(lines[i]).replace(url, "<a style='cursor:pointer;' onclick='openURLinTab(this.href);' href='" + url + "'>" + url+ "</a>") + "</div>";
+//        } else
+//            html += "<div>" + htmlSafe(lines[i]).replace(/\s/gi,"&nbsp;") + "</div>";
+//    }
+//    $editor.html("<div>" + html + "</div>");
+//    $('div#note #contenteditor').attr("contenteditable","true");
+//}
 
 //function maximize(event) {
 //    var key = this.id;
@@ -584,9 +584,9 @@ function slideEditor(callback, duration) {
         duration = 300;
     $('div#index').animate({left:"-=400"}, {duration: duration, complete: callback});
     $('div#note').animate({left:"-=400"}, duration);
-    if (isDebug) {
-        $('div#note2').animate({left:"-=400"}, duration);        
-    } else
+//    if (isDebug) {
+//        $('div#note2').animate({left:"-=400"}, duration);
+//    } else
         $('div#noteeditor').animate({width:"+=400"}, duration);
 
     $('body').animate({width:"+=400"}, duration);
@@ -596,15 +596,18 @@ function slideIndex(callback, duration) {
     if (duration == undefined)
         duration = 300;
     localStorage.opentonotekey = "";
+    editorClearDirty();
     $('div#index').animate({left:"+=400"}, {duration: duration, complete: callback});
     $('div#note').animate({left:"+=400"}, duration);
-    if (isDebug) {
-        $('div#note2').animate({left:"+=400"}, duration);
-    } else
+//    if (isDebug) {
+//        $('div#note2').animate({left:"+=400"}, duration);
+//    } else
         $('div#noteeditor').animate({width:"-=400"}, duration);
     
     $('body').animate({width : "-=400"},duration);
 }
+
+var editor = null;
 
 function editorShowNote(note, duration) {
     log("showNote");      
@@ -614,14 +617,27 @@ function editorShowNote(note, duration) {
     // new note dummy data
     if (note==undefined)
         note = {content:"",tags:[],systemtags:[], key:""};
-    
+
+    if (!editor) {
+        editor = CodeMirror(document.getElementById("noteeditor"),{mode:"simplenote", onChange: function(ineditor) {
+                if (!ineditor)
+                    return
+                console.log("change" + ineditor.note.key)
+        }});
+        $(".CodeMirror").attr("id","contenteditor");
+        $("span.sn-link").live("click",function(event) {
+           openURLinTab(this.textContent);
+        });
+    }
+
+    editor.note = note;
+
     // add note content change (dirty) event listeners
     $('div#note #contenteditor').unbind();
     $('div#note #contenteditor').bind('change keyup paste cut', note, function(event) {
         var note=event.data;        
-        $("#contenteditor2").val(elem2txt($('div#note #contenteditor')[0]));
-        
-        if (note.content != getEditorContent()) {
+       
+        if (note.content != editor.getValue()) {
             if ($('div#note #contenteditor').attr('dirty') != "true")
                 log("content dirty now (" + event.type + ")");
             $('div#note #contenteditor').attr('dirty', 'true');
@@ -686,37 +702,22 @@ function editorShowNote(note, duration) {
         }
     });
 
-    // bind editor tab->spaces
-    $('div#note #contenteditor').keydown(function(event) {
-        // tab: keyCode: 9        
-        if (event.keyCode == 9 && !event.shiftKey) {            
-            event.preventDefault();
-            indentSelection(4);
-            //insertHtmlAtCursor("&nbsp;&nbsp;&nbsp;&nbsp;")
-            //$('div#note #contenteditor').focus();
-        } else if (event.keyCode == 9 && event.shiftKey) {
-            event.preventDefault();
-            indentSelection(-4);
-            this.focus();
-        }
-    });
-
     // bind word wrap           
-    $("div#note input#wordwrap").unbind();
-    $("div#note input#wordwrap").bind('change', function(event) {
-        localStorage.wordwrap = $("#wordwrap").attr("checked");
-        if ($("div#note input#wordwrap").attr("checked"))
-            $('div#note #contenteditor').css("white-space","normal");
-        else
-            $('div#note #contenteditor').css("white-space","nowrap");
-    });
+//    $("div#note input#wordwrap").unbind();
+//    $("div#note input#wordwrap").bind('change', function(event) {
+//        localStorage.wordwrap = $("#wordwrap").attr("checked");
+//        if ($("div#note input#wordwrap").attr("checked"))
+//            $('div#note #contenteditor').css("white-space","normal");
+//        else
+//            $('div#note #contenteditor').css("white-space","nowrap");
+//    });
 
-    if (localStorage.wordwrap != undefined && localStorage.wordwrap == "true") {
-        $("div#note input#wordwrap").attr("checked","true");        
-    } else {
-        $("div#note input#wordwrap").attr("checked","");        
-    }
-    $("div#note input#wordwrap").change();
+//    if (localStorage.wordwrap != undefined && localStorage.wordwrap == "true") {
+//        $("div#note input#wordwrap").attr("checked","true");
+//    } else {
+//        $("div#note input#wordwrap").attr("checked","");
+//    }
+//    $("div#note input#wordwrap").change();
 
     // set editor style
     if (localStorage.option_editorfont )
@@ -738,7 +739,7 @@ function editorShowNote(note, duration) {
         });
     
         // insert data
-        $('div#note #contenteditor').html("");
+        editor.setValue("");
         //$('div#note div#info').html("");
 
         // show/hide elements        
@@ -754,12 +755,13 @@ function editorShowNote(note, duration) {
         $('div#note input#destroy').unbind();
         $('div#note input#destroy').click(note,function(event) {
             editorTrashNote(event.data.key);
+            slideIndex();
         });
 
         // bind UNDO button
         $('div#note input#undo').unbind();
         $('div#note input#undo').click(note,function(event) {
-            setEditorContent(note.content);
+            editor.setValue(note.content);
             $('div#note input#tags').val(note.tags.join(" "));
             if (note.systemtags.indexOf("pinned")>=0)
                 $('div#note input#pinned').attr("checked","checked");
@@ -772,7 +774,7 @@ function editorShowNote(note, duration) {
         $('div#note input#undo').attr("disabled","disabled");
                 
         // insert data
-        setEditorContent(note.content);        
+        editor.setValue(note.content);
         $('div#note input#tags').val(note.tags.join(" "));        
         if (note.systemtags.indexOf("pinned")>=0)
             $('div#note input#pinned').attr("checked","checked");
@@ -794,18 +796,17 @@ function editorShowNote(note, duration) {
     $('div#note #contenteditor').attr('key',note.key);
 
     // synchronize both editors
-    $('div#note #contenteditor').scroll(function(event) {        
-        $('div#note2 #contenteditor2').scrollTop($(this).scrollTop());
-        $('div#note2 #contenteditor2').scrollLeft($(this).scrollLeft());
-    });
-    $('div#note2 #contenteditor2').scroll(function(event) {
-        $('div#note #contenteditor').scrollTop($(this).scrollTop());
-        $('div#note #contenteditor').scrollLeft($(this).scrollLeft());
-    });
-
-
-    slideEditor(function () {
-        $('div#note #contenteditor').focus();
+//    $('div#note #contenteditor').scroll(function(event) {
+//        $('div#note2 #contenteditor2').scrollTop($(this).scrollTop());
+//        $('div#note2 #contenteditor2').scrollLeft($(this).scrollLeft());
+//    });
+//    $('div#note2 #contenteditor2').scroll(function(event) {
+//        $('div#note #contenteditor').scrollTop($(this).scrollTop());
+//        $('div#note #contenteditor').scrollLeft($(this).scrollLeft());
+//    });
+    
+    slideEditor(function () {        
+        editor.focus();
     }, duration);
 
 }
@@ -813,10 +814,10 @@ function editorShowNote(note, duration) {
 //  ---------------------------------------
 
 function editorNoteChanged(key) {
-        
+    
     var noteData = {};
     if ($('div#note #contenteditor').attr("dirty")=="true")
-        noteData.content = getEditorContent();
+        noteData.content = editor.getValue();
     if ($('div#note input#pinned').attr("dirty")=="true")
         noteData.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[];
     if ($('div#note input#tags').attr("dirty")=="true")
@@ -832,8 +833,7 @@ function editorNoteChanged(key) {
         noteData.action = "update";
     } else if (noteData.content != '')          // new note, new data -> create
         noteData.action = "create";
-
-    editorClearDirty();
+    
     slideIndex();
        
     if (noteData.action) {
@@ -864,8 +864,7 @@ function editorClearDirty() {
 
 function editorTrashNote(key) {
     log("editorTrashNote");
-    $('div#note div#toolbar input').attr('disabled', 'disabled');
-    slideIndex();
+    $('div#note div#toolbar input').attr('disabled', 'disabled');    
     chrome.extension.sendRequest({action : "update", key : key, deleted : 1},
             function() {
                 $('div#note div#toolbar input').removeAttr('disabled');

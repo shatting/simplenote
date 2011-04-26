@@ -274,6 +274,24 @@ div#note div#toolbar input#destroy, div#note div#toolbar input#undo {
     -webkit-user-modify: read-write-plaintext-only !important;
 }
 
+.CodeMirror {
+    padding: 10px;
+    height: 454px;
+    border-radius: 12px 0px 0px 0px;
+    border: 1px solid #999;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    box-shadow: 0 1px 0 #fff;
+    margin-left: 2px;
+    margin-right: 2px;
+    margin-top: 4px;
+    resize: none;
+    overflow: auto; 
+}
+
+.CodeMirror-lines pre {
+    padding-top: 4px;
+}
+
 #contenteditor a:visited{
     color: blue;
 }
