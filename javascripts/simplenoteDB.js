@@ -30,6 +30,14 @@ var SimplenoteDB = {
         }              
     },
 
+    reset : function() {
+        this.isSyncInProgress = false;
+        this.syncCallbackChunk = undefined;
+        this.syncCallbackFinished = undefined;
+        delete this._indexKeysTemp;
+        delete this._indexKeysChanged;
+    },
+
     isSyncInProgress : false,
     
     // jsut to detect whether we actually had a sync
@@ -161,6 +169,8 @@ var SimplenoteDB = {
                 this.log("_gotIndexChunk: changed " + this._indexKeysChanged.changed.length);
             if (this._indexKeysChanged.deleted.length > 0)
                 this.log("_gotIndexChunk: deleted " + this._indexKeysChanged.deleted.length);
+
+            delete this._indexKeysChanged;
         }
     },
 

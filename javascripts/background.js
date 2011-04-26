@@ -101,6 +101,7 @@ function handleRequest(request, sender, sendResponse) {
     if (!SimplenoteDB.hadSync() && request.action != "login") {
         
         log("handleRequest:starting initial sync.");
+        SimplenoteDB.reset();
         backgroundSync(true, function() {
             log("handleRequest:initial sync done.");
             handleRequest(request, sender, sendResponse);

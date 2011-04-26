@@ -67,9 +67,12 @@ chrome.extension.onRequest.addListener(function (eventData, sender, sendResponse
         fillTags(true);
     } else if (eventData.name == "noteupdated") {
         log("EventListener:" + eventData.name);
-        if (eventData.changes.changed.indexOf("deleted")>=0)
+        if (eventData.changes.changed.indexOf("deleted")>=0) {
             $('div.noterow#' + eventData.newnote.key).hide()
-        else {
+            fillTags(false);
+        } else if (eventData.changes.changed.indexOf("systemtags")>=0 || eventData.changes.changed.indexOf("modifydate")>=0) {
+            fillTags(true);
+        } else {
             indexAddNote("replace", eventData.newnote);
             indexFillNote(eventData.newnote);
         }
@@ -297,7 +300,7 @@ function indexAddNote(mode, note){
                 shareds.push(tag);                
             }
         });
-        if (note.sharekey != undefined)
+        if (shareds.length > 0)
             html+= "<div class='shared' id='" + note.key + "shared' title='Shared with " + shareds.join(", ") + "'>&nbsp;</div>";
     }
     html+=          "<div class='noteheading' id='" + note.key + "heading'>";    
@@ -831,7 +834,7 @@ function editorNoteChanged(key) {
     else if (key != '' ) {                  // existing note, new data -> update
         noteData.key = key;
         noteData.action = "update";
-    } else if (noteData.content != '')          // new note, new data -> create
+    } else if (noteData.content && noteData.content != '')          // new note, new data -> create
         noteData.action = "create";
     
     slideIndex();
