@@ -20,75 +20,75 @@
     </head>
     <body onselectstart="return false;">
         <div id="content">
-            <div class="optionheading">Simplenote account information</div>
-            <div class="option">
-                <input type="text" placeholder="Email Address" id="username" autocomplete="off"/>
-                <input type="password" placeholder="Password" id="password" autocomplete="off"/>
-                <div class="tip">
-                    Click <a href="http://simplenote-import.appspot.com/" target="_blank">here</a> to import your notes from plaintext, CSV, JSON, XML, YAML, and ENEX(Evernote) into Simplenote.
+            <div class="option group">
+                <div class="optionheading">Simplenote account information</div>
+                <div class="option">
+                    <input type="text" placeholder="Email Address" id="username" autocomplete="off"/>
+                    <input type="password" placeholder="Password" id="password" autocomplete="off"/>
+                    <div class="tip">
+                        Click <a href="http://simplenote-import.appspot.com/" target="_blank">here</a> to import your notes from plaintext, CSV, JSON, XML, YAML, and ENEX(Evernote) into Simplenote.
+                    </div>
                 </div>
             </div>
+            <div class="option group">
+                <div class="optionheading">Options</div>
+                <div class="option"><input type="checkbox" id="opentonote"/><label for="opentonote"> Open to last note</label></div>
+                <div class="option"><input type="checkbox" id="showdate"/><label for="showdate"> Show modification/creation date in index</label></div>
 
-            <div class="optionheading">Options</div>
-            <div class="option"><input type="checkbox" id="opentonote"/> Open to last open note</div>
-            <div class="option"><input type="checkbox" id="showdate"/> Show modification/creation dates in index</div>
-
-            <div class="option">Show
-                <select id="abstractlines" style="text-align: right">
-                    <option value="0">no abstract</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option selected value="3">3 (default)</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="-1">unlimited</option>
-                </select>
-                lines in abstract.
+                <div class="option">Show
+                    <select id="abstractlines" style="text-align: right">
+                        <option value="0">no abstract</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option selected value="3">3 (default)</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="-1">unlimited</option>
+                    </select>
+                    lines in abstract.
+                </div>
+                <div class="option">
+                    Sort
+                    <select id="sort">
+                        <option value="modifydate">by modify date, newest to oldest</option>
+                        <option value="createdate">by create date, newest to oldest</option>
+                        <option value="alpha">alphabetical, a-z</option>
+                    </select><br>
+                    <input type="checkbox" id="sortdirection"/><label for="sortdirection"> Reverse order</label>
+                </div>
+                <div class="option">
+                    Editor font
+                    <select id="editorfont">
+                        <!--<option value='"Helvetica Neue", Arial, Helvetica, Arimo, FreeSans, "Nimbus Sans", "Phetsarath OT", Malayalam, "Gargi_1.7", sans-serif'>Simplenote</option>-->
+                        <!--<option value='"Lucida Console", "Lucida Sans Typewriter", Consolas, "Andale Mono", "Courier New", monospace;'>Monospace</option>-->
+                        <option value='Inconsolata'>Inconsolata (Monospace)</option>
+                        <option selected value='Droid Sans Mono'>Droid Sans Mono (Monospace)</option>
+                        <option value='Lekton'>Lekton (Monospace)</option>
+                        <!--<option value='"Walter Turncoat"'>Walter Turncoat</option>
+                        <option value='"Yanone Kaffeesatz"'>Yanone Kaffeesatz</option>
+                        <option value='Vollkorn'>Vollkorn</option>-->
+                    </select>
+                    <br>
+                    Editor font size <select id="editorfontsize" style="text-align: right">
+                        <option value="11">11</option>
+                        <option value="12">12</option>
+                        <option selected value="13">13 (default)</option>
+                        <option value="14">14</option>
+                        <option value="15">15</option>
+                        <option value="16">16</option>
+                        <option value="17">17</option>
+                        <option value="18">18</option>
+                        <option value="19">19</option>
+                        <option value="22">22</option>
+                        <option value="24">24</option>
+                    </select> px.<br>
+                    <input type="checkbox" id="editorfontshadow"/><label for="editorfontshadow"> Editor font shadow</label>
+                </div>
             </div>
-            <div class="option">
-                Sort
-                <select id="sort">
-                    <option value="modifydate">by modify date, newest to oldest</option>
-                    <option value="createdate">by create date, newest to oldest</option>
-                    <option value="alpha">alphabetical, a-z</option>
-                </select><br>
-                <input type="checkbox" id="sortdirection"/> Reverse order
-            </div>
-            <div class="option">
-                Editor font
-                <select id="editorfont">
-                    <option value='"Helvetica Neue", Arial, Helvetica, Arimo, FreeSans, "Nimbus Sans", "Phetsarath OT", Malayalam, "Gargi_1.7", sans-serif'>Simplenote</option>
-                    <option value='"Lucida Console", "Lucida Sans Typewriter", Consolas, "Andale Mono", "Courier New", monospace;'>Monospace</option>
-                    <option value='Inconsolata'>Inconsolata (Monospace)</option>
-                    <option selected value='Droid Sans Mono'>Droid Sans Mono (Monospace)</option>
-                    <option value='Lekton'>Lekton (Monospace)</option>
-                    <option value='"Walter Turncoat"'>Walter Turncoat</option>
-                    <option value='"Yanone Kaffeesatz"'>Yanone Kaffeesatz</option>
-                    <option value='Vollkorn'>Vollkorn</option>
-                </select>
-                <br>
-                Editor font size <select id="editorfontsize" style="text-align: right">
-                    <option value="11">11</option>
-                    <option value="12">12</option>
-                    <option selected value="13">13 (default)</option>
-                    <option value="14">14</option>
-                    <option value="15">15</option>
-                    <option value="16">16</option>
-                    <option value="17">17</option>
-                    <option value="18">18</option>
-                    <option value="19">19</option>
-                    <option value="22">22</option>
-                    <option value="24">24</option>
-                </select> px.<br>
-                <input type="checkbox" id="editorfontshadow"/> Editor font shadow
-            </div>
-
             <center>
 
                 <div class="option">
-                    <div class="tip">If you like Simplenote for Chrome, please consider making a (small) donation!</div>
-
-
+                    <div class="tip">If you like Simplenote+, please consider making a (small) donation!</div>
                     <form action="https://www.paypal.com/cgi-bin/webscr" method="post" id="donate">
                         <input type="hidden" name="cmd" value="_s-xclick">
                         <input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----MIIHTwYJKoZIhvcNAQcEoIIHQDCCBzwCAQExggEwMIIBLAIBADCBlDCBjjELMAkGA1UEBhMCVVMxCzAJBgNVBAgTAkNBMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MRQwEgYDVQQKEwtQYXlQYWwgSW5jLjETMBEGA1UECxQKbGl2ZV9jZXJ0czERMA8GA1UEAxQIbGl2ZV9hcGkxHDAaBgkqhkiG9w0BCQEWDXJlQHBheXBhbC5jb20CAQAwDQYJKoZIhvcNAQEBBQAEgYBoOWnRDjPjgVUZ1RffbJa9nky4r6tEbk7IKwgzAMor4a8UNcvnmydcjSi6POiEwrIKWl2LKKuvFM8Me6jrgOzBsHsZrAOPOLhj3h/I6xEsDYcuNBcQZJbZEMRpWUDizIgIvMUPVavkihUDTjkDYVvUdZhx9x5WJpAdHK7ReApY6DELMAkGBSsOAwIaBQAwgcwGCSqGSIb3DQEHATAUBggqhkiG9w0DBwQIGJMxmBro+wGAgai5tTd/vKa5G1ONoB7ilhSxxzRJZjj98W/9iAHos/FUxIGxyByACDT83B9oJtV3W4LtAeet118zGHIYfIj0JNyZQYYI+7+l2P125nOzFA36UMo28vRmI8st3zn+lZTxiagRyq5A87/90u+iQltmaU2UuhNQ1ZHYxFTmc1xUzbtRVxsfMHo6YxvWOC0fZvMygp+LZbAPtZDoOxkA0763WBi+a2YdYJOrCIugggOHMIIDgzCCAuygAwIBAgIBADANBgkqhkiG9w0BAQUFADCBjjELMAkGA1UEBhMCVVMxCzAJBgNVBAgTAkNBMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MRQwEgYDVQQKEwtQYXlQYWwgSW5jLjETMBEGA1UECxQKbGl2ZV9jZXJ0czERMA8GA1UEAxQIbGl2ZV9hcGkxHDAaBgkqhkiG9w0BCQEWDXJlQHBheXBhbC5jb20wHhcNMDQwMjEzMTAxMzE1WhcNMzUwMjEzMTAxMzE1WjCBjjELMAkGA1UEBhMCVVMxCzAJBgNVBAgTAkNBMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MRQwEgYDVQQKEwtQYXlQYWwgSW5jLjETMBEGA1UECxQKbGl2ZV9jZXJ0czERMA8GA1UEAxQIbGl2ZV9hcGkxHDAaBgkqhkiG9w0BCQEWDXJlQHBheXBhbC5jb20wgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAMFHTt38RMxLXJyO2SmS+Ndl72T7oKJ4u4uw+6awntALWh03PewmIJuzbALScsTS4sZoS1fKciBGoh11gIfHzylvkdNe/hJl66/RGqrj5rFb08sAABNTzDTiqqNpJeBsYs/c2aiGozptX2RlnBktH+SUNpAajW724Nv2Wvhif6sFAgMBAAGjge4wgeswHQYDVR0OBBYEFJaffLvGbxe9WT9S1wob7BDWZJRrMIG7BgNVHSMEgbMwgbCAFJaffLvGbxe9WT9S1wob7BDWZJRroYGUpIGRMIGOMQswCQYDVQQGEwJVUzELMAkGA1UECBMCQ0ExFjAUBgNVBAcTDU1vdW50YWluIFZpZXcxFDASBgNVBAoTC1BheVBhbCBJbmMuMRMwEQYDVQQLFApsaXZlX2NlcnRzMREwDwYDVQQDFAhsaXZlX2FwaTEcMBoGCSqGSIb3DQEJARYNcmVAcGF5cGFsLmNvbYIBADAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBBQUAA4GBAIFfOlaagFrl71+jq6OKidbWFSE+Q4FqROvdgIONth+8kSK//Y/4ihuE4Ymvzn5ceE3S/iBSQQMjyvb+s2TWbQYDwcp129OPIbD9epdr4tJOUNiSojw7BHwYRiPh58S1xGlFgHFXwrEBb3dgNbMUa+u4qectsMAXpVHnD9wIyfmHMYIBmjCCAZYCAQEwgZQwgY4xCzAJBgNVBAYTAlVTMQswCQYDVQQIEwJDQTEWMBQGA1UEBxMNTW91bnRhaW4gVmlldzEUMBIGA1UEChMLUGF5UGFsIEluYy4xEzARBgNVBAsUCmxpdmVfY2VydHMxETAPBgNVBAMUCGxpdmVfYXBpMRwwGgYJKoZIhvcNAQkBFg1yZUBwYXlwYWwuY29tAgEAMAkGBSsOAwIaBQCgXTAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqGSIb3DQEJBTEPFw0xMTA0MTQxMDEzMzBaMCMGCSqGSIb3DQEJBDEWBBQ+mfqwOJw6efJaFzf2D8ABO3L0VTANBgkqhkiG9w0BAQEFAASBgDONluA6wNhonHmd3IQ5p5VVe+m9iaIxgyds4lkYu5LT7qiczy6dt6RHEFnuYxz5q9D/cyG1KY4b0nwHIqvzaiKDHypL76EEmIj0w+nn7aLfKrCcwqCyThlaRWC+7EgXdpcPdZOrm04q5G++ACQnRFG/myXBlTmq6FXw5sORJT7N-----END PKCS7-----
@@ -98,6 +98,12 @@
                     </form>
                 </div>
             </center>
+            <div class="option">
+                <div class="tip">
+                    Simplenote+ for Chrome is developed and maintained by Stephan Hattinger. <br><br>For comments/bug reports/requests, you can drop me an <a href="mailto:stephan.hattinger@gmail.com">email</a> or
+                    visit the <br><a href="http://chrome.google.com/extensions/detail/djiafihgcdhojlgmgfolclfgmllnhhbj">extension's site</a> in the gallery.
+                </div>
+            </div>
         </div>
     </body>
 </html>

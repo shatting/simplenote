@@ -1,4 +1,4 @@
-var isDebug = false;
+var isDebug = true;
 function log(s) {
     if (isDebug)
         logGeneral(s,"background.js");
@@ -100,16 +100,16 @@ function handleRequest(request, sender, sendResponse) {
     // first run
     if (!SimplenoteDB.hadSync() && request.action != "login") {
         
-        log("handleRequest:starting initial sync.");
-        SimplenoteDB.reset();
+        log("handleRequest:starting initial sync.");        
+        SimplenoteLS._reset();
         backgroundSync(true, function() {
             log("handleRequest:initial sync done.");
-            handleRequest(request, sender, sendResponse);
+            if (request.action != "sync")
+                handleRequest(request, sender, sendResponse);
         });
         return;
     }
-
-
+    
     log("request: " + request.action);
     log(request);
     var callbacks;

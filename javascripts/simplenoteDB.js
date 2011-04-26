@@ -6,12 +6,12 @@ var SimplenoteDB = {
     offlineKey : "_offline",
 
     isDebug : true,
-    
+   
     log : function(s) {
         if (this.isDebug)       
             logGeneral(s,"SimplenoteDB");
     },
-    
+
     isOffline : function() {        
         return $.storage.get(this.offlineKey) == "true";
     },
@@ -30,16 +30,13 @@ var SimplenoteDB = {
         }              
     },
 
-    reset : function() {
+    _reset : function() {
         this.isSyncInProgress = false;
         this.syncCallbackChunk = undefined;
         this.syncCallbackFinished = undefined;
-        delete this._indexKeysTemp;
-        delete this._indexKeysChanged;
+        this._indexKeysTemp = [];
+        this._indexKeysChanged = {hadchanges: false, added:[],changed:[],deleted:[]};
     },
-
-    isSyncInProgress : false,
-    
     // jsut to detect whether we actually had a sync
     hadSync : function() {
         return localStorage[SimplenoteLS.indexTimeKey] != undefined;
@@ -50,7 +47,10 @@ var SimplenoteDB = {
             log("sync: sync already in progress, returning");            
             return;
         }
+
         this.isSyncInProgress = true;
+        this._reset();
+
         var syncKeys = SimplenoteLS.getSyncKeys();
         var note;
         
@@ -79,12 +79,7 @@ var SimplenoteDB = {
                 apioptions.since = indexTime;
             }
         }
-        apioptions.length = 100;
-
-        if (fullSync)
-            this._indexKeysTemp = [];
-        
-        this._indexKeysChanged = {hadchanges: false, added:[],changed:[],deleted:[]};
+        apioptions.length = 100;        
 
         uiEvent("sync", {status: "started", changes : this._indexKeysChanged});
         
@@ -103,7 +98,7 @@ var SimplenoteDB = {
             this.log("_gotIndexChunk: error getting index from server.");
             this.offline(true);
             this.isSyncInProgress = false;
-             uiEvent("sync", { status: "error", changes : this._indexKeysChanged});
+            uiEvent("sync", { status: "error", changes : this._indexKeysChanged});
         } else {
             var thisHadChanges = false, note;
             
@@ -149,8 +144,6 @@ var SimplenoteDB = {
                         this.log("_gotIndexChunk: had remote deletions.");
                     else
                         this.log("_gotIndexChunk: no remote deletions.");
-
-                    delete this._indexKeysTemp;
                 }
 
                 if (this.syncCallbackFinished)
@@ -442,3 +435,5 @@ var SimplenoteDB = {
         });
     }
 }
+
+SimplenoteDB._reset();

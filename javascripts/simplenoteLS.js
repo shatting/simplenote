@@ -342,7 +342,7 @@ var SimplenoteLS = {
         }
     },
 
-    _clear : function () {
+    _reset : function () {
         $.each(this.getKeys(), function (i,e) {
             $.storage.del(e);
         });

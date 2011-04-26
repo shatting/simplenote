@@ -140,7 +140,7 @@ div.noteheading, div.abstract {
     overflow: hidden;
     width: auto;
     margin-right: 0px;
-    text-wrap: none;
+    white-space: nowrap;
 }
 
 div.noteheading {

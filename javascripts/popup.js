@@ -43,7 +43,7 @@ addEventListener("unload", function (event) {
 // {name:"noteupdated", newnote:{note}, oldnote: {note}, changes:{hadChanges: false|true, added:[fields],changed:[fields], deleted:[fields]}}
 // {name:"offlinechanged", status:true|false}
 // {name:"synclistchanged", added|removed:key}
-chrome.extension.onRequest.addListener(function (eventData, sender, sendResponse) {
+function uiEventListener(eventData, sender, sendResponse) {
         
     if (eventData.name == "sync") {
         
@@ -70,7 +70,7 @@ chrome.extension.onRequest.addListener(function (eventData, sender, sendResponse
         if (eventData.changes.changed.indexOf("deleted")>=0) {
             $('div.noterow#' + eventData.newnote.key).hide()
             fillTags(false);
-        } else if (eventData.changes.changed.indexOf("systemtags")>=0 || eventData.changes.changed.indexOf("modifydate")>=0) {
+        } else if (eventData.changes.changed.indexOf("tags")>=0 || eventData.changes.changed.indexOf("systemtags")>=0 || eventData.changes.changed.indexOf("modifydate")>=0) {
             fillTags(true);
         } else {
             indexAddNote("replace", eventData.newnote);
@@ -91,7 +91,7 @@ chrome.extension.onRequest.addListener(function (eventData, sender, sendResponse
     } else {
         log("EventListener:" + eventData.name);
     }
-});
+}
 
 //  ---------------------------------------
 $(document).ready(function() {
@@ -123,6 +123,7 @@ $(document).ready(function() {
                 } 
 
                 log("(ready): calling fillTags");
+                chrome.extension.onRequest.addListener(uiEventListener);
                 fillTags(true);
                 
                 // bind ADD button
@@ -629,7 +630,10 @@ function editorShowNote(note, duration) {
         }});
         $(".CodeMirror").attr("id","contenteditor");
         $("span.sn-link").live("click",function(event) {
-           openURLinTab(this.textContent);
+           var url = this.textContent;
+           if (url[url.length-1] == ".")
+               url=url.substring(0,url.length-1);
+           openURLinTab(url);
         });
     }
 

@@ -3,7 +3,7 @@
 // ------------------------------------------------------------------------------------------------
 
 // global debug switch
-var commonDebug = false;
+var commonDebug = true;
 
 function logGeneral(s,prefix,target) {
     if (!commonDebug)

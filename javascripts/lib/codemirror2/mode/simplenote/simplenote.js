@@ -3,7 +3,7 @@ CodeMirror.defineMode("simplenote", function() {
     token: function(stream) {
       var url;      
       var urlRe = /^https?:\/\/([-\w\.]+)+(:\d+)?(\/([\w/_\.]*(\?\S+)?)?)?/;
-      //var urlRe = /^https?:\/\/[^:\/\s]+\.[^\s\(\)\[\]]*/;
+      var urlRe = /^https?:\/\/[^:\/\s]+\.[^\s\(\)\[\]]*/;
 
       if (stream.peek() == "h") {
         url = stream.match(urlRe, true);
