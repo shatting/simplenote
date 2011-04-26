@@ -1,6 +1,6 @@
 {
   "name": "Simplenote+",
-  "version": "1.4.6",
+  "version": "1.4.7",
   "description": "Access your Simplenote notes right from your chrome extension bar.",  
   "icons": {
     "96": "imanges/logo_96.png",
