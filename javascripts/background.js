@@ -97,23 +97,16 @@ chrome.omnibox.onInputChanged.addListener(function(text, suggest) {
 chrome.extension.onRequest.addListener(handleRequest);
 function handleRequest(request, sender, sendResponse) {    
 
-    // first run
-    if (!SimplenoteDB.hadSync() && request.action != "login") {
-        
-        log("handleRequest:starting initial sync.");        
-        SimplenoteLS._reset();
-        backgroundSync(true, function() {
-            log("handleRequest:initial sync done.");
-            if (request.action != "sync")
-                handleRequest(request, sender, sendResponse);
-        });
-        return;
-    }
-    
     log("request: " + request.action);
     log(request);
     var callbacks;
-    if (request.action === "login") {
+    if (request.action == "userchanged") {
+        SimplenoteLS._reset();
+        SimplenoteDB._reset();        
+        backgroundSync(true, function() {
+            log("handleRequest:userchanged sync done.");            
+        });
+    } else if (request.action === "login") {
 
         callbacks = {
             success:   function(credentials) { 
@@ -125,11 +118,11 @@ function handleRequest(request, sender, sendResponse) {
                     localStorage.token = credentials.token;
                     localStorage.tokenTime = credentials.tokenTime;
                 }
-                sendResponse({success:true});  
+                sendResponse({success:true, reason:credentials?"success":"token"});
             },
             loginInvalid:     function() {
                 SimplenoteDB.offline(false);
-                sendResponse({ success:false });
+                sendResponse({ success:false, reason:"logininvalid" });
             },
             timeout: function() { 
                                         
@@ -140,22 +133,24 @@ function handleRequest(request, sender, sendResponse) {
                 else
                     sendResponse({
                         success:false,
-                        message:"Network timeout, please try again later or check your internet connection."
+                        message:"Network timeout, please try again later or check your internet connection.",
+                        reason:"timeout"
                     });
             }
         };
-                
+        
         var credentials = {
-            email: localStorage.option_email, 
+            email: localStorage.option_email,
             password: localStorage.option_password
             };
         if (localStorage.token) {
             credentials.token = localStorage.token;
-            credentials.tokenTime = new Date(localStorage.tokenTime);        
+            credentials.tokenTime = new Date(localStorage.tokenTime);
         }
+
         SimplenoteAPI2.login(credentials, callbacks);
     } else if (request.action === "sync") {        
-        backgroundSync(request.fullsync);
+        backgroundSync(request.fullsync, sendResponse);
     } else if (request.action === "note") {
         SimplenoteDB.getNote(request.key,sendResponse);    
     } else if (request.action === "getnotes") {                

@@ -29,6 +29,39 @@ a, a:visited {
     color: inherit;
 }
 
+#save {
+	color:#000;
+	background:#E5ECFF;
+	border:1px solid #FFF;
+	padding:0px 10px 0px 10px;
+        margin:3px;        
+	text-decoration:none !important;
+	cursor: pointer;
+	-moz-border-radius: 4px;
+	border-radius:4px;
+	font-size:20px;
+	text-shadow: 1px 0px 1px #FFF;
+	-webkit-box-shadow: 0 0px 3px rgba(0,0,0,0.5);
+	background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #FFF),color-stop(1.0, #E5ECFF));
+        float:right;          
+        height: 90px;
+        
+}
+#save:hover{
+	color: #000 !important;
+	background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #E5ECFF),color-stop(1.0, #FFF));
+}
+#save:active{
+	color: #000 !important;
+	background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #E5ECFF),color-stop(1.0, #E5ECFF));
+}
+#save:disabled{
+	color: #FFF !important;
+	background: #333;
+	text-shadow: 1px 0px 1px #000;
+	border:1px solid #AAA;
+}
+
 .option, .optionheading {
     margin-top: 8px;
     margin-bottom: 8px;
@@ -53,6 +86,7 @@ a, a:visited {
    background:#bbb;
    -webkit-box-shadow: 3px 10px 5px rgba(0,0,0,0.5);
    background: #4F4F59 url(/images/texture.png);
+   ''background: rgba(0,80,128,0.5);
 }
 
 .tip {
@@ -100,18 +134,18 @@ input[type=text], input[type=checkbox], select {
   cursor:pointer;
 }
 
-input#username, input#password {
+input#email, input#password {
   border-color: #8D8D8D;
   border-radius: 2px;
   border-style: solid;
   border-width: 1px;
   font-size: inherit;
   padding: 8px;
-  width: 96%;
+  width: 83%;
   cursor:text;
 }
 
-#message {
+#loginmessage{
   text-align: left;
 }
 

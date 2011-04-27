@@ -97,9 +97,11 @@ function uiEventListener(eventData, sender, sendResponse) {
 $(document).ready(function() {
     
     log("---------------- popup opened ---------------------");
-    if (!isDebug)
-        $('div#note2').hide();
-    
+    //if (!isDebug)
+    //    $('div#note2').hide();   
+    //if (!isDebug)
+    //     $('div#note div#info').hide();
+
     var signUpLink =  "<a href='https://simple-note.appspot.com/create/'>signup</a>";
     var optionsLink = "<a href='options.html'>options page</a>";
     
@@ -110,8 +112,12 @@ $(document).ready(function() {
     else {                
         chrome.extension.sendRequest({action : "login"}, function(result) {
             if (result.success) {
-                log("(ready): login success, requesting full sync.");
-                chrome.extension.sendRequest({action: "sync", fullsync:true});
+                
+                log("(ready): login success, requesting full sync.");                
+                chrome.extension.sendRequest({action: "sync", fullsync:true}, function() {
+                    log("(ready): calling fillTags");                    
+                    chrome.extension.onRequest.addListener(uiEventListener); 
+                });
                                 
                 if (localStorage.opentonotekey && localStorage.opentonotekey != "" && localStorage.option_opentonote == "true") {
                     log("(ready): sending request for open to note");
@@ -120,12 +126,10 @@ $(document).ready(function() {
                         if (note)
                             editorShowNote(note,0);
                     });                    
-                } 
-
-                log("(ready): calling fillTags");
-                chrome.extension.onRequest.addListener(uiEventListener);
-                fillTags(true);
+                }
                 
+                fillTags(true);
+
                 // bind ADD button
                 $('div#index div#toolbar div#add').click(function() {
                     editorShowNote();
@@ -167,8 +171,6 @@ $(document).ready(function() {
                     numbers: []
                 }
 
-                //if (!isDebug)
-                //     $('div#note div#info').hide();
             }
             else {
                 log("(ready): login error, message=" + result.message);

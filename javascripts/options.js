@@ -1,6 +1,6 @@
 $(document).ready(function() {
   
-  $("#username").val(localStorage.option_email);
+  $("#email").val(localStorage.option_email);
   $("#password").val(localStorage.option_password);    
   if (localStorage.option_abstractlines == undefined)
     $("#abstractlines").val("3");
@@ -33,9 +33,7 @@ $(document).ready(function() {
       save_options();
   });
 
-  $("#username, #password").bind("keyup paste cut select blur",function(event) {
-      save_options();
-  }); 
+  $("#save").click(save_clicked);
 
 });
 
@@ -43,24 +41,11 @@ $(document).ready(function() {
  * Saves options to localStorage.
  * @param ms Milliseconds to fade in the status message.
  */
-function save_options() {
-  var status = $("#status");
-  var email = $("#username").val();
-  
-  if (email != localStorage.option_email && (localStorage._syncKeys)) {
-          if (!confirm("You are about to switch your Simplenote login!\n\nThere are notes stored locally that have not been synchronized to the server.\n\nIf you switch accounts now, those changes will be lost.\n\nContinue?")) {              
-                status.html("Not saved. Please connect to the internet to synchronize local changes to the server.");
-                status.css("opacity", 1);
-                $("#username").val(localStorage.option_email);
-                return;
-          }
-  }
-  if (email != localStorage.option_email)
-    localStorage.clear();
-            
-  localStorage.option_email = email;
-  localStorage.option_password = $("#password").val();	
+function save_options() {  
+ 
   localStorage.option_abstractlines = $("#abstractlines").val();
+  if (localStorage.option_opentonote  != $('#opentonote').attr("checked"))
+      delete localStorage.opentonotekey;
   localStorage.option_opentonote  = $('#opentonote').attr("checked");
   localStorage.option_showdate  = $('#showdate').attr("checked");
   localStorage.option_sortby = $("#sort").val();
@@ -69,14 +54,62 @@ function save_options() {
   localStorage.option_editorfontsize = $("#editorfontsize").val();
   localStorage.option_editorfontshadow  = $('#editorfontshadow').attr("checked");
   
-  if (localStorage.option_email && localStorage.option_password) {
-    status.html("Options saved");
-  } else {
-    status.html("Save failed.");
-  }
+//  $("#status").css("opacity", 1);
+//  setTimeout(function() {
+//    $("#status").css("opacity", 0);
+//  }, 1500);
+}
 
-  status.css("opacity", 1);
-  setTimeout(function() {
-    status.css("opacity", 0);
-  }, 1500);
+function save_clicked() {
+
+    var email = $("#email").val();
+    var password = $("#password").val();
+
+    $("#save").attr("disabled","disabled");
+
+    if (email == localStorage.option_email && password == localStorage.option_password || email=="" || password=="") {
+        $("#loginmessage").html("");
+        $("#loginmessage").css("color","black");
+        $("#save").removeAttr("disabled");
+        return;
+    }
+
+    if (email != localStorage.option_email && (localStorage._syncKeys)) {
+      if (!confirm("You are about to switch your Simplenote login!\n\nThere are notes stored locally that have not been synchronized to the server.\n\nIf you switch accounts now, those changes will be lost.\n\nContinue?")) {
+            //$("#status").html("Not saved. Please connect to the internet to synchronize local changes to the server.");
+            //$("#status").css("opacity", 1);
+            $("#loginmessage").html("Not saved, please connect to the internet.");
+            $("#loginmessage").css("color","black");
+            $("#email").val(localStorage.option_email);
+            $("#password").val(localStorage.option_password);
+            $("#save").removeAttr("disabled");
+            return;
+      }
+    }
+    delete localStorage.token;
+    delete localStorage.tokenTime;
+    localStorage.option_email = email;
+    localStorage.option_password = password;
+
+    $("#loginmessage").html("Logging in..");
+    $("#loginmessage").css("color","black");
+    chrome.extension.sendRequest({action:"login"}, function(successObj) {
+        if (successObj.success) {
+            $("#loginmessage").html("Email and password saved.");
+            $("#loginmessage").css("color","green");
+            delete localStorage.opentonotekey;
+            chrome.extension.sendRequest({action:"userchanged"});
+        } else {
+            if (successObj.reason=="timeout")
+                $("#loginmessage").html("Network timeout, please try again later.");
+            else if (successObj.reason=="logininvalid")
+                $("#loginmessage").html("Email or password incorrect.");
+            else
+                $("#loginmessage").html("Unknown error.");
+
+            $("#loginmessage").css("color","red");
+        }
+        $("#save").removeAttr("disabled");
+    });
+
 }

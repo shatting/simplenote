@@ -80,7 +80,8 @@ var SimplenoteAPI2 = {
      *              
      * @param credentials either {.email,.password} or {.email,.password,.token,tokenTime}
      * @param callbacks.success(credentials) (optional) called after successful login
-     * @param callbacks.error (optional) error logging in
+     * @param callbacks.timeout (optional) timeout logging in
+     * @param callbacks.loginInvalid (optional)
      */
     login: function(credentials, callbacks) {
         if (!callbacks) callbacks = {};        
