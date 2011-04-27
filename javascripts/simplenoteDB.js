@@ -204,9 +204,10 @@ var SimplenoteDB = {
                 alert("SimplenoteDB::getIndex:repeat");
                 SimplenoteDB._gotIndexChunk(undefined, false);                
             },
-            timeout:        function() {
+            timeout:        function() {                
                 SimplenoteDB.log("getIndex:timeout");
-                alert("SimplenoteDB::getIndex:timeout");
+                SimplenoteDB.offline(true);
+                //alert("SimplenoteDB::getIndex:timeout");
                 SimplenoteDB._gotIndexChunk(undefined, false);
             }
         };
@@ -257,7 +258,7 @@ var SimplenoteDB = {
                 timeout: function(options) {
                     SimplenoteDB.offline(true);
                     SimplenoteDB.log('getNote::timeout');
-                    alert('SimplenoteDB::getNote::timeout');
+                    //alert('SimplenoteDB::getNote::timeout');
                     if (callback)
                         callback();
                 }                    
@@ -321,7 +322,7 @@ var SimplenoteDB = {
             timeout: function(note) {                                 
                 SimplenoteDB.offline(true);
                 SimplenoteDB.log('updateNote::timeout');
-                alert('SimplenoteDB::updateNote::timeout');
+                //alert('SimplenoteDB::updateNote::timeout');
                 if (callback)
                     callback(note);
             }                    
@@ -383,7 +384,7 @@ var SimplenoteDB = {
             timeout: function(note) {             
                 SimplenoteDB.offline(true);
                 SimplenoteDB.log("createNote::timeout")
-                alert('SimplenoteDB::createNote::timeout');
+                //alert('SimplenoteDB::createNote::timeout');
                 if (callback)
                     callback();
             }                    
