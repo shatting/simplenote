@@ -29,9 +29,13 @@ var SimplenoteDB = {
             $.storage.set(this.offlineKey,isOffline==true);
         }              
     },
-
+    _setSyncInProgress: function(val) {
+        this.log("_setSyncInProgress:" + val);
+        this.isSyncInProgress = val;
+    },
     _reset : function() {
-        this.isSyncInProgress = false;
+        this.log("_reset");
+        this._setSyncInProgress(false);
         this.syncCallbackChunk = undefined;
         this.syncCallbackFinished = undefined;
         this._indexKeysTemp = [];
@@ -47,9 +51,9 @@ var SimplenoteDB = {
             log("sync: sync already in progress, returning");            
             return;
         }
-
-        this.isSyncInProgress = true;
+        
         this._reset();
+        this._setSyncInProgress(true);        
 
         var syncKeys = SimplenoteLS.getSyncKeys();
         var note;
@@ -97,7 +101,7 @@ var SimplenoteDB = {
                 this.syncCallbackFinished(false);
             this.log("_gotIndexChunk: error getting index from server.");
             this.offline(true);
-            this.isSyncInProgress = false;
+            this._setSyncInProgress(false);
             uiEvent("sync", { status: "error", changes : this._indexKeysChanged});
         } else {
             var thisHadChanges = false, note;
@@ -149,7 +153,7 @@ var SimplenoteDB = {
                 if (this.syncCallbackFinished)
                     this.syncCallbackFinished(true);
                 
-                this.isSyncInProgress = false;
+                this._setSyncInProgress(false);
                 
                 uiEvent("sync", {status: "done", changes : this._indexKeysChanged});
             } 
@@ -351,6 +355,8 @@ var SimplenoteDB = {
 
             SimplenoteLS.addNote(note);            
             SimplenoteLS.addToSyncList(note.key);
+        } else {
+            tempkey = note.key;
         }
         
         var callbacks = {

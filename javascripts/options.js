@@ -78,7 +78,7 @@ function save_clicked() {
       if (!confirm("You are about to switch your Simplenote login!\n\nThere are notes stored locally that have not been synchronized to the server.\n\nIf you switch accounts now, those changes will be lost.\n\nContinue?")) {
             //$("#status").html("Not saved. Please connect to the internet to synchronize local changes to the server.");
             //$("#status").css("opacity", 1);
-            $("#loginmessage").html("Not saved, please connect to the internet.");
+            $("#loginmessage").html("Changes not saved");
             $("#loginmessage").css("color","black");
             $("#email").val(localStorage.option_email);
             $("#password").val(localStorage.option_password);

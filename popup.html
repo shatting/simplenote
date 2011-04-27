@@ -42,16 +42,17 @@
       <div id="statusbar"><div id="offline"></div><div id="sync"></div></div>
     </div>
     <div id="note">
-        <div id="toolbar">
-          <input type="button" id="backtoindex" value="Back" title="Back to notes (Changes are saved)"/>
-          <!--<input type="checkbox" id="wordwrap" title="Toggle wordwrap"/>-->
-          <input type="button" id="destroy" value="Trash" title="Send note to trash"/>
-          <input type="button" id="undo" value="Undo changes" title="Revert changes"/>                    
-        </div>
+        
         <div id="noteeditor">
+            <!--<div id="toolbar">-->
+              <input type="button" id="backtoindex" value="Back" title="Back to notes (Changes are saved)"/>
+              <!--<input type="checkbox" id="wordwrap" title="Toggle wordwrap"/>-->
+              <input type="button" id="destroy" value="Trash" title="Send note to trash"/>
+              <input type="button" id="undo" value="Undo changes" title="Revert changes"/>
+            <!--</div>-->
             <input type="text" id="tags" placeholder="Tag this note" spellcheck="false" title="Click here to enter tags for this note"/>
             <div id="pinwrapper" title="Pin this note to always show on top">
-                <input type="checkbox" id="pinned" />Pin
+                <input type="checkbox" id="pinned" /><label for="pinned"> Pin</label>
             </div>
             <!--<div id="contenteditor" spellcheck="false" contenteditable="true"></div>-->
         </div>        

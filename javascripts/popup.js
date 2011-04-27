@@ -305,6 +305,8 @@ function indexAddNote(mode, note){
         });
         if (shareds.length > 0)
             html+= "<div class='shared' id='" + note.key + "shared' title='Shared with " + shareds.join(", ") + "'>&nbsp;</div>";
+    } else {
+        $("div#" + note.key).attr("title", "Click to undelete");
     }
     html+=          "<div class='noteheading' id='" + note.key + "heading'>";    
     html+=          "</div>";
@@ -408,7 +410,9 @@ function indexFillNoteReqComplete(note) {
             $noterow.click(note, function(event) {
                 editorShowNote(event.data);
             });
-        else
+        else {
+
+            $noterow.attr("title", "Click to undelete");
             $noterow.click(function() {
                 chrome.extension.sendRequest({
                     action : "update",
@@ -416,7 +420,7 @@ function indexFillNoteReqComplete(note) {
                     deleted : 0
                     });
             });
-        
+        }
         //$noterow.hover(maximize,minimize);
                 
         // check new inview, might have changed due to reflow
@@ -625,7 +629,7 @@ function editorShowNote(note, duration) {
         note = {content:"",tags:[],systemtags:[], key:""};
 
     if (!editor) {
-        editor = CodeMirror(document.getElementById("noteeditor"),{mode:"simplenote", onChange: function(ineditor) {
+        editor = CodeMirror(document.getElementById("noteeditor"),{mode:"simplenote", electricChars:false, tabMode: "shift", indentUnit: 4, onChange: function(ineditor) {
                 if (!ineditor)
                     return
                 console.log("change" + ineditor.note.key)
@@ -740,8 +744,8 @@ function editorShowNote(note, duration) {
     if (note.key == "") { // new note
         
         // delete button now cancel button
-        $('div#note div#toolbar input#destroy').val("Cancel");
-        $('div#note div#toolbar input#destroy').attr("title","Dont save note, return to notes");
+        $('div#note input#destroy').val("Cancel");
+        $('div#note input#destroy').attr("title","Dont save note, return to notes");
         $('div#note input#destroy').unbind();
         $('div#note input#destroy').click(function() {
             slideIndex();
@@ -759,8 +763,8 @@ function editorShowNote(note, duration) {
     } else { // existing note
         
         // bind TRASH button
-        $('div#note div#toolbar input#destroy').val("Trash");
-        $('div#note div#toolbar input#destroy').attr("title","Send note to trash");
+        $('div#note input#destroy').val("Trash");
+        $('div#note input#destroy').attr("title","Send note to trash");
         $('div#note input#destroy').unbind();
         $('div#note input#destroy').click(note,function(event) {
             editorTrashNote(event.data.key);
@@ -873,10 +877,10 @@ function editorClearDirty() {
 
 function editorTrashNote(key) {
     log("editorTrashNote");
-    $('div#note div#toolbar input').attr('disabled', 'disabled');    
+    $('div#note input').attr('disabled', 'disabled');    
     chrome.extension.sendRequest({action : "update", key : key, deleted : 1},
             function() {
-                $('div#note div#toolbar input').removeAttr('disabled');
+                $('div#note input').removeAttr('disabled');
             });
 }
 

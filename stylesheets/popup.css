@@ -152,7 +152,7 @@ div.noteheadingdeleted {
 }
 
 div.noterowdeleted:hover {
-     background: white url(/images/undelete.png) no-repeat 100% 2px;
+     background: white url(/images/undelete.png) no-repeat 50% 2px;
 }
 
 div.pinned:hover {
@@ -255,13 +255,22 @@ div#note2 {
     width:400px;
 }
 
-div#note div#toolbar input#destroy, div#note div#toolbar input#undo {
+div#note input#destroy, div#note input#undo {
   float: right;
+}
+
+div#note input#backtoindex {
+  float: right;
+  margin-left:100px;
+}
+
+div#note div#toolbar {
+  float:right;
 }
 
 #contenteditor, #contenteditor2 {
     padding: 10px;    
-    height: 454px;
+    height: 486px;
     border-radius: 12px 0px 0px 0px;
     border: 1px solid #999; 
     border: 1px solid rgba(0, 0, 0, 0.3); 
@@ -292,13 +301,6 @@ div#note div#toolbar input#destroy, div#note div#toolbar input#undo {
     padding-top: 4px;
 }
 
-#contenteditor a:visited{
-    color: blue;
-}
-#contenteditor {
-    white-space: nowrap;
-}
-
 #contenteditor:focus, #contenteditor2:focus {
     border: 1px solid #666;
     border: 1px solid rgba(0, 0, 0, 0.4);
@@ -308,7 +310,8 @@ div#note div#toolbar input#destroy, div#note div#toolbar input#undo {
 
 div#note input#tags, div#note input#tags2 {
     padding: 4px 0px 4px 34px;
-    width: 75%;
+    display: inline;
+    width: 35%;
     color: #333;
     font-size: 13px;    
     border-radius: 12px;
@@ -348,10 +351,10 @@ div#note2 #contenteditor2{
 }
 
 div#note div#pinwrapper, div#note div#pinwrapper2 {
-    float:right;
+    width:10%;
     padding: 5px;
     margin-right:5px;
-    cursor: default;
+    display:inline;
 }
 
 /* scrollbar */
