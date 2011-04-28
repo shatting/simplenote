@@ -1,7 +1,7 @@
 {
   "name": "Simplenote+",
-  "version": "1.4.9",
-  "description": "Access your Simplenote notes right from your chrome extension bar.",  
+  "version": "1.4.9.9",
+  "description": "An easy way to keep notes, lists, ideas and more. Syncs automatically with your devices and other apps.",  
   "icons": {
     "96": "imanges/logo_96.png",
     "128": "images/logo_128.png",

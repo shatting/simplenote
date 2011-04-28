@@ -421,6 +421,10 @@ function indexFillNoteReqComplete(note) {
                     });
             });
         }
+
+        if (note._syncNote)
+            $noterow.css("background","#ccc");        
+
         //$noterow.hover(maximize,minimize);
                 
         // check new inview, might have changed due to reflow
