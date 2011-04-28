@@ -68,7 +68,7 @@ function uiEventListener(eventData, sender, sendResponse) {
     } else if (eventData.name == "noteupdated") {
         log("EventListener:" + eventData.name);
         if (eventData.changes.changed.indexOf("deleted")>=0) {
-            $('div.noterow#' + eventData.newnote.key).hide()
+            $('div.noterow#' + eventData.newnote.key).hide();
             fillTags(false);
         } else if (eventData.changes.changed.indexOf("tags")>=0 || eventData.changes.changed.indexOf("systemtags")>=0 || eventData.changes.changed.indexOf("modifydate")>=0) {
             fillTags(true);
@@ -88,6 +88,9 @@ function uiEventListener(eventData, sender, sendResponse) {
             $('div.noterow#' + eventData.added).css("background","#ccc");
         if (eventData.removed)
             $('div.noterow#' + eventData.removed).css("background","");
+    } else if (eventData.name == "notedeleted") {
+        log("EventListener:" + eventData.name);
+        $('div.noterow#' + eventData.key).hide();
     } else {
         log("EventListener:" + eventData.name);
     }

@@ -269,7 +269,7 @@ var SimplenoteAPI2 = {
                         break;
                     case 404:
                         if (callbacks.noteNotExist)
-                            callbacks.noteNotExist();
+                            callbacks.noteNotExist(key);
                         break;               
                     case 0:
                         if (callbacks.timeout)

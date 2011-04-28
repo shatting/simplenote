@@ -102,7 +102,7 @@ var SimplenoteDB = {
             this.log("_gotIndexChunk: error getting index from server.");
             this.offline(true);
             this._setSyncInProgress(false);
-            uiEvent("sync", { status: "error", changes : this._indexKeysChanged});
+            uiEvent("sync", {status: "error", changes : this._indexKeysChanged});
         } else {
             var thisHadChanges = false, note;
             
@@ -252,10 +252,12 @@ var SimplenoteDB = {
                     if (callback)
                         callback();                    
                 },
-                noteNotExist:  function() {
+                noteNotExist:  function(key) {
                     SimplenoteDB.offline(false);
                     SimplenoteDB.log('getNote::noteNotExists');
-                    alert('SimplenoteDB::getNote::noteNoteExist');
+                    SimplenoteLS.removeFromSyncList(key);
+                    SimplenoteLS.delNote(key);
+                    //alert('SimplenoteDB::getNote::noteNoteExist');
                     if (callback)
                         callback();                    
                 },

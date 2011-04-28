@@ -34,6 +34,7 @@ $(document).ready(function() {
   });
 
   $("#save").click(save_clicked);
+  $("#reset").click(reset_clicked);
 
 });
 
@@ -112,4 +113,8 @@ function save_clicked() {
         $("#save").removeAttr("disabled");
     });
 
+}
+
+function reset_clicked() {
+    chrome.extension.sendRequest({action:"userchanged"});
 }
