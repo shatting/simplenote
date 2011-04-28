@@ -148,7 +148,7 @@ var SimplenoteLS = {
         var regQuery;
         
         if (options && options.contentquery && options.contentquery != "")
-            regQuery = new RegExp(options.contentquery,"im");
+            regQuery = options.contentquery;//new RegExp(options.contentquery,"im");
 
         // filter with options
         for (var i = 0; i<keys.length;i++) {
@@ -179,7 +179,7 @@ var SimplenoteLS = {
             }                   
             if (!add) continue;
 
-            add &= regQuery == undefined || regQuery.test(note.content);
+            add &= regQuery == undefined || note.content.indexOf(regQuery)>=0;
             if (!add) continue;
             
             add &= options.systemtag == undefined || note.systemtags.indexOf(options.systemtag)>=0;

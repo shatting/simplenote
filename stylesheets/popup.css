@@ -91,10 +91,10 @@ div#index div#toolbar input#q:focus {
 }
 
 div#notes {  
-    width: 99%;
+    width: 398px;
     margin-bottom: 27px;
     position: absolute;
-    top: 40px;
+    top: 38px;
     bottom: 0;
     overflow-y: auto;
     overflow-x: none;
@@ -111,8 +111,8 @@ div.noterow {
     background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));    
     -webkit-box-shadow: 0 0px 2px rgba(0,80,128,0.5);
     border: 2px solid #F7F8FF;
-    border-radius: 6px;
-    margin: 4px;
+    border-radius: 2px;
+    margin: 2px;
     margin-bottom: 2px;
     margin-top: 0px;
     padding: 2px;

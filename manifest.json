@@ -1,6 +1,6 @@
 {
   "name": "Simplenote+",
-  "version": "1.4.9.9",
+  "version": "1.5",
   "description": "An easy way to keep notes, lists, ideas and more. Syncs automatically with your devices and other apps.",  
   "icons": {
     "96": "imanges/logo_96.png",
@@ -22,4 +22,3 @@
     "unlimitedStorage"
   ]
 }
-
