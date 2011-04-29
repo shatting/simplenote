@@ -219,7 +219,7 @@ var SimplenoteLS = {
             });
 
         // get pinned on top
-        //   since chromes sort isnt stable, we gotta stabilize it
+        //   since chromes array sort isnt stable, we have to stabilize it
         for (i=0; i<notes.length; i++)
             notes[i].index = i;
         notes.sort(function(n1,n2) {            

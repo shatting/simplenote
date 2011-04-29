@@ -95,7 +95,6 @@ function uiEventListener(eventData, sender, sendResponse) {
         log("EventListener:" + eventData.name);
     }
 }
-
 //  ---------------------------------------
 $(document).ready(function() {
     
@@ -119,7 +118,8 @@ $(document).ready(function() {
                 log("(ready): login success, requesting full sync.");                
                 chrome.extension.sendRequest({action: "sync", fullsync:true}, function() {
                     log("(ready): calling fillTags");                    
-                    chrome.extension.onRequest.addListener(uiEventListener); 
+
+                    chrome.extension.onRequest.addListener(uiEventListener);
                 });
                                 
                 if (localStorage.opentonotekey && localStorage.opentonotekey != "" && localStorage.option_opentonote == "true") {
@@ -160,13 +160,13 @@ $(document).ready(function() {
                     prefixFromNow: null,
                     suffixAgo: "",
                     suffixFromNow: "from now",
-                    seconds: "< 1 min",
+                    seconds: "<1 min",
                     minute: "1 min",
                     minutes: "%d min",
-                    hour: "1h",
-                    hours: "%dh",
-                    day: "1d",
-                    days: "%dd",
+                    hour: "1 h",
+                    hours: "%d h",
+                    day: "1 d",
+                    days: "%d d",
                     month: "1 month",
                     months: "%d months",
                     year: "1 year",
@@ -198,7 +198,6 @@ $(document).ready(function() {
 function displayStatusMessage(message) {    
     $('#toolbar').hide();
     $('#statusbar').hide();
-    //$('#loader').hide();
     $('#notes').html(message);
     $('body').css("background","#fff");
     links = $('a');
@@ -233,8 +232,7 @@ function fillTags(callFillIndex) {
         if (!stillhavetag) {
             oldval = "#all#";
         }
-        // add handler
-        
+       // add handler        
         $("#notetags").val(oldval);
         $("#notetags").change(function(event) {
             log("#notetags:changed: calling fillIndex");
@@ -604,7 +602,7 @@ function slideEditor(callback, duration) {
 //    if (isDebug) {
 //        $('div#note2').animate({left:"-=400"}, duration);
 //    } else
-        $('div#noteeditor').animate({width:"+=400"}, duration);
+        //$('div#noteeditor').animate({width:"+=400"}, duration);
 
     $('body').animate({width:"+=400"}, duration);
 }
@@ -619,7 +617,7 @@ function slideIndex(callback, duration) {
 //    if (isDebug) {
 //        $('div#note2').animate({left:"+=400"}, duration);
 //    } else
-        $('div#noteeditor').animate({width:"-=400"}, duration);
+        //$('div#noteeditor').animate({width:"-=400"}, duration);
     
     $('body').animate({width : "-=400"},duration);
 }

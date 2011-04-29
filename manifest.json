@@ -1,19 +1,19 @@
 {
-  "name": "Simplenote+",
-  "version": "1.5.0.1",
-  "description": "An easy way to keep notes, lists, ideas and more. Syncs automatically with your devices and other apps.",  
+  "name": "Syncpad for Simplenote",
+  "version": "1.5.0.2",
+  "description": "Simple text notepad that makes it easy to keep your notes with you, wherever you are: Sync notes between your computers and your handheld devices via the Simplenote service.",
   "icons": {
-    "96": "imanges/logo_96.png",
-    "128": "images/logo_128.png",
-    "16": "images/logo_16.png",
-    "19": "images/logo_19_c.png",
-    "32": "images/logo_32.png",
-    "48": "images/logo_48.png"
+    "96": "imanges/icon_96.png",
+    "128": "images/icon_128.png",
+    "16": "images/icon_16.png",
+    "19": "images/icon_24.png",
+    "32": "images/icon_32.png",
+    "48": "images/icon_48.png"
   },
   "background_page": "background.html",
   "options_page": "options.html",
   "browser_action": {
-    "default_icon": "images/logo_19_c.png",
+    "default_icon": "images/icon_24.png",
     "popup": "popup.html"
   },
   "permissions": [
