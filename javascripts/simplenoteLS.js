@@ -145,10 +145,11 @@ var SimplenoteLS = {
         var notes = [];
         var add;
         var note;
-        var regQuery;
+        var wordexps;
         
-        if (options && options.contentquery && options.contentquery != "")
-            regQuery = options.contentquery;//new RegExp(options.contentquery,"im");
+        if (options && options.contentquery && options.contentquery != "") {
+            wordexps = options.contentquery.split(" ").map(function(word) {return new RegExp(RegExp.escape(word),'gi');});
+        }
 
         // filter with options
         for (var i = 0; i<keys.length;i++) {
@@ -174,14 +175,17 @@ var SimplenoteLS = {
                         add &= note.deleted == 0;
                         break;
                     default:
-                        add &= note.tags && note.tags.indexOf(options.tag)>=0;
+                        add &= note.tags != undefined && note.tags.indexOf(options.tag)>=0;
                 }
             }                   
             if (!add) continue;
 
-            add &= regQuery == undefined || note.content.indexOf(regQuery)>=0;
+            if (wordexps)
+                for (var j=0; j<wordexps.length; j++)
+                    add &= wordexps[j].test(note.content);
+
             if (!add) continue;
-            
+
             add &= options.systemtag == undefined || note.systemtags.indexOf(options.systemtag)>=0;
 
             if (add) {

@@ -1,7 +1,7 @@
 {
   "name": "Syncpad for Simplenote",
   "version": "1.5.0.2",
-  "description": "Simple text notepad that makes it easy to keep your notes with you, wherever you are: Sync notes between your computers and your handheld devices via the Simplenote service.",
+  "description": "Simple text notepad that syncs with Simplenote. Keep your notes in sync across computers and handhelds. Works offline as well.",
   "icons": {
     "96": "imanges/icon_96.png",
     "128": "images/icon_128.png",
