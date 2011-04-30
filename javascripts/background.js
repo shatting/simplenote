@@ -89,14 +89,14 @@ function handleContextMenu(info, tab) {
 //{"favIconUrl":"http://derstandard.at/favicon.ico","id":16,"incognito":false,"index":3,"pinned":false,"selected":true,"status":"complete","title":"Switchlist - derStandard.at › Etat › Medien › TV","url":"http://derstandard.at/r2140/Switchlist","windowId":1}
 
 // handle omnibox
-chrome.omnibox.onInputChanged.addListener(function(text, suggest) {
-    var notes = SimplenoteLS.getNotes({query:text,deleted:0});
-    for (var i=0; i<notes.length; i++) {
-        notes[i].description = notes[i].content.substr(0, Math.min(notes[i].content.length,40));
-        notes[i].content = notes[i].key;
-    }
-    suggest(notes);
-});
+//chrome.omnibox.onInputChanged.addListener(function(text, suggest) {
+//    var notes = SimplenoteLS.getNotes({query:text,deleted:0});
+//    for (var i=0; i<notes.length; i++) {
+//        notes[i].description = notes[i].content.substr(0, Math.min(notes[i].content.length,40));
+//        notes[i].content = notes[i].key;
+//    }
+//    suggest(notes);
+//});
 
 
 chrome.extension.onRequest.addListener(handleRequest);

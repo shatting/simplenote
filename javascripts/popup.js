@@ -713,7 +713,6 @@ function editorShowNote(note, duration) {
     
         // insert data
         editor.setCode("");
-        //$('div#note div#info').html("");
 
         // show/hide elements        
         $("div#note input#pinned").attr("checked","");        
@@ -734,31 +733,25 @@ function editorShowNote(note, duration) {
         // bind UNDO button
         $('div#note input#undo').unbind();
         $('div#note input#undo').click(note,function(event) {
+            // reset content
             editor.setCode(note.content);
+            // reset tags
             $('div#note input#tags').val(note.tags.join(" "));
+            // reset pinned
             if (note.systemtags.indexOf("pinned")>=0)
                 $('div#note input#pinned').attr("checked","checked");
             else
                 $('div#note input#pinned').removeAttr("checked");
-
+             
             $('div#note input#undo').attr("disabled","disabled");
             editorClearDirty();
         });
-        $('div#note input#undo').attr("disabled","disabled");
-                
-        // insert data
-        editor.setCode(note.content);
-        $('div#note input#tags').val(note.tags.join(" "));        
-        if (note.systemtags.indexOf("pinned")>=0)
-            $('div#note input#pinned').attr("checked","checked");
-        else
-            $('div#note input#pinned').removeAttr("checked");
-        
-        // info div
-        $('div#note2 div#info').html(note2str(note));
-        // show/hide elements
-        
+
+        // trigger undo click-> fills everything
+        $('div#note input#undo').click();        
+
         $('div#note input#undo').show();
+        
         localStorage.opentonotekey = note.key;
     }
 
@@ -796,8 +789,7 @@ function editorNoteChanged(key) {
     
     slideIndex();
        
-    if (noteData.action) {
-        
+    if (noteData.action) {        
         chrome.extension.sendRequest(noteData, function(note) {
             log("editorNoteChanged: request complete");            
         });        
