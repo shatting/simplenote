@@ -579,6 +579,7 @@ function editorShowNote(note, duration) {
         note = {content:"",tags:[],systemtags:[], key:""};
 
     var $editbox = $(editor.editor.container);
+    $editbox.unbind();
     // the following could be done with activeTokens config property
     $(".sn-link",$editbox).die();
     $(".sn-link",$editbox).live("click",function(event) {
@@ -605,8 +606,7 @@ function editorShowNote(note, duration) {
     editor.note = note;
 
     // add note content change (dirty) event listeners
-    editor.dirty = false;
-    $editbox.unbind();
+    editor.dirty = false;    
     $editbox.bind('change keyup paste cut', note, function(event) {
         var note=event.data;        
        

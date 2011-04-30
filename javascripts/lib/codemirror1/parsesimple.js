@@ -5,23 +5,32 @@ var SimpleParser = Editor.Parser = (function() {
 //  }
   var tokenizeSimple = (function() {
 
-    var urlRe = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?[^\s\(\)\[\]\.]/;
+    var urlRe = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)\.(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?[^\s\(\)\[\]\.]/;
 
     function normal(source, setState) {
       var ch = source.peek();
       var url;
-      if (ch != "h") {
-        source.nextWhileMatches(/[^h\n]/);
-        return "text";
-      } else {
-        url = source.lookAheadRegex(urlRe, true);
-        if (url)
-            return "sn-link";
-        else {
-            var s = source.next();
-            return "text";
-        }
+      if (source.endOfLine()) {
+          source.next();
+          return "whitespace";
       }
+
+      if (source.lookAheadRegex(urlRe, true))
+          return "sn-link";
+
+      while(!url && !source.endOfLine()) {
+        source.nextWhileMatches(/[^h\n]/);
+        if (!source.endOfLine()) {
+            url = source.lookAheadRegex(urlRe, false);
+            if (url)
+                return "text";
+            else {
+                source.next();                
+            }
+        } else
+            return "text";
+      }      
+      return "text";
     }
 
     return function(source, startState) {

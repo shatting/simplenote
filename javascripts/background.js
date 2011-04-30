@@ -41,19 +41,24 @@ $(document).ready(function() {
 chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (URL)",contexts:['page'],onclick:handleContextMenu})
 chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (Selection)",contexts:['selection'],onclick:handleContextMenu})
 chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (Link)",contexts:['link','image'],onclick:handleContextMenu})
+
 //chrome.contextMenus.create({type:"normal",title:"Insert a Simplenote",contexts:['editable'],onclick:handleContextMenu})
 
 function handleContextMenu(info, tab) {
     var content = "";
+    var gotSelection = info.selectionText != undefined;
+//    console.log(info)
+//    console.log(tab)
     if (info.linkUrl) {
-        if (info.selectionText)
-            content += info.selectionText + "\n";
-        content += info.linkUrl;
+        if (gotSelection)
+            content += info.selectionText + ": ";
+        content += info.linkUrl;        
     } else {
-        if (info.selectionText)
+        if (gotSelection) {
             content += info.selectionText + "\n";
-        content += tab.title + " (" + info.pageUrl + ")";
-       
+            content += "(Source: " + tab.title + "\n" + info.pageUrl + ")";
+        } else
+            content += tab.title + " (" + info.pageUrl + ")";
     } 
     
     var note = {content:content};
