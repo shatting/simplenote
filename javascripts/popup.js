@@ -19,7 +19,7 @@ addEventListener("unload", function (event) {
         var note = {};
         log("(unload): requesting background save");
                 
-        if (editor.dirty) //$('div#note #contenteditor').attr("dirty")=="true")
+        if (editor.dirty)
             note.content = editor.getCode();
         if ($('div#note input#pinned').attr("dirty")=="true")
             note.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[]; // todo: "read" systag       
@@ -554,11 +554,6 @@ function slideEditor(callback, duration) {
         duration = 300;
     $('div#index').animate({left:"-=400"}, {duration: duration, complete: callback});
     $('div#note').animate({left:"-=400"}, duration);
-//    if (isDebug) {
-//        $('div#note2').animate({left:"-=400"}, duration);
-//    } else
-        //$('div#noteeditor').animate({width:"+=400"}, duration);
-
     $('body').animate({width:"+=400"}, duration);
 }
 
@@ -568,12 +563,7 @@ function slideIndex(callback, duration) {
     localStorage.opentonotekey = "";
     editorClearDirty();
     $('div#index').animate({left:"+=400"}, {duration: duration, complete: callback});
-    $('div#note').animate({left:"+=400"}, duration);
-//    if (isDebug) {
-//        $('div#note2').animate({left:"+=400"}, duration);
-//    } else
-        //$('div#noteeditor').animate({width:"-=400"}, duration);
-    
+    $('div#note').animate({left:"+=400"}, duration);   
     $('body').animate({width : "-=400"},duration);
 }
 
@@ -616,7 +606,8 @@ function editorShowNote(note, duration) {
 
     // add note content change (dirty) event listeners
     editor.dirty = false;
-    $(editor.editor.container,$editbox).bind('change keyup paste cut', note, function(event) {
+    $editbox.unbind();
+    $editbox.bind('change keyup paste cut', note, function(event) {
         var note=event.data;        
        
         if (note.content != editor.getCode()) {
@@ -634,6 +625,12 @@ function editorShowNote(note, duration) {
             $('div#note input#undo').removeAttr("disabled");
         else
             $('div#note input#undo').attr("disabled","disabled");
+    });
+
+    // fix for home not scrolling all to the left
+    $(editor.editor.container,$editbox).keydown(function(event) {        
+        if (event.keyCode == 36) //home key            
+            $editbox.scrollLeft($editbox.scrollLeft()-650);            
     });
     
     // add note tags change (dirty) event listeners
