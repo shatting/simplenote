@@ -244,8 +244,40 @@ div.shared {
 /* note div */
 
 div#note {
-    left:400px;
     position: absolute;
+    left:400px;
+    width:792px;
+    height: 542px;
+    margin-right: 2px;
+    margin-left: 2px;
+    margin-top: 2px;
+    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
+    outline-color: black;
+    -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
+    border: 2px solid #F5F6FD;
+    border-radius: 3px;    
+}
+
+.CodeMirror-wrapping {
+    padding: 1px;    
+    border-radius: 12px 0px 0px 0px;
+    border: 1px solid #999;
+    ''border: 1px solid rgba(0, 0, 0, 0.3);
+    ''box-shadow: 0 1px 0 #fff;
+    ''margin-left: 2px;
+    ''margin-right: 2px;    
+    margin-top: 4px;    
+}
+
+.CodeMirror-wrapping:focus {
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    -webkit-box-shadow: 0 0 3px #3c7ecf;
+    outline: none;
+}
+
+div#note input[type=button] {
+    padding: 2px 6px;
+    margin: 4px;
 }
 
 div#note input#destroy, div#note input#undo {
@@ -254,51 +286,6 @@ div#note input#destroy, div#note input#undo {
 
 div#note input#backtoindex {
   float: right;
-  margin-left:100px;
-}
-
-div#note div#toolbar {
-  float:right;
-}
-
-#contenteditor {
-    padding: 10px;    
-    height: 486px;
-    border-radius: 12px 0px 0px 0px;
-    border: 1px solid #999; 
-    border: 1px solid rgba(0, 0, 0, 0.3); 
-    box-shadow: 0 1px 0 #fff; 
-    margin-left: 2px;
-    margin-right: 2px;
-    margin-top: 4px;    
-    resize: none;
-    overflow: auto;
-    -webkit-user-modify: read-write-plaintext-only !important;
-}
-
-.CodeMirror {
-    padding: 10px;
-    height: 454px;
-    border-radius: 12px 0px 0px 0px;
-    border: 1px solid #999;
-    border: 1px solid rgba(0, 0, 0, 0.3);
-    box-shadow: 0 1px 0 #fff;
-    margin-left: 2px;
-    margin-right: 2px;
-    margin-top: 4px;
-    resize: none;
-    overflow: auto; 
-}
-
-.CodeMirror-lines pre {
-    padding-top: 4px;
-}
-
-#contenteditor:focus {
-    border: 1px solid #666;
-    border: 1px solid rgba(0, 0, 0, 0.4);
-    -webkit-box-shadow: 0 0 3px #3c7ecf;
-    outline: none;    
 }
 
 div#note input#tags {
@@ -322,43 +309,35 @@ div#note input#tags:focus {
     outline: none;
 }
 
-div#note div#noteeditor {
-    margin-right: 2px;
-    margin-left: 2px;
-    margin-top: 2px;
-    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
-    outline-color: black;
-    -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
-    border: 2px solid #F5F6FD;
-    border-radius: 3px;
-    width:792px;
-}
-
-div#note div#pinwrapper {
-    width:10%;
+div#note div#pinwrapper, div#note div#wordwrapwrapper {
     padding: 5px;
     margin-right:5px;
     display:inline;
 }
+div#note div#wordwrapwrapper {
+    float:right;
+    margin-left:50px;
+}
 
 /* scrollbar */
 ::-webkit-scrollbar {
-    width: 15px;
-    height: 15px;    
-    background-color: transparent; 
+    width: 14px;
+    height: 14px;
+    background-color: transparent;    
 }
 
 ::-webkit-scrollbar-track-piece  {
     background-color: #CACFDE;
     -webkit-border-radius: 6px;
+    ''background: #4F4F59 url(/images/texture.png);
 }
 
-:-webkit-scrollbar-button:start:decrement,
+/*::-webkit-scrollbar-button:start:decrement,
 ::-webkit-scrollbar-button:end:increment  {
-    height: 30px;
+    height: 1px;
     display: block;
-    background-color: #FAA;
-}
+    background-color: #FAA;    
+}*/
 
 ::-webkit-scrollbar-thumb:vertical {      
     background: -webkit-gradient(linear, right top, left top,color-stop(0.0, #F7F8FF),color-stop(1.0, #FFF));

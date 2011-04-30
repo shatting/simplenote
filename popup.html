@@ -2,22 +2,12 @@
 <html>
   <head>
     <meta http-equiv='Content-type' content='text/html; charset=utf-8' />    
-    <link rel="stylesheet" href="javascripts/lib/codemirror2/lib/codemirror.css">
-    <link rel="stylesheet" href="stylesheets/popup.css" type="text/css" media="all" />    
-    <link rel="stylesheet" href="javascripts/lib/codemirror2/mode/simplenote/simplenote.css">
-    <link href="http://fonts.googleapis.com/css?family=Walter+Turncoat:regular" rel="stylesheet" type="text/css" >
-    <link href="http://fonts.googleapis.com/css?family=Inconsolata:regular" rel="stylesheet" type="text/css" >
-    <link href="http://fonts.googleapis.com/css?family=Droid+Sans+Mono:regular" rel="stylesheet" type="text/css" >
-    <link href='http://fonts.googleapis.com/css?family=Lekton' rel='stylesheet' type='text/css'>
-    <link href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:300" rel="stylesheet" type="text/css" >
-    <link  href="http://fonts.googleapis.com/css?family=Vollkorn:regular" rel="stylesheet" type="text/css" >
+    <link rel="stylesheet" href="stylesheets/popup.css" type="text/css" media="all" />       
     <script type="text/javascript" src="javascripts/lib/jquery.js"></script>
     <script type="text/javascript" src="javascripts/lib/jquery.typewatch.js"></script>
     <script type="text/javascript" src="javascripts/lib/jquery.timeago.js"></script>    
-    <script type="text/javascript" src="javascripts/lib/codemirror2/lib/codemirror.js"></script>
-    <script type="text/javascript" src="javascripts/lib/codemirror2/mode/simplenote/simplenote.js"></script>
-    <script type="text/javascript" src="javascripts/common.js"></script>
-    
+    <script type="text/javascript" src="javascripts/lib/codemirror1/js/codemirror.js"></script>    
+    <script type="text/javascript" src="javascripts/common.js"></script>    
     <script type="text/javascript" src="javascripts/popup.js"></script>
     <script>
         var _gaq = _gaq || [];
@@ -31,7 +21,7 @@
         })();
     </script>
   </head>
-  <body>
+  <body onselectstart="return false;">
     <div id="index">
         <div id="toolbar">
           <input type="text" id="q" onsubmit="return false" placeholder="Search notes" spellcheck="false" title="Type here to search for notes"/>
@@ -43,20 +33,31 @@
     </div>
     <div id="note">
         
-        <div id="noteeditor">
-            <!--<div id="toolbar">-->
-              <input type="button" id="backtoindex" value="Back" title="Back to notes (Changes are saved)"/>
-              <!--<input type="checkbox" id="wordwrap" title="Toggle wordwrap"/>-->
-              <input type="button" id="destroy" value="Trash" title="Send note to trash"/>
-              <input type="button" id="undo" value="Undo changes" title="Revert changes"/>
-            <!--</div>-->
-            <input type="text" id="tags" placeholder="Tag this note" spellcheck="false" title="Click here to enter tags for this note"/>
-            <div id="pinwrapper" title="Pin this note to always show on top">
-                <input type="checkbox" id="pinned" /><label for="pinned"> Pin</label>
-            </div>
-        </div>        
-        
-    </div>    
+        <input type="button" id="backtoindex" value="Back" title="Back to notes (Changes are saved)"/>
+        <div id="wordwrapwrapper">
+            <input type="checkbox" id="wordwrap" title="Toggle wordwrap"/><label for="wordwrap">Wordwrap</label>
+        </div>
+        <input type="button" id="destroy" value="Trash" title="Send note to trash"/>
+        <input type="button" id="undo" value="Undo changes" title="Revert changes"/>        
+        <input type="text" id="tags" placeholder="Tag this note" spellcheck="false" title="Click here to enter tags for this note"/>
+        <div id="pinwrapper" title="Pin this note to always show on top">
+            <input type="checkbox" id="pinned" /><label for="pinned">Pin</label>
+        </div>
+    </div>
+    <script type="text/javascript">
+        editor = new CodeMirror(document.getElementById("note"),{
+                parserfile: "parsesimple.js",
+                path: "javascripts/lib/codemirror1/js/",
+                iframeClass: "cm-iframe",                
+                height: "503px",
+                content: "",
+                stylesheet: "stylesheets/editor.css",
+                tabMode: "shift"
+            });
+        $(".cm-iframe").attr("id","cmiframe");
+        $(".CodeMirror-wrapping").attr("id","cmwrapper");        
+
+    </script>
     <!--<div id="loader"></div>
     <div id="status"></div>-->
   </body>

@@ -1,0 +1,47 @@
+html {
+    overflow: auto;
+}
+
+.editbox {
+  margin: .4em;
+  padding: 10px;
+  font-family: monospace;
+  font-size: 13pt;
+  color: black;
+}
+
+.editbox p {
+  margin: 0;
+}
+
+.sn-link {color: #00f; cursor:pointer;}
+
+::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+    background-color: transparent;
+}
+
+::-webkit-scrollbar-track-piece  {
+    background-color: #CACFDE;
+    -webkit-border-radius: 6px;
+    ''background: #4F4F59 url(/images/texture.png);
+}
+
+/*:-webkit-scrollbar-button:start:decrement,
+::-webkit-scrollbar-button:end:increment  {
+    height: 30px;
+    display: block;
+    background-color: #FAA;
+}*/
+
+::-webkit-scrollbar-thumb:vertical {
+    background: -webkit-gradient(linear, right top, left top,color-stop(0.0, #F7F8FF),color-stop(1.0, #FFF));
+    border: 1px solid #CACFDE;
+    -webkit-border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:horizontal {
+    background: -webkit-gradient(linear, right top, left top,color-stop(0.0, #F7F8FF),color-stop(1.0, #FFF));
+    border: 1px solid #CACFDE;
+    -webkit-border-radius: 6px;
+}

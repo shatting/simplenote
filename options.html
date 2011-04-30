@@ -1,7 +1,7 @@
 <!DOCTYPE html> 
 <html>
     <head>
-        <title>Simplenote+ Options</title>
+        <title>Syncpad for Simplenote Options</title>
         <meta http-equiv='Content-type' content='text/html; charset=utf-8' />
         <link rel="stylesheet" href="stylesheets/options.css" type="text/css" media="all" />
         <script src="javascripts/lib/jquery.js"></script>
@@ -61,13 +61,13 @@
                 <div class="option">
                     Editor font
                     <select id="editorfont">
-                        <!--<option value='"Helvetica Neue", Arial, Helvetica, Arimo, FreeSans, "Nimbus Sans", "Phetsarath OT", Malayalam, "Gargi_1.7", sans-serif'>Simplenote</option>-->
-                        <!--<option value='"Lucida Console", "Lucida Sans Typewriter", Consolas, "Andale Mono", "Courier New", monospace;'>Monospace</option>-->
+                        <option value='"Helvetica Neue", Arial, Helvetica, Arimo, FreeSans, "Nimbus Sans", "Phetsarath OT", Malayalam, "Gargi_1.7", sans-serif'>Simplenote</option>
+                        <option value='"Lucida Console", "Lucida Sans Typewriter", Consolas, "Andale Mono", "Courier New", monospace;'>Monospace</option>
                         <option value='Inconsolata'>Inconsolata (Monospace)</option>
                         <option selected value='Droid Sans Mono'>Droid Sans Mono (Monospace)</option>
                         <option value='Lekton'>Lekton (Monospace)</option>
-                        <!--<option value='"Walter Turncoat"'>Walter Turncoat</option>
-                        <option value='"Yanone Kaffeesatz"'>Yanone Kaffeesatz</option>
+                        <option value='Walter Turncoat'>Walter Turncoat</option>
+                        <option value='Yanone Kaffeesatz'>Yanone Kaffeesatz</option>
                         <option value='Vollkorn'>Vollkorn</option>-->
                     </select>
                     <br>
@@ -87,10 +87,18 @@
                     <input type="checkbox" id="editorfontshadow"/><label for="editorfontshadow"> Font shadow</label>
                 </div>
             </div>
+            <div class="option">
+                <div class="tip">
+                    Syncpad for Simplenote is developed and maintained by Stephan Hattinger and based on the <a href="https://github.com/janne/unofficial_simplenote" target="_blank">Unofficial Simplenote extension</a> by Jan Andersson. <br><br>For comments/bug reports/requests, please send me an <a href="mailto:stephan.hattinger@gmail.com">email</a> or
+                    visit the <a target="_blank" href="http://chrome.google.com/extensions/detail/djiafihgcdhojlgmgfolclfgmllnhhbj">extension's site</a> and leave a comment.
+                    <br>
+                    If youre having trouble, you can try to <button id="reset">clear</button> the notes cache.
+                </div>
+            </div>
             <center>
 
                 <div class="option">
-                    <div class="tip">If you like Simplenote+, please consider making a (small) donation!</div>
+                    <div class="tip">If you like this extension, please consider making a (small) donation!</div>
                     <form action="https://www.paypal.com/cgi-bin/webscr" method="post" id="donate">
                         <input type="hidden" name="cmd" value="_s-xclick">
                         <input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----MIIHTwYJKoZIhvcNAQcEoIIHQDCCBzwCAQExggEwMIIBLAIBADCBlDCBjjELMAkGA1UEBhMCVVMxCzAJBgNVBAgTAkNBMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MRQwEgYDVQQKEwtQYXlQYWwgSW5jLjETMBEGA1UECxQKbGl2ZV9jZXJ0czERMA8GA1UEAxQIbGl2ZV9hcGkxHDAaBgkqhkiG9w0BCQEWDXJlQHBheXBhbC5jb20CAQAwDQYJKoZIhvcNAQEBBQAEgYBoOWnRDjPjgVUZ1RffbJa9nky4r6tEbk7IKwgzAMor4a8UNcvnmydcjSi6POiEwrIKWl2LKKuvFM8Me6jrgOzBsHsZrAOPOLhj3h/I6xEsDYcuNBcQZJbZEMRpWUDizIgIvMUPVavkihUDTjkDYVvUdZhx9x5WJpAdHK7ReApY6DELMAkGBSsOAwIaBQAwgcwGCSqGSIb3DQEHATAUBggqhkiG9w0DBwQIGJMxmBro+wGAgai5tTd/vKa5G1ONoB7ilhSxxzRJZjj98W/9iAHos/FUxIGxyByACDT83B9oJtV3W4LtAeet118zGHIYfIj0JNyZQYYI+7+l2P125nOzFA36UMo28vRmI8st3zn+lZTxiagRyq5A87/90u+iQltmaU2UuhNQ1ZHYxFTmc1xUzbtRVxsfMHo6YxvWOC0fZvMygp+LZbAPtZDoOxkA0763WBi+a2YdYJOrCIugggOHMIIDgzCCAuygAwIBAgIBADANBgkqhkiG9w0BAQUFADCBjjELMAkGA1UEBhMCVVMxCzAJBgNVBAgTAkNBMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MRQwEgYDVQQKEwtQYXlQYWwgSW5jLjETMBEGA1UECxQKbGl2ZV9jZXJ0czERMA8GA1UEAxQIbGl2ZV9hcGkxHDAaBgkqhkiG9w0BCQEWDXJlQHBheXBhbC5jb20wHhcNMDQwMjEzMTAxMzE1WhcNMzUwMjEzMTAxMzE1WjCBjjELMAkGA1UEBhMCVVMxCzAJBgNVBAgTAkNBMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MRQwEgYDVQQKEwtQYXlQYWwgSW5jLjETMBEGA1UECxQKbGl2ZV9jZXJ0czERMA8GA1UEAxQIbGl2ZV9hcGkxHDAaBgkqhkiG9w0BCQEWDXJlQHBheXBhbC5jb20wgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAMFHTt38RMxLXJyO2SmS+Ndl72T7oKJ4u4uw+6awntALWh03PewmIJuzbALScsTS4sZoS1fKciBGoh11gIfHzylvkdNe/hJl66/RGqrj5rFb08sAABNTzDTiqqNpJeBsYs/c2aiGozptX2RlnBktH+SUNpAajW724Nv2Wvhif6sFAgMBAAGjge4wgeswHQYDVR0OBBYEFJaffLvGbxe9WT9S1wob7BDWZJRrMIG7BgNVHSMEgbMwgbCAFJaffLvGbxe9WT9S1wob7BDWZJRroYGUpIGRMIGOMQswCQYDVQQGEwJVUzELMAkGA1UECBMCQ0ExFjAUBgNVBAcTDU1vdW50YWluIFZpZXcxFDASBgNVBAoTC1BheVBhbCBJbmMuMRMwEQYDVQQLFApsaXZlX2NlcnRzMREwDwYDVQQDFAhsaXZlX2FwaTEcMBoGCSqGSIb3DQEJARYNcmVAcGF5cGFsLmNvbYIBADAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBBQUAA4GBAIFfOlaagFrl71+jq6OKidbWFSE+Q4FqROvdgIONth+8kSK//Y/4ihuE4Ymvzn5ceE3S/iBSQQMjyvb+s2TWbQYDwcp129OPIbD9epdr4tJOUNiSojw7BHwYRiPh58S1xGlFgHFXwrEBb3dgNbMUa+u4qectsMAXpVHnD9wIyfmHMYIBmjCCAZYCAQEwgZQwgY4xCzAJBgNVBAYTAlVTMQswCQYDVQQIEwJDQTEWMBQGA1UEBxMNTW91bnRhaW4gVmlldzEUMBIGA1UEChMLUGF5UGFsIEluYy4xEzARBgNVBAsUCmxpdmVfY2VydHMxETAPBgNVBAMUCGxpdmVfYXBpMRwwGgYJKoZIhvcNAQkBFg1yZUBwYXlwYWwuY29tAgEAMAkGBSsOAwIaBQCgXTAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqGSIb3DQEJBTEPFw0xMTA0MTQxMDEzMzBaMCMGCSqGSIb3DQEJBDEWBBQ+mfqwOJw6efJaFzf2D8ABO3L0VTANBgkqhkiG9w0BAQEFAASBgDONluA6wNhonHmd3IQ5p5VVe+m9iaIxgyds4lkYu5LT7qiczy6dt6RHEFnuYxz5q9D/cyG1KY4b0nwHIqvzaiKDHypL76EEmIj0w+nn7aLfKrCcwqCyThlaRWC+7EgXdpcPdZOrm04q5G++ACQnRFG/myXBlTmq6FXw5sORJT7N-----END PKCS7-----
@@ -100,14 +108,6 @@
                     </form>
                 </div>
             </center>
-            <div class="option">
-                <div class="tip">
-                    Simplenote+ for Chrome is developed and maintained by Stephan Hattinger. <br><br>For comments/bug reports/requests, please send me an <a href="mailto:stephan.hattinger@gmail.com">email</a> or
-                    visit the <br><a target="_blank" href="http://chrome.google.com/extensions/detail/djiafihgcdhojlgmgfolclfgmllnhhbj">extension's site</a> and leave a comment.
-                    <br>
-                    If youre having trouble, please try this first: <button id="reset">Clear local memory</button>
-                </div>
-            </div>
         </div>
     </body>
 </html>

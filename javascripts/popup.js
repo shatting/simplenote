@@ -19,14 +19,14 @@ addEventListener("unload", function (event) {
         var note = {};
         log("(unload): requesting background save");
                 
-        if ($('div#note #contenteditor').attr("dirty")=="true")
-            note.content = editor.getValue();
+        if (editor.dirty) //$('div#note #contenteditor').attr("dirty")=="true")
+            note.content = editor.getCode();
         if ($('div#note input#pinned').attr("dirty")=="true")
             note.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[]; // todo: "read" systag       
         if ($('div#note input#tags').attr("dirty")=="true")
             note.tags = $('div#note input#tags').val().split(" ");
         
-        note.key = $('div#note #contenteditor').attr('key');
+        note.key = editor.note.key;
 
         log("(unload): note:");
         log(note);
@@ -95,6 +95,16 @@ function uiEventListener(eventData, sender, sendResponse) {
         log("EventListener:" + eventData.name);
     }
 }
+
+var fontUrls = {
+    "Droid Sans Mono"   : '<link href="http://fonts.googleapis.com/css?family=Droid+Sans+Mono:regular" rel="stylesheet" type="text/css" >',
+    "Walter Turncoat"   : '<link href="http://fonts.googleapis.com/css?family=Walter+Turncoat:regular" rel="stylesheet" type="text/css" >',
+    "Inconsolata"       : '<link href="http://fonts.googleapis.com/css?family=Inconsolata:regular" rel="stylesheet" type="text/css" >',
+    "Lekton"            : '<link href="http://fonts.googleapis.com/css?family=Lekton" rel="stylesheet" type="text/css">',
+    "Yanone Kaffeesatz" : '<link href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:300" rel="stylesheet" type="text/css" >',
+    "Vollkorn"          : '<link href="http://fonts.googleapis.com/css?family=Vollkorn:regular" rel="stylesheet" type="text/css" >'
+}
+//
 //  ---------------------------------------
 $(document).ready(function() {
     
@@ -468,61 +478,6 @@ function htmlDecode(s) {
     return htmlUnsafe(s.replace(/<br>/gi,"\n").replace(/&nbsp;/gi," "));
 }
 
-function getEditorContent() {
-//    return elem2txt($('div#note #contenteditor')[0]);
-//}
-
-//function elem2txt(e) {
-//    if (e.innerText.length == 0)
-//        return "";
-//
-//    if (e.innerText[e.innerText.length-1] == "\n") // innertext doubles trailing \n
-//        return e.innerText.substring(0, e.innerText.length-1);
-//    else
-//        return e.innerText;
-    
-//    var s = [];
-//    var line = "";
-//    var childs;
-//    for (var i=0;i<e.children.length;i++) {
-//        childs = e.children[i].children;
-//        if (childs.length > 0 && !(childs.length == 1 && childs[0].outerHTML == "<br>")) { // pasted
-//            //console.log(e.children[i])
-//            line = elem2txt(e.children[i]);
-//            //console.log(line)
-//        } else {
-//            line = htmlDecode(e.children[i].innerHTML.replace("<br>",""));
-//        }
-//        if (line=="\n")
-//            s.push("");
-//        else
-//            s.push(line);
-//    }
-//    return s.join("\n");
-}
-
-//function setEditorContent(s) {
-//    var $editor = $('div#note #contenteditor');
-//    $("#contenteditor2").val(s);
-//    $('div#note #contenteditor').attr("contenteditable","false");
-//    $('div#note #contenteditor').empty();
-//    var html = "";
-//    var lines = s.split("\n");
-//    for (var i=0; i<lines.length; i++) {
-//        //log("line " + i);
-//        //log(lines[i]);
-//        if (lines[i].length == 0)
-//            html += "<div><br></div>";
-//        else if (lines[i].match(/https?:\/\/[^:\/\s]+[^\s\(\)\[\]]*/gi)) {
-//            url = RegExp['$&'];
-//            html += "<div>" + htmlSafe(lines[i]).replace(url, "<a style='cursor:pointer;' onclick='openURLinTab(this.href);' href='" + url + "'>" + url+ "</a>") + "</div>";
-//        } else
-//            html += "<div>" + htmlSafe(lines[i]).replace(/\s/gi,"&nbsp;") + "</div>";
-//    }
-//    $editor.html("<div>" + html + "</div>");
-//    $('div#note #contenteditor').attr("contenteditable","true");
-//}
-
 //function maximize(event) {
 //    var key = this.id;
 //    var $this = $(this);
@@ -633,36 +588,47 @@ function editorShowNote(note, duration) {
     if (note==undefined)
         note = {content:"",tags:[],systemtags:[], key:""};
 
-    if (!editor) {
-        editor = CodeMirror(document.getElementById("noteeditor"),{mode:"simplenote", electricChars:false, tabMode: "shift", indentUnit: 4, onChange: function(ineditor) {
-                if (!ineditor)
-                    return
-                console.log("change" + ineditor.note.key)
-        }});
-        $(".CodeMirror").attr("id","contenteditor");
-        $("span.sn-link").live("click",function(event) {
-           var url = this.textContent;
-           if (url[url.length-1] == ".")
-               url=url.substring(0,url.length-1);
-           openURLinTab(url);
-        });
+    var $editbox = $(editor.editor.container);
+    // the following could be done with activeTokens config property
+    $(".sn-link",$editbox).die();
+    $(".sn-link",$editbox).live("click",function(event) {
+       var url = this.textContent;
+       openURLinTab(url);
+    });
+    
+    var $head = $(editor.editor.container.ownerDocument.head);    
+    for(var name in fontUrls) {        
+        if (name == localStorage.option_editorfont) {
+            $head.append(fontUrls[name]);
+            delete fontUrls[name];
+            break;
+        }
     }
-
+        
+    if (localStorage.option_editorfont )
+        $editbox.css("font-family",localStorage.option_editorfont );
+    if (localStorage.option_editorfontsize )
+        $editbox.css("font-size",localStorage.option_editorfontsize + "px" );
+    if (localStorage.option_editorfontshadow && localStorage.option_editorfontshadow == "true")
+        $editbox.css("text-shadow","2px 2px 2px #aaa" );
+    
     editor.note = note;
 
     // add note content change (dirty) event listeners
-    $('div#note #contenteditor').unbind();
-    $('div#note #contenteditor').bind('change keyup paste cut', note, function(event) {
+    editor.dirty = false;
+    $(editor.editor.container,$editbox).bind('change keyup paste cut', note, function(event) {
         var note=event.data;        
        
-        if (note.content != editor.getValue()) {
-            if ($('div#note #contenteditor').attr('dirty') != "true")
+        if (note.content != editor.getCode()) {
+            if (!editor.dirty)
                 log("content dirty now (" + event.type + ")");
-            $('div#note #contenteditor').attr('dirty', 'true');
+            //$('div#note').attr('dirty', 'true');
+            editor.dirty = true;
         } else {
-            if ($('div#note #contenteditor').attr('dirty') == "true")
+            if (editor.dirty)
                 log("content not dirty now (" + event.type + ")");
-            $('div#note #contenteditor').removeAttr('dirty');
+            //$('div#note #contenteditor').removeAttr('dirty');
+            editor.dirty = false;
         }
         if (editorIsNoteDirty())
             $('div#note input#undo').removeAttr("disabled");
@@ -721,29 +687,21 @@ function editorShowNote(note, duration) {
     });
 
     // bind word wrap           
-//    $("div#note input#wordwrap").unbind();
-//    $("div#note input#wordwrap").bind('change', function(event) {
-//        localStorage.wordwrap = $("#wordwrap").attr("checked");
-//        if ($("div#note input#wordwrap").attr("checked"))
-//            $('div#note #contenteditor').css("white-space","normal");
-//        else
-//            $('div#note #contenteditor').css("white-space","nowrap");
-//    });
+    $("div#note input#wordwrap").unbind();
+    $("div#note input#wordwrap").bind('change', function(event) {
+        localStorage.wordwrap = $("#wordwrap").attr("checked");
+        editor.setTextWrapping($("div#note input#wordwrap").attr("checked"))
+    });
 
-//    if (localStorage.wordwrap != undefined && localStorage.wordwrap == "true") {
-//        $("div#note input#wordwrap").attr("checked","true");
-//    } else {
-//        $("div#note input#wordwrap").attr("checked","");
-//    }
-//    $("div#note input#wordwrap").change();
+    if (localStorage.wordwrap != undefined && localStorage.wordwrap == "true") {
+        $("div#note input#wordwrap").attr("checked","true");
+    } else {
+        $("div#note input#wordwrap").attr("checked","");
+    }
+    $("div#note input#wordwrap").change();
 
     // set editor style
-    if (localStorage.option_editorfont )
-        $("div#note #contenteditor, div#note2 #contenteditor2").css("font-family",localStorage.option_editorfont );
-    if (localStorage.option_editorfontsize )
-        $("div#note #contenteditor, div#note2 #contenteditor2").css("font-size",localStorage.option_editorfontsize + "px" );
-    if (localStorage.option_editorfontshadow && localStorage.option_editorfontshadow == "true")
-        $("div#note #contenteditor, div#note2 #contenteditor2").css("text-shadow","2px 2px 2px #aaa" );
+
     
     // get note contents
     if (note.key == "") { // new note
@@ -757,7 +715,7 @@ function editorShowNote(note, duration) {
         });
     
         // insert data
-        editor.setValue("");
+        editor.setCode("");
         //$('div#note div#info').html("");
 
         // show/hide elements        
@@ -779,7 +737,7 @@ function editorShowNote(note, duration) {
         // bind UNDO button
         $('div#note input#undo').unbind();
         $('div#note input#undo').click(note,function(event) {
-            editor.setValue(note.content);
+            editor.setCode(note.content);
             $('div#note input#tags').val(note.tags.join(" "));
             if (note.systemtags.indexOf("pinned")>=0)
                 $('div#note input#pinned').attr("checked","checked");
@@ -792,7 +750,7 @@ function editorShowNote(note, duration) {
         $('div#note input#undo').attr("disabled","disabled");
                 
         // insert data
-        editor.setValue(note.content);
+        editor.setCode(note.content);
         $('div#note input#tags').val(note.tags.join(" "));        
         if (note.systemtags.indexOf("pinned")>=0)
             $('div#note input#pinned').attr("checked","checked");
@@ -807,22 +765,9 @@ function editorShowNote(note, duration) {
         localStorage.opentonotekey = note.key;
     }
 
-    //$('div#note input#pinned').html("&nbsp;&nbsp;&nbsp;&nbsp;pin");
-    $('div#note input#wordwrap').html("&nbsp;&nbsp;&nbsp;&nbsp;Wordwrap")
-
     // needed for background save
-    $('div#note #contenteditor').attr('key',note.key);
-
-    // synchronize both editors
-//    $('div#note #contenteditor').scroll(function(event) {
-//        $('div#note2 #contenteditor2').scrollTop($(this).scrollTop());
-//        $('div#note2 #contenteditor2').scrollLeft($(this).scrollLeft());
-//    });
-//    $('div#note2 #contenteditor2').scroll(function(event) {
-//        $('div#note #contenteditor').scrollTop($(this).scrollTop());
-//        $('div#note #contenteditor').scrollLeft($(this).scrollLeft());
-//    });
-    
+    //$('div#note #contenteditor').attr('key',note.key);
+   
     slideEditor(function () {        
         editor.focus();
     }, duration);
@@ -834,8 +779,8 @@ function editorShowNote(note, duration) {
 function editorNoteChanged(key) {
     
     var noteData = {};
-    if ($('div#note #contenteditor').attr("dirty")=="true")
-        noteData.content = editor.getValue();
+    if (editor.dirty)
+        noteData.content = editor.getCode();
     if ($('div#note input#pinned').attr("dirty")=="true")
         noteData.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[];
     if ($('div#note input#tags').attr("dirty")=="true")
@@ -866,14 +811,15 @@ function editorNoteChanged(key) {
 //  ---------------------------------------
 
 function editorIsNoteDirty() {
-    return $('div#note #contenteditor').attr("dirty")=="true" ||
+    return editor.dirty || //$('div#note #contenteditor').attr("dirty")=="true" ||
         $('div#note input#pinned').attr("dirty")=="true" ||
         $('div#note input#tags').attr("dirty")=="true";
 }
 
 function editorClearDirty() {
     log("editorClearDirty");
-    $('div#note #contenteditor').removeAttr('dirty');
+    //$('div#note #contenteditor').removeAttr('dirty');
+    editor.dirty = false;
     $('div#note input#pinned').removeAttr("dirty");
     $('div#note input#tags').removeAttr('dirty');
 }

@@ -45,7 +45,7 @@ $(document).ready(function() {
 function save_options() {  
  
   localStorage.option_abstractlines = $("#abstractlines").val();
-  if (localStorage.option_opentonote  != $('#opentonote').attr("checked"))
+  if ((localStorage.option_opentonote=="true") != $('#opentonote').attr("checked"))
       delete localStorage.opentonotekey;
   localStorage.option_opentonote  = $('#opentonote').attr("checked");
   localStorage.option_showdate  = $('#showdate').attr("checked");
