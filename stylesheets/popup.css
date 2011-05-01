@@ -111,15 +111,16 @@ div#nonotes {
 }
 
 div.noterow {
-    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));    
+    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
+    ''background: rgba(255,255,255,1);
     -webkit-box-shadow: 0 0px 2px rgba(0,80,128,0.5);
     ''border: 2px solid #F7F8FF;
     border-radius: 2px;
     margin: 2px;
     margin-bottom: 2px;
     margin-top: 0px;
-    padding: 2px;
-    padding-bottom: 4px;
+    padding: 4px;
+    padding-bottom: 8px;
 }
 
 div.noterow:hover { 
