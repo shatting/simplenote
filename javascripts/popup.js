@@ -4,6 +4,21 @@ var popup = this;
 var isDebug = true && commonDebug;
 var isDebugToBg =  true && isDebug;
 
+// this will hold the CodeMirror instance
+var codeMirror = null;
+// amount of vertical viewport size to add for preloading notes in index
+var preLoadFactor = 1/4;
+
+//  ---------------------------------------
+var fontUrls = {
+    "Droid Sans Mono"   : '<link href="http://fonts.googleapis.com/css?family=Droid+Sans+Mono:regular" rel="stylesheet" type="text/css" >',
+    "Walter Turncoat"   : '<link href="http://fonts.googleapis.com/css?family=Walter+Turncoat:regular" rel="stylesheet" type="text/css" >',
+    "Inconsolata"       : '<link href="http://fonts.googleapis.com/css?family=Inconsolata:regular" rel="stylesheet" type="text/css" >',
+    "Lekton"            : '<link href="http://fonts.googleapis.com/css?family=Lekton" rel="stylesheet" type="text/css">',
+    "Yanone Kaffeesatz" : '<link href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:300" rel="stylesheet" type="text/css" >',
+    "Vollkorn"          : '<link href="http://fonts.googleapis.com/css?family=Vollkorn:regular" rel="stylesheet" type="text/css" >'
+}
+
 function log(s) {
     if (isDebug)
         logGeneral(s,"popup.js",console);
@@ -19,14 +34,14 @@ addEventListener("unload", function (event) {
         var note = {};
         log("(unload): requesting background save");
                 
-        if (editor.dirty)
-            note.content = editor.getCode();
+        if (codeMirror.dirty)
+            note.content = codeMirror.getCode();
         if ($('div#note input#pinned').attr("dirty")=="true")
             note.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[]; // todo: "read" systag       
         if ($('div#note input#tags').attr("dirty")=="true")
             note.tags = $('div#note input#tags').val().split(" ");
         
-        note.key = editor.note.key;
+        note.key = codeMirror.note.key;
 
         log("(unload): note:");
         log(note);
@@ -37,6 +52,9 @@ addEventListener("unload", function (event) {
         log("(unload): no background save");
 }, true);
 
+//  ---------------------------------------
+//  event listener for "uiEvents" (anything background->popup)
+//
 // {name:"sync", status: "started|done|error", changes : {hadchanges: false|true, added:[keys],changed:[keys],deleted:[keys]}}
 // {name:"noteadded", note:{note}}
 // {name:"notedeleted", key: key}
@@ -95,24 +113,10 @@ function uiEventListener(eventData, sender, sendResponse) {
         log("EventListener:" + eventData.name);
     }
 }
-
-var fontUrls = {
-    "Droid Sans Mono"   : '<link href="http://fonts.googleapis.com/css?family=Droid+Sans+Mono:regular" rel="stylesheet" type="text/css" >',
-    "Walter Turncoat"   : '<link href="http://fonts.googleapis.com/css?family=Walter+Turncoat:regular" rel="stylesheet" type="text/css" >',
-    "Inconsolata"       : '<link href="http://fonts.googleapis.com/css?family=Inconsolata:regular" rel="stylesheet" type="text/css" >',
-    "Lekton"            : '<link href="http://fonts.googleapis.com/css?family=Lekton" rel="stylesheet" type="text/css">',
-    "Yanone Kaffeesatz" : '<link href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:300" rel="stylesheet" type="text/css" >',
-    "Vollkorn"          : '<link href="http://fonts.googleapis.com/css?family=Vollkorn:regular" rel="stylesheet" type="text/css" >'
-}
-//
 //  ---------------------------------------
 $(document).ready(function() {
     
     log("---------------- popup opened ---------------------");
-    //if (!isDebug)
-    //    $('div#note2').hide();   
-    //if (!isDebug)
-    //     $('div#note div#info').hide();
 
     var signUpLink =  "<a href='https://simple-note.appspot.com/create/'>signup</a>";
     var optionsLink = "<a href='options.html'>options page</a>";
@@ -120,8 +124,7 @@ $(document).ready(function() {
     if ( !localStorage.option_email || !localStorage.option_password) {
         var message = "Please " + signUpLink + " for a Simplenote account and enter your credentials on the " + optionsLink + ".";
         displayStatusMessage(message);
-    }
-    else {                
+    } else {
         chrome.extension.sendRequest({action : "login"}, function(result) {
             if (result.success) {
                 
@@ -209,7 +212,6 @@ $(document).ready(function() {
 });
 
 
-//  ---------------------------------------
 /*
  * Displays a status message.
  * @param message The HTML content of the status message to display. All links
@@ -226,7 +228,11 @@ function displayStatusMessage(message) {
     links.click(function() {window.close();});
 }
 
-//  ---------------------------------------
+/*
+ * Fills the Tags dropdown with all tags from the DB.
+ *
+ * @param callFillIndex boolean, call fillIndex() after tags are filled or not
+ */
 function fillTags(callFillIndex) {
     log("fillTags");
     chrome.extension.sendRequest({action:"tags"}, function(taginfos) {
@@ -264,10 +270,11 @@ function fillTags(callFillIndex) {
             fillIndex();
     });
 }
-
-//  ---------------------------------------
+/*
+ * Fills the index pane with noterows.
+ */
 function fillIndex() {    
-
+    
     var req =               {action : "getnotes", deleted : 0};
     req     = mergeobj(req, {tag : $("#notetags").val()});
     req     = mergeobj(req, {contentquery : $('#q').val()});
@@ -298,14 +305,20 @@ function fillIndex() {
     });
   
 }
-
-//mode: delteAndPrepend, append, replace
+/*
+ * Appends/prepends/replaces a noterow div in the index pane.
+ *
+ * @param mode "delteAndPrepend", "append", "replace"
+ * @param note must at least be a note from and index api call
+ */
 function indexAddNote(mode, note){
-    
-    var html =  "";
+    var date, prefix, shareds = [], html =  "";
+
+    // assemble noterow html string
     if (mode!= "replace")
-        html = "<div class='noterow' id='" + note.key  + "' >";
-    var date, prefix, shareds = [];
+        html = "<div class='noterow' id='" + note.key  + "' >";    
+
+    // date abbr
     if (localStorage.option_showdate == "true") {
         if (localStorage.option_sortby == "createdate") {
             date = convertDate(note.createdate);
@@ -317,6 +330,7 @@ function indexAddNote(mode, note){
         
         html+=      "<abbr class='notetime' id='" + note.key + "time' title='" + ISODateString(date) + "'>" + prefix + localeDateString(date) + "</abbr>";
     }
+    // pin/shared/published
     if (note.deleted == 0) {
         html+=      "<div title='Click to pin/unpin' class='" + (note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + "' id='" + note.key + "pin'>&nbsp;</div>";
         html+=      "<div title='Click to view published version of this note' class='" + (note.publishkey != undefined?"published":"unpublished") + "' id='" + note.key + "published'>&nbsp;</div>";
@@ -330,13 +344,15 @@ function indexAddNote(mode, note){
     } else {
         $("div#" + note.key).attr("title", "Click to undelete");
     }
-    html+=          "<div class='noteheading' id='" + note.key + "heading'>";    
-    html+=          "</div>";
+    // note heading div
+    html+=          "<div class='noteheading' id='" + note.key + "heading'></div>";
+    // note abstract div
     html+=          "<div class='abstract' id='" + note.key + "abstract'>&nbsp;<br>&nbsp;</div>";
 
     if (mode!="replace")
-        html+=      "</div>";
-    
+        html+="</div>";
+
+    // insert the html string into document
     if (mode=="delteAndPrepend") {
         $('div.noterow#' + note.key).remove();
         $('#notes').prepend(html);                
@@ -345,13 +361,13 @@ function indexAddNote(mode, note){
     } else if (mode=="replace")
         $('div.noterow#' + note.key).html(html);
 
+    // bind timeago for time abbr
     if (localStorage.option_showdate == "true")
         $("#" + note.key + "time").timeago();
+    
+    if (note.deleted != 0) return;
 
-    if (note.deleted != 0)
-        return
-
-    // bind pin div
+    // bind pinned klick
     $("#" + note.key +"pin").unbind();
     $("#" + note.key +"pin").click(note.key,function(event) {
             var tag = $(this).attr("class")=="pinned"?[]:["pinned"];
@@ -360,6 +376,7 @@ function indexAddNote(mode, note){
                 $("#" + note.key +"pin").attr("class",note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned");                
             });
         });
+    // bind published click
     if (note.publishkey) {
         $("#" + note.key +"published").unbind();
         $("#" + note.key +"published").click(note.publishkey,function(event) {            
@@ -367,11 +384,13 @@ function indexAddNote(mode, note){
             openURLinTab("http://simp.ly/publish/"+event.data);
         }); 
     }
-    //$('div.noterow#' + note.key).data("modify",note.modifydate);
 }
 
-
-// element: jquery div.noterow#key or note object
+/*
+ *  Fills a noterow div from the note.content. Callback from checkInView.
+ *
+ *  @param elementOrNote jquery object div.noterow#key or note object with .content
+ */
 function indexFillNote(elementOrNote) {
 
     if (elementOrNote.key) {//note        
@@ -391,9 +410,12 @@ function indexFillNote(elementOrNote) {
         elementOrNote.data("requested",true);
     }
 }
-
+/*
+ *  Fills a noterow div from the note.content. Callback from checkInView.
+ *
+ *  @param note note with .content, .key and .deleted
+ */
 function indexFillNoteReqComplete(note) {
-        // fields: noteData.key, noteData.text
         
         var $noterow = $('#' + note.key);
         var $noteheading = $('#' + note.key + "heading");
@@ -403,10 +425,12 @@ function indexFillNoteReqComplete(note) {
             return ( line.trim().length > 0 )
             });
 
-        // first line
+        // heading
         $('#' + note.key + 'loader').remove();
-        $noteheading.removeAttr("align");
-        $noteheading.html(htmlEncode(lines[0]));
+        $noteheading.removeAttr("align"); // from loader
+        // set actual heading
+        $noteheading.html(htmlEncode(lines[0],100)); // dont need more than 100 chars
+        // deleted note css style
         if (note.deleted == 1) {
             $noteheading.addClass("noteheadingdeleted"); // for text color
             $noterow.addClass("noterowdeleted"); // for undelete image on hover
@@ -416,78 +440,69 @@ function indexFillNoteReqComplete(note) {
         var abstractlines;
         if (localStorage.option_abstractlines>=0)
             abstractlines = lines.slice(1,Math.min(lines.length,localStorage.option_abstractlines*1+1));
-        else
+        else // -1 ~ all
             abstractlines = lines;
+        // set actual abstract
+        $abstract.html(htmlEncode(abstractlines,100).join("<br/>"));
 
-        $abstract.html(htmlEncode(abstractlines).join("<br/>"));
-                
+        $noterow.unbind();
         // add dblclick binding
-        $noterow.css("height",$noterow.height());
-        $noterow.data('origheight',$noterow.height());
+        //$noterow.css("height",$noterow.height());
+        //$noterow.data('origheight',$noterow.height());
         //$noterow.dblclick(maximize);
                 
         // add click binding        
-        $noterow.unbind();
         if (note.deleted == 0)
             $noterow.click(note, function(event) {
                 editorShowNote(event.data);
             });
         else {
-
             $noterow.attr("title", "Click to undelete");
             $noterow.click(function() {
-                chrome.extension.sendRequest({
-                    action : "update",
-                    key : note.key,
-                    deleted : 0
-                    });
+                chrome.extension.sendRequest({action : "update", key : note.key, deleted : 0 });
             });
         }
 
+        // sync note 
         if (note._syncNote)
             $noterow.css("background","#ccc");        
 
         //$noterow.hover(maximize,minimize);
                 
         // check new inview, might have changed due to reflow
-        $noterow.data('loaded',true);        
+        $noterow.data('loaded',true);
+        
         checkInView();    
 }
 
-//function makeAbstract(lines) {
-//    var abstracttext = lines.map(function(element) {
-//        var shorttext = element.substr(0, 45);
-//        return shorttext.length + 3 < element.length ? shorttext + "..." : element;
-//    });
-//    return htmlEncode(abstracttext).join("<br />");
-//}
-
 // encode string or string array into html equivalent
-function htmlEncode(s)
+function htmlEncode(s, maxchars)
 {
     if (!s)
         return "";
+    if (!maxchars)
+        maxchars = 1000000;
+        
     if (s instanceof Array)
         return s.map(function(s) {
-            return htmlSafe(s).replace(/\n/g,"<br>").replace(/\s/g,"&nbsp;");
+            return htmlSafe(s.substring(0,maxchars)).replace(/\n/g,"<br>").replace(/\s/g,"&nbsp;");
         });
     else
-        return htmlSafe(s).replace(/\n/g,"<br>").replace(/\s/g,"&nbsp;");
+        return htmlSafe(s.substring(0,maxchars)).replace(/\n/g,"<br>").replace(/\s/g,"&nbsp;");
 }
 
 // make string html safe
 function htmlSafe(s) {
-    //return s.replace(/&(?!\w+([;\s]|$))/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function htmlUnsafe(s) {
-    return s.replace(/&gt;/gi, ">").replace(/&lt;/gi, "<").replace(/&amp;/gi,"&");
-}
-
-function htmlDecode(s) {
-    return htmlUnsafe(s.replace(/<br>/gi,"\n").replace(/&nbsp;/gi," "));
-}
+//function htmlUnsafe(s) {
+//    return s.replace(/&gt;/gi, ">").replace(/&lt;/gi, "<").replace(/&amp;/gi,"&");
+//}
+//
+//function htmlDecode(s) {
+//    return htmlUnsafe(s.replace(/<br>/gi,"\n").replace(/&nbsp;/gi," "));
+//}
 
 //function maximize(event) {
 //    var key = this.id;
@@ -542,24 +557,15 @@ function htmlDecode(s) {
 //}
 
 //  ---------------------------------------
-
 function ISODateString(d) {
-    return d.getUTCFullYear()+'-'
-    + pad(d.getUTCMonth()+1)+'-'
-    + pad(d.getUTCDate())+'T'
-    + pad(d.getUTCHours())+':'
-    + pad(d.getUTCMinutes())+':'
-    + pad(d.getUTCSeconds())+'Z'
+    return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+ pad(d.getUTCDate())+'T'+ pad(d.getUTCHours())+':'+ pad(d.getUTCMinutes())+':'+ pad(d.getUTCSeconds())+'Z'
 }
-
-function localeDateString(d) {
-    //var now = new Date(Date.now());
+//  ---------------------------------------
+function localeDateString(d) {    
     var s = d.toLocaleString();
     return s.substring(0, s.indexOf("GMT")-1);
 }
-
 //  ---------------------------------------
-
 function slideEditor(callback, duration) {
     if (duration == undefined)
         duration = 300;
@@ -567,7 +573,7 @@ function slideEditor(callback, duration) {
     $('div#note').animate({left:"-=400"}, duration);
     $('body').animate({width:"+=400"}, duration);
 }
-
+//  ---------------------------------------
 function slideIndex(callback, duration) {
     if (duration == undefined)
         duration = 300;
@@ -577,9 +583,7 @@ function slideIndex(callback, duration) {
     $('div#note').animate({left:"+=400"}, duration);   
     $('body').animate({width : "-=400"},duration);
 }
-
-var editor = null;
-
+//  ---------------------------------------
 function editorShowNote(note, duration) {
     log("showNote");      
     
@@ -589,8 +593,8 @@ function editorShowNote(note, duration) {
     if (note==undefined)
         note = {content:"",tags:[],systemtags:[], key:""};
 
-    var $head = $(editor.editor.container.ownerDocument.head);
-    var $editbox = $(editor.editor.container);
+    var $head = $(codeMirror.editor.container.ownerDocument.head);
+    var $editbox = $(codeMirror.editor.container);
     
     $editbox.unbind();
     // the following could be done with activeTokens config property
@@ -632,23 +636,23 @@ function editorShowNote(note, duration) {
     if (localStorage.option_editorfontshadow && localStorage.option_editorfontshadow == "true")
         $editbox.css("text-shadow","2px 2px 2px #aaa" );    
 
-    editor.note = note;
+    codeMirror.note = note;
 
     // add note content change (dirty) event listeners
-    editor.dirty = false;    
+    codeMirror.dirty = false;
     $editbox.bind('change keyup paste cut', note, function(event) {
         var note=event.data;        
        
-        if (note.content != editor.getCode()) {
-            if (!editor.dirty)
+        if (note.content != codeMirror.getCode()) {
+            if (!codeMirror.dirty)
                 log("content dirty now (" + event.type + ")");
             //$('div#note').attr('dirty', 'true');
-            editor.dirty = true;
+            codeMirror.dirty = true;
         } else {
-            if (editor.dirty)
+            if (codeMirror.dirty)
                 log("content not dirty now (" + event.type + ")");
             //$('div#note #contenteditor').removeAttr('dirty');
-            editor.dirty = false;
+            codeMirror.dirty = false;
         }
         if (editorIsNoteDirty())
             $('div#note input#undo').removeAttr("disabled");
@@ -657,7 +661,7 @@ function editorShowNote(note, duration) {
     });
 
     // fix for home not scrolling all to the left
-    $(editor.editor.container,$editbox).keydown(function(event) {        
+    $(codeMirror.editor.container,$editbox).keydown(function(event) {
         if (event.keyCode == 36) //home key            
             $editbox.scrollLeft($editbox.scrollLeft()-650);            
     });
@@ -716,7 +720,7 @@ function editorShowNote(note, duration) {
     $("div#note input#wordwrap").unbind();
     $("div#note input#wordwrap").bind('change', function(event) {
         localStorage.wordwrap = $("#wordwrap").attr("checked");
-        editor.setTextWrapping($("div#note input#wordwrap").attr("checked"))
+        codeMirror.setTextWrapping($("div#note input#wordwrap").attr("checked"))
     });
 
     if (localStorage.wordwrap != undefined && localStorage.wordwrap == "true") {
@@ -726,9 +730,6 @@ function editorShowNote(note, duration) {
     }
     $("div#note input#wordwrap").change();
 
-    // set editor style
-
-    
     // get note contents
     if (note.key == "") { // new note
         
@@ -741,7 +742,7 @@ function editorShowNote(note, duration) {
         });
     
         // insert data
-        editor.setCode("");
+        codeMirror.setCode("");
 
         // show/hide elements        
         $("div#note input#pinned").attr("checked","");        
@@ -763,7 +764,7 @@ function editorShowNote(note, duration) {
         $('div#note input#undo').unbind();
         $('div#note input#undo').click(note,function(event) {
             // reset content
-            editor.setCode(note.content);
+            codeMirror.setCode(note.content);
             // reset tags
             $('div#note input#tags').val(note.tags.join(" "));
             // reset pinned
@@ -783,23 +784,17 @@ function editorShowNote(note, duration) {
         
         localStorage.opentonotekey = note.key;
     }
-
-    // needed for background save
-    //$('div#note #contenteditor').attr('key',note.key);
    
-    slideEditor(function () {        
-        editor.focus();
-    }, duration);
+    slideEditor(function () { codeMirror.focus(); }, duration);
 
 }
 
 //  ---------------------------------------
-
 function editorNoteChanged(key) {
     
     var noteData = {};
-    if (editor.dirty)
-        noteData.content = editor.getCode();
+    if (codeMirror.dirty)
+        noteData.content = codeMirror.getCode();
     if ($('div#note input#pinned').attr("dirty")=="true")
         noteData.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[];
     if ($('div#note input#tags').attr("dirty")=="true")
@@ -825,25 +820,18 @@ function editorNoteChanged(key) {
     }
     
 }
-
 //  ---------------------------------------
-
 function editorIsNoteDirty() {
-    return editor.dirty || //$('div#note #contenteditor').attr("dirty")=="true" ||
-        $('div#note input#pinned').attr("dirty")=="true" ||
-        $('div#note input#tags').attr("dirty")=="true";
+    return codeMirror.dirty || $('div#note input#pinned').attr("dirty")=="true" || $('div#note input#tags').attr("dirty")=="true";
 }
-
+//  ---------------------------------------
 function editorClearDirty() {
     log("editorClearDirty");
-    //$('div#note #contenteditor').removeAttr('dirty');
-    editor.dirty = false;
+    codeMirror.dirty = false;
     $('div#note input#pinned').removeAttr("dirty");
     $('div#note input#tags').removeAttr('dirty');
 }
-
 //  ---------------------------------------
-
 function editorTrashNote(key) {
     log("editorTrashNote");
     $('div#note input').attr('disabled', 'disabled');    
@@ -852,7 +840,6 @@ function editorTrashNote(key) {
                 $('div#note input').removeAttr('disabled');
             });
 }
-
 //  ---------------------------------------
 // from inview.js
 function getViewportSize() {
@@ -878,7 +865,8 @@ function getViewportSize() {
 
     return size;
 }
-
+//  ---------------------------------------
+// from inview.js
 function getViewportOffset() {
     return {
         top:  window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop,
@@ -886,8 +874,8 @@ function getViewportOffset() {
     };
 }
 
-// amount of vertical viewport size to add for preloading
-var preLoadFactor = 1/4;
+//  ---------------------------------------
+// from inview.js
 function checkInView() {
     var elements = $('div.noterow').get(), elementsLength, i = 0, viewportSize, viewportOffset;
     var allLoaded = true;    
@@ -926,7 +914,6 @@ function checkInView() {
 //            console.log(i + ": loaded " + loaded + ", inview=" + inview);
 //            console.log(elementOffset);
 //            console.log(elementOffset);
-
             
             allLoaded = allLoaded && loaded;
             if (!loaded && inview) {
