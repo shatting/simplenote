@@ -121,6 +121,7 @@ div.noterow {
 
 div.noterow:hover { 
     background: rgba(0,80,128,0.5);
+    background: #4F92EB -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
     -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
     color: #ddd;
 } 
@@ -312,7 +313,7 @@ div#note input#tags:focus {
 div#note div#pinwrapper, div#note div#wordwrapwrapper {
     padding: 5px;
     margin-right:5px;
-    display:inline;
+    display:inline;    
 }
 div#note div#wordwrapwrapper {
     float:right;

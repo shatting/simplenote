@@ -578,7 +578,9 @@ function editorShowNote(note, duration) {
     if (note==undefined)
         note = {content:"",tags:[],systemtags:[], key:""};
 
+    var $head = $(editor.editor.container.ownerDocument.head);
     var $editbox = $(editor.editor.container);
+    
     $editbox.unbind();
     // the following could be done with activeTokens config property
     $(".sn-link",$editbox).die();
@@ -586,23 +588,39 @@ function editorShowNote(note, duration) {
        var url = this.textContent;
        openURLinTab(url);
     });
-    
-    var $head = $(editor.editor.container.ownerDocument.head);    
+
+    // get fontinfo if there
+    var fontinfo;
+    if (localStorage.editorfontinfo)
+        fontinfo = JSON.parse(localStorage.editorfontinfo);
+
+    // inject font url
+    // keeping this so we can easily delete already loaded fonts
+    // otherwise could add a fontinfo field for url
+    var fontname = localStorage.option_editorfont?localStorage.option_editorfont:fontinfo.family;
     for(var name in fontUrls) {        
-        if (name == localStorage.option_editorfont) {
+        if (fontname == name) {
             $head.append(fontUrls[name]);
             delete fontUrls[name];
             break;
         }
     }
-        
-    if (localStorage.option_editorfont )
-        $editbox.css("font-family",localStorage.option_editorfont );
-    if (localStorage.option_editorfontsize )
-        $editbox.css("font-size",localStorage.option_editorfontsize + "px" );
+    // set font properties
+    if (fontinfo) {
+        $editbox.css("font-family",fontinfo.family);
+        $editbox.css("font-size",fontinfo.size);
+        $editbox.css("letter-spacing",fontinfo.letter_spacing);
+        $editbox.css("word-spacing",fontinfo.word_spacing);
+        $editbox.css("line-height",fontinfo.line_height);
+    } else {
+        $editbox.css("font-family", localStorage.option_editorfont);
+        $editbox.css("font-size", localStorage.option_editorfontsize);
+    }
+
+    // set font shadow
     if (localStorage.option_editorfontshadow && localStorage.option_editorfontshadow == "true")
-        $editbox.css("text-shadow","2px 2px 2px #aaa" );
-    
+        $editbox.css("text-shadow","2px 2px 2px #aaa" );    
+
     editor.note = note;
 
     // add note content change (dirty) event listeners

@@ -53,12 +53,28 @@ function save_options() {
   localStorage.option_sortbydirection = $("#sortdirection").attr("checked")?-1:1;
   localStorage.option_editorfont = $("#editorfont").val();
   localStorage.option_editorfontsize = $("#editorfontsize").val();
+
+  // font stuff
+  var fontinfo = { size: localStorage.option_editorfontsize + "px", letter_spacing: "0em", word_spacing: "0em", line_height: "1.5"};  
+  switch (localStorage.option_editorfont) {
+      case "Droid Sans Mono":
+        fontinfo.family = "Droid Sans Mono";        
+        fontinfo.letter_spacing = "0.05em";
+        fontinfo.word_spacing = "0.01em";        
+        break;
+      case "Simplenote":
+        fontinfo.family = '"Helvetica Neue", Arial, Helvetica, Arimo, FreeSans, "Nimbus Sans", "Phetsarath OT", Malayalam, "Gargi_1.7", sans-serif';
+        break;
+      default:
+          delete localStorage.editorfontinfo;
+  }
+  if (fontinfo.family) { // this is only set if we had a case above
+      localStorage.editorfontinfo = JSON.stringify(fontinfo);      
+  }
+
+  // font shadow
   localStorage.option_editorfontshadow  = $('#editorfontshadow').attr("checked");
   
-//  $("#status").css("opacity", 1);
-//  setTimeout(function() {
-//    $("#status").css("opacity", 0);
-//  }, 1500);
 }
 
 function save_clicked() {
@@ -76,9 +92,7 @@ function save_clicked() {
     }
 
     if (email != localStorage.option_email && (localStorage._syncKeys)) {
-      if (!confirm("You are about to switch your Simplenote login!\n\nThere are notes stored locally that have not been synchronized to the server.\n\nIf you switch accounts now, those changes will be lost.\n\nContinue?")) {
-            //$("#status").html("Not saved. Please connect to the internet to synchronize local changes to the server.");
-            //$("#status").css("opacity", 1);
+      if (!confirm("You are about to switch your Simplenote login!\n\nThere are notes stored locally that have not been synchronized to the server.\n\nIf you switch accounts now, those changes will be lost.\n\nContinue?")) {            
             $("#loginmessage").html("Changes not saved");
             $("#loginmessage").css("color","black");
             $("#email").val(localStorage.option_email);

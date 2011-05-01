@@ -1,20 +1,30 @@
 html {
-    overflow: auto;
+    overflow: auto;    
 }
 
 .editbox {
   margin: .4em;
   padding: 10px;
   font-family: monospace;
-  font-size: 13pt;
-  color: black;
+  font-size: 14pt;
+  color: #333;
+  line-height: 1.5;
 }
 
 .editbox p {
   margin: 0;
 }
 
-.sn-link {color: #00f; cursor:pointer;}
+.sn-link {
+    color: #4F92EB;
+    color: #5CA0FF;
+    color: #3C7ECF;
+    cursor:pointer;
+    text-decoration: none;
+}
+.sn-link:hover {
+    text-decoration: underline;
+}
 
 ::-webkit-scrollbar {
     width: 14px;
