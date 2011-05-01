@@ -127,8 +127,7 @@ $(document).ready(function() {
                 
                 log("(ready): login success, requesting full sync.");                
                 chrome.extension.sendRequest({action: "sync", fullsync:true}, function() {
-                    log("(ready): calling fillTags");                    
-
+                    log("(ready): sync request complete");
                     chrome.extension.onRequest.addListener(uiEventListener);
                 });
                                 
@@ -152,6 +151,18 @@ $(document).ready(function() {
                 $("#sync").click( function() {
                     chrome.extension.sendRequest({action: "sync", fullsync:true});
                 })
+
+                $("div.noterow").live("mouseover", function(event) {                    
+                    $("abbr.notetime",this).css("color","#ccc");
+                    $("div.abstract",this).css("color","#bbb");
+                    $("div.noteheading",this).css("color","#eee");
+                });
+
+                $("div.noterow").live("mouseleave", function(event) {
+                    $("abbr.notetime",this).css("color","");
+                    $("div.abstract",this).css("color","");
+                    $("div.noteheading",this).css("color","");
+                });
 
                 // bind SEARCH field
                 var options = {

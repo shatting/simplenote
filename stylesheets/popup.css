@@ -25,11 +25,10 @@ div#toolbar {
     margin-right: 2px;
     margin-left: 2px;
     margin-top: 2px;    
-    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
-    ''background: white;
+    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));        
     outline-color: black;
     -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
-    border: 2px solid #F5F6FD;
+    border: 2px solid #F5F6FD;    
     border-radius: 3px;
     width:392px;
 }
@@ -47,6 +46,9 @@ div#index div#toolbar select#notetags {
 div#index div#toolbar select#notetags:focus {
     outline: none;
     -webkit-box-shadow: 0 0 3px #3c7ecf;
+}
+div#index div#toolbar select#notetags:hover {
+    cursor: pointer;
 }
 
 div#index div#toolbar input#q {
@@ -88,6 +90,7 @@ div#index div#toolbar input#q:focus {
 
 #add:hover {
     background-color: #aaaaaa;
+    cursor: pointer;
 }
 
 div#notes {  
@@ -110,7 +113,7 @@ div#nonotes {
 div.noterow {
     background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));    
     -webkit-box-shadow: 0 0px 2px rgba(0,80,128,0.5);
-    border: 2px solid #F7F8FF;
+    ''border: 2px solid #F7F8FF;
     border-radius: 2px;
     margin: 2px;
     margin-bottom: 2px;
@@ -122,8 +125,7 @@ div.noterow {
 div.noterow:hover { 
     background: rgba(0,80,128,0.5);
     background: #4F92EB -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
-    -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
-    color: #ddd;
+    -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);    
 } 
 
 abbr.notetime {
@@ -133,6 +135,7 @@ abbr.notetime {
     padding-right:5px;
     cursor: pointer;
     float: right;
+    cursor: help;
 }
 
 div.noteheading, div.abstract {
@@ -141,19 +144,15 @@ div.noteheading, div.abstract {
     overflow: hidden;
     width: auto;
     margin-right: 0px;
-    white-space: nowrap;
+    white-space: nowrap;    
 }
 
-div.noteheading {
-}
-
-div.noteheadingdeleted {
-    color: #aaa; 
-    cursor: pointer;    
-}
+div.noteheading { color:#111;}
+div.noteheadingdeleted { color:#666;}
 
 div.noterowdeleted:hover {
-     background: white url(/images/undelete.png) no-repeat 50% 2px;
+     background: #4F92EB url(/images/undelete.png) no-repeat 50% 2px -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
+     cursor: pointer;
 }
 
 div.pinned:hover {
@@ -223,10 +222,10 @@ div.shared {
 }
 #statusbar div#sync {
     float:right;
-    cursor: progress;
+    cursor: pointer;
 }
 
-#statusbar {    
+#statusbar {
     color: #aaa;
     position: absolute;
     top:524px;
@@ -313,11 +312,16 @@ div#note input#tags:focus {
 div#note div#pinwrapper, div#note div#wordwrapwrapper {
     padding: 5px;
     margin-right:5px;
-    display:inline;    
+    display:inline;
+    cursor: pointer;
 }
 div#note div#wordwrapwrapper {
     float:right;
-    margin-left:50px;
+    margin-left:50px;    
+}
+
+label, input[type=checkbox], input[type=button] {
+    cursor: pointer;
 }
 
 /* scrollbar */

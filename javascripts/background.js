@@ -6,9 +6,16 @@ function log(s) {
 
 function backgroundSync(fullSync, callbackComplete, callbackPartial) {
     if (localStorage.option_email == undefined || localStorage.option_password == undefined) {
-        log("backgroundSync: no credentials, exiting..")
+        log("backgroundSync: no credentials, exiting..");
         return;
     }
+
+    if (SimplenoteDB.getSyncInProgress()) {
+        log("backgroundSync: sync already in progress");
+        if (callbackComplete)
+            callbackComplete();
+        return;
+    }        
 
     if (!fullSync && !SimplenoteDB.hadSync())
         fullSync = true;

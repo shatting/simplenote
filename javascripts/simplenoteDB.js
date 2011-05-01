@@ -33,6 +33,9 @@ var SimplenoteDB = {
         this.log("_setSyncInProgress:" + val);
         this.isSyncInProgress = val;
     },
+    getSyncInProgress: function() {
+        return this.isSyncInProgress;
+    },
     _reset : function() {
         this.log("_reset");
         this._setSyncInProgress(false);
@@ -47,7 +50,7 @@ var SimplenoteDB = {
     },
    
     sync : function(fullSync, callbackFinished, callbackChunk) {
-        if (this.isSyncInProgress) {
+        if (this.getSyncInProgress()) {
             log("sync: sync already in progress, returning");            
             return;
         }
