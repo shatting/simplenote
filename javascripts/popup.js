@@ -8,6 +8,7 @@ var isDebugToBg =  true && isDebug;
 var codeMirror = null;
 // amount of vertical viewport size to add for preloading notes in index
 var preLoadFactor = 1/4;
+var currentView = "index";
 
 //  ---------------------------------------
 var fontUrls = {
@@ -113,6 +114,56 @@ function uiEventListener(eventData, sender, sendResponse) {
         log("EventListener:" + eventData.name);
     }
 }
+
+$(document).keydown(shorcuts);
+function shorcuts(event) {
+//    "up": function() {alert("up");},
+//    "down": function() {}
+    var notesheight = $("div#notes").get(0).scrollHeight;
+
+    if (currentView=="index") {
+//        - index: up, down, enter/right
+        switch(event.keyCode) {
+            case 38: //up
+                $("div#notes").scrollTop($("div#notes").scrollTop()-notesheight/20)
+            break;
+            case 40: //down
+                $("div#notes").scrollTop($("div#notes").scrollTop()+notesheight/20)
+            break;
+            case 39: //right
+            break;
+        }
+    } else if (currentView=="editor") {
+        return; // still needs testing
+//        - editor: ctrl-s83, crtl-b66=back, crtl-d68=trash, ctrl-u85=undo, ctrl-p80=pin, ctrl-w87=wordwrap, ctrl-t84=tags
+//        - trap esc key and mouse side button for back in editor
+        //console.log(event.keyCode + "=" + event.keyIdentifier )
+        switch(event.keyCode) {
+            case 83:
+                break;
+            case 66: //b
+                $('div#note input#backtoindex').click();break;                
+            case 68: //d
+                if (event.shiftKey)
+                    $('div#note input#destroy').click();break;
+            case 85: //u
+                $('div#note input#undo').click();break;
+            case 80: //p
+                $('div#note input#pinned').attr("checked",!$('div#note input#pinned').attr("checked"));
+                $('div#note input#pinned').change();
+                break;
+            case 87: //w
+                $("div#note input#wordwrap").attr("checked",!$("div#note input#wordwrap").attr("checked"));
+                $("div#note input#wordwrap").change();
+                break;
+            case 84: //t
+                 $("div#note input#tags").focus(); break;
+            case 69: //e
+                codeMirror.focus();break;
+        }
+    }
+}
+
 //  ---------------------------------------
 $(document).ready(function() {
     
@@ -156,9 +207,9 @@ $(document).ready(function() {
                 })
 
                 $("div.noterow").live("mouseover", function(event) {                    
-                    $("abbr.notetime",this).css("color","#ccc");
-                    $("div.abstract",this).css("color","#bbb");
-                    $("div.noteheading",this).css("color","#eee");
+                    $("abbr.notetime",this).css("color","#ddd");
+                    $("div.abstract",this).css("color","#ccc");
+                    $("div.noteheading",this).css("color","#fff");
                 });
 
                 $("div.noterow").live("mouseleave", function(event) {
@@ -459,7 +510,7 @@ function indexFillNoteReqComplete(note) {
         else {
             $noterow.attr("title", "Click to undelete");
             $noterow.click(function() {
-                chrome.extension.sendRequest({action : "update", key : note.key, deleted : 0 });
+                chrome.extension.sendRequest({action : "update", key : note.key, deleted : 0});
             });
         }
 
@@ -572,6 +623,7 @@ function slideEditor(callback, duration) {
     $('div#index').animate({left:"-=400"}, {duration: duration, complete: callback});
     $('div#note').animate({left:"-=400"}, duration);
     $('body').animate({width:"+=400"}, duration);
+    currentView = "editor";
 }
 //  ---------------------------------------
 function slideIndex(callback, duration) {
@@ -582,6 +634,7 @@ function slideIndex(callback, duration) {
     $('div#index').animate({left:"+=400"}, {duration: duration, complete: callback});
     $('div#note').animate({left:"+=400"}, duration);   
     $('body').animate({width : "-=400"},duration);
+    currentView = "index";
 }
 //  ---------------------------------------
 function editorShowNote(note, duration) {
@@ -661,10 +714,16 @@ function editorShowNote(note, duration) {
     });
 
     // fix for home not scrolling all to the left
-    $(codeMirror.editor.container,$editbox).keydown(function(event) {
-        if (event.keyCode == 36) //home key            
-            $editbox.scrollLeft($editbox.scrollLeft()-650);            
+    $(codeMirror.editor.container,$editbox).keydown(shorcuts);
+    $(codeMirror.editor.container,$editbox).keyup(function(event) {
+        if (event.keyCode == 36) { //home key            
+            $editbox.scrollLeft(Math.max(0,$editbox.scrollLeft()-300));
+        }
     });
+
+//    $editbox.mousedown(function (event) {
+//        console.log(event);
+//    })
     
     // add note tags change (dirty) event listeners
     $('div#note input#tags').unbind();
@@ -747,6 +806,7 @@ function editorShowNote(note, duration) {
         // show/hide elements        
         $("div#note input#pinned").attr("checked","");        
         $('div#note input#tags').val("");
+        $('div#note input#undo').unbind();
         $('div#note input#undo').hide();                
 
     } else { // existing note
@@ -785,7 +845,7 @@ function editorShowNote(note, duration) {
         localStorage.opentonotekey = note.key;
     }
    
-    slideEditor(function () { codeMirror.focus(); }, duration);
+    slideEditor(function () {codeMirror.focus();}, duration);
 
 }
 

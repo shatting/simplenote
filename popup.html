@@ -29,18 +29,18 @@
           <div id="add" title="Create a note"></div>
         </div>
       <div id="notes"></div>
-      <div id="statusbar"><div id="offline"></div><div id="sync" title="Click to force a sync"></div></div>
+      <div id="statusbar"><div id="offline"></div><div id="sync" title="Click to sync"></div></div>
     </div>
     <div id="note">
         
-        <input type="button" id="backtoindex" value="Back" title="Back to notes (Changes are saved)"/>
+        <input type="button" id="backtoindex" value="Back" title="Back to notes (ctrl-b)"/>
         <div id="wordwrapwrapper">
-            <input type="checkbox" id="wordwrap" title="Toggle wordwrap"/><label for="wordwrap">Wordwrap</label>
+            <input type="checkbox" id="wordwrap" title="Toggle wordwrap (ctrl-w)"/><label for="wordwrap">Wordwrap</label>
         </div>
-        <input type="button" id="destroy" value="Trash" title="Send note to trash"/>
-        <input type="button" id="undo" value="Undo changes" title="Revert changes"/>        
-        <input type="text" id="tags" placeholder="Tag this note" spellcheck="false" title="Click here to enter tags for this note"/>
-        <div id="pinwrapper" title="Pin this note to always show on top">
+        <input type="button" id="destroy" value="Trash" title="Send note to trash (ctrl-shift-d)"/>
+        <input type="button" id="undo" value="Undo changes" title="Revert note to state before opening (ctrl-u)"/>
+        <input type="text" id="tags" placeholder="Tag this note" spellcheck="false" title="Click here to enter tags for this note (ctrl-t to focus, ctrl-e to get back to editor)"/>
+        <div id="pinwrapper" title="Pin this note to always show on top (ctrl-p)">
             <input type="checkbox" id="pinned" /><label for="pinned">Pin</label>
         </div>
     </div>
