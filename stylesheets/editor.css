@@ -28,6 +28,16 @@ html {
     border-bottom: 1px solid rgba(0, 0, 0, 0.15);
 }
 
+
+.sn-link-unhot {
+    color: #111;
+    cursor: text;
+    text-decoration: none;
+}
+.sn-link-unhot:hover {
+    border-bottom: 0px;
+}
+
 ::-webkit-scrollbar {
     width: 14px;
     height: 14px;

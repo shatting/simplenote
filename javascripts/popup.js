@@ -160,7 +160,9 @@ function shorcuts(event) {
         if (event.altKey && !event.shiftKey)
             switch(event.keyCode) {
                 case 83: //s
-                    break;
+                    searchForSelection(); break;
+                case 86: // v
+                    insertUrl(); break;
                 case 66: //b
                     $('div#note input#backtoindex').click();break;
                 case 67: //c
@@ -838,8 +840,19 @@ function editorInitialize() {
     // bind links
     $(".sn-link",$editbox).die();
     $(".sn-link",$editbox).live("click",function(event) {
+       if (event.ctrlKey)
+           return;
        var url = this.textContent;
        openURLinTab(url);
+    });
+    $editbox.bind('keydown', function(event) {
+        if (event.keyCode == 17) // ctrl
+            $(".sn-link",$editbox).addClass("sn-link-unhot");
+    });
+
+    $editbox.bind('keyup', function(event) {
+        if (event.keyCode == 17) // ctrl
+            $(".sn-link",$editbox).removeClass("sn-link-unhot");
     });
 
     // add context menu
@@ -848,22 +861,40 @@ function editorInitialize() {
     codeMirror.initialized = true;
 }
 
+function insertUrl() {
+    var $editbox = $(codeMirror.editor.container);
+    chrome.tabs.getSelected(undefined,function(tab) {
+        codeMirror.replaceSelection(tab.url);
+        $editbox.change();
+    });
+}
+
+function searchForSelection() {
+    openURLinTab("http://google.com/search?q=" + encodeURIComponent(codeMirror.selection().trim()));
+}
+
 //  ---------------------------------------
 function editorMakeContextMenu() {
 
     var $editbox = $(codeMirror.editor.container);
     var menu1 = [
-      {'Insert browser tab URL':function(menuItem,menu) {
-            chrome.tabs.getSelected(undefined,function(tab) {
-                codeMirror.replaceSelection(tab.url);
-                $editbox.change();
-            });
-          }},
-      {'Google for selection':
+//      {'Cut (crtl-x)': function(menuItem,menu) {
+//              console.log($editbox);
+//              console.log($editbox.get(0));
+//            $editbox.get(0).execCommand("cut");
+//      }},
+//      {'Copy (crtl-c)': function(menuItem,menu) {
+//            execCommand("copy");
+//      }},
+//      {'Paste (crtl-v)': function(menuItem,menu) {
+//            execCommand("paste");
+//      }},
+//      $.contextMenu.separator,
+      {'Insert tab URL (alt-v)':insertUrl},
+      
+      {'Search for selection (alt-s)':
         {
-            onclick: function(menuItem,menu) {
-                openURLinTab("http://google.com/search?q=" + encodeURIComponent(codeMirror.selection().trim()));
-            },
+            onclick: searchForSelection,
             className: "disableonnoselection"
         }
       }
