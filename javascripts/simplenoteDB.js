@@ -153,10 +153,10 @@ var SimplenoteDB = {
                         this.log("_gotIndexChunk: no remote deletions.");
                 }
 
-                if (this.syncCallbackFinished)
-                    this.syncCallbackFinished(true);
-                
                 this._setSyncInProgress(false);
+                
+                if (this.syncCallbackFinished)
+                    this.syncCallbackFinished(true);                
                 
                 uiEvent("sync", {status: "done", changes : this._indexKeysChanged});
             } 
