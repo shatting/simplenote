@@ -285,8 +285,10 @@ function handleRequest(request, sender, sendResponse) {
     if (request.action == "userchanged") {
         SimplenoteLS._reset();
         SimplenoteDB._reset();        
-        backgroundSync(true, function() {
-            log("handleRequest:userchanged sync done.");            
+        backgroundSync(true, function(success) {            
+            log("handleRequest:userchanged sync done.");
+            if (sendResponse)
+                sendResponse(success);
         });
     } else if (request.action === "login") {
 

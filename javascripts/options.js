@@ -112,10 +112,12 @@ function save_clicked() {
     $("#loginmessage").css("color","black");
     chrome.extension.sendRequest({action:"login"}, function(successObj) {
         if (successObj.success) {
-            $("#loginmessage").html("Email and password saved.");
+            $("#loginmessage").html("Logged in, getting notes index from server..");
             $("#loginmessage").css("color","green");
             delete localStorage.opentonotekey;
-            chrome.extension.sendRequest({action:"userchanged"});
+            chrome.extension.sendRequest({action:"userchanged"}, function(success) {
+                $("#loginmessage").html("Account info saved, initial sync done.<br><center>Happy Syncpad-ing</center>!");
+            });
         } else {
             if (successObj.reason=="timeout")
                 $("#loginmessage").html("Network timeout, please try again later.");
