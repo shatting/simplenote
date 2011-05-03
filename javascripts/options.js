@@ -35,6 +35,7 @@ $(document).ready(function() {
 
   $("#save").click(save_clicked);
   $("#reset").click(reset_clicked);
+  $("#donate").click(function () { _gaq.push(['_trackEvent', 'Options', 'donate_clicked']); });
 
 });
 
@@ -43,14 +44,14 @@ $(document).ready(function() {
  * @param ms Milliseconds to fade in the status message.
  */
 function save_options() {  
- 
-  localStorage.option_abstractlines = $("#abstractlines").val();
+  
+  localStorage.option_abstractlines = $("#abstractlines").val();  
   if ((localStorage.option_opentonote=="true") != $('#opentonote').attr("checked"))
-      delete localStorage.opentonotekey;
+    delete localStorage.opentonotekey;
   localStorage.option_opentonote  = $('#opentonote').attr("checked");
   localStorage.option_showdate  = $('#showdate').attr("checked");
   localStorage.option_sortby = $("#sort").val();
-  localStorage.option_sortbydirection = $("#sortdirection").attr("checked")?-1:1;
+  localStorage.option_sortbydirection = $("#sortdirection").attr("checked")?-1:1;  
   localStorage.option_editorfont = $("#editorfont").val();
   localStorage.option_editorfontsize = $("#editorfontsize").val();
 
@@ -80,7 +81,7 @@ function save_options() {
 }
 
 function save_clicked() {
-
+    
     var email = $("#email").val();
     var password = $("#password").val();
 
@@ -92,6 +93,8 @@ function save_clicked() {
         $("#save").removeAttr("disabled");
         return;
     }
+    
+    _gaq.push(['_trackEvent', 'Options', 'save_clicked']);
 
     if (email != localStorage.option_email && (localStorage._syncKeys)) {
       if (!confirm("You are about to switch your Simplenote login!\n\nThere are notes stored locally that have not been synchronized to the server.\n\nIf you switch accounts now, those changes will be lost.\n\nContinue?")) {            
@@ -100,38 +103,49 @@ function save_clicked() {
             $("#email").val(localStorage.option_email);
             $("#password").val(localStorage.option_password);
             $("#save").removeAttr("disabled");
+            _gaq.push(['_trackEvent', 'Options', 'save_clicked','synckeyspresent_reverted']);
             return;
-      }
+      } else
+        _gaq.push(['_trackEvent', 'Options', 'save_clicked','synckeyspresent_overridden']);
     }
     delete localStorage.token;
     delete localStorage.tokenTime;
     localStorage.option_email = email;
     localStorage.option_password = password;
-
+    
     $("#loginmessage").html("Logging in..");
     $("#loginmessage").css("color","black");
     chrome.extension.sendRequest({action:"login"}, function(successObj) {
         if (successObj.success) {
-            $("#loginmessage").html("Logged in, getting notes index from server..");
-            $("#loginmessage").css("color","yellow");
+
+            _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_success']);
+
+            $("#loginmessage").html("<center>Logged in, getting notes index from server..</center>");
+            $("#loginmessage").css("color","#ff66ff");
             delete localStorage.opentonotekey;
-            chrome.extension.sendRequest({action:"userchanged"}, function(success) {
-                if (success) {
-                    $("#loginmessage").html("Account info saved, initial sync done.<br><center>Happy Syncpad-ing</center>!");
+            chrome.extension.sendRequest({action:"userchanged"}, function(successObj) {
+                if (successObj && successObj.success) {
+                    _gaq.push(['_trackEvent', 'Options', 'save_clicked','sync_success',successObj.numKeys]);
+                    $("#loginmessage").html("<center>Account info saved, initial sync done.<br>Happy Syncpad-ing!</center>");
                     $("#loginmessage").css("color","green");
                 } else {
-                    $("#loginmessage").html("Logged in, but initial sync had problems. Might still work!");
+                    _gaq.push(['_trackEvent', 'Options', 'save_clicked','sync_error']);
+                    $("#loginmessage").html("<center>Logged in, but initial sync had problems.<br>Might still work!</center>");
                     $("#loginmessage").css("color","red");
                 }
             });
-        } else {
-            if (successObj.reason=="timeout")
-                $("#loginmessage").html("Could not log in: network timeout, please try again later.");
-            else if (successObj.reason=="logininvalid")
-                $("#loginmessage").html("Could not log in: email or password incorrect.");
-            else
-                $("#loginmessage").html("Could not log in: unknown error.");
+        } else {            
 
+            if (successObj.reason=="timeout") {
+                _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_timeout']);
+                $("#loginmessage").html("Could not log in: network timeout, please try again later.");
+            } else if (successObj.reason=="logininvalid") {
+                _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_invalid']);
+                $("#loginmessage").html("Could not log in: email or password incorrect.");
+            } else {
+                _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_error']);
+                $("#loginmessage").html("Could not log in: unknown error.");
+            }
             $("#loginmessage").css("color","red");
         }
         $("#save").removeAttr("disabled");
@@ -140,5 +154,6 @@ function save_clicked() {
 }
 
 function reset_clicked() {
+    _gaq.push(['_trackEvent', 'Options', 'reset_clicked']);
     chrome.extension.sendRequest({action:"userchanged"});
 }

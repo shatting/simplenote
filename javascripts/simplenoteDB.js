@@ -98,10 +98,10 @@ var SimplenoteDB = {
     //  mark: "agtzaW1wbGUtbm90ZXINCxIETm90ZRiElc0HDB"
     //  time: "1302261452.277224"
     _gotIndexChunk : function(indexData, havemore, fullSync) {
-                
+        
         if (!indexData) {
             if (this.syncCallbackFinished)
-                this.syncCallbackFinished(false);
+                this.syncCallbackFinished({success:false, fullSync:fullSync});
             this.log("_gotIndexChunk: error getting index from server.");
             this.offline(true);
             this._setSyncInProgress(false);
@@ -131,10 +131,12 @@ var SimplenoteDB = {
             if (this.syncCallbackChunk)
                 this.syncCallbackChunk(indexData);
 
-            if (!havemore) {                
+            if (!havemore) {
+                var successObj = {success:true, fullSync:fullSync};
+                
                 if (indexData.data.length > 0) // check for indextime sync, most often we get 0 back
                     SimplenoteLS.indexTime(indexData.time);
-                
+                                
                 if (fullSync) {                    
                     // check for deletions
                     var lskeys = SimplenoteLS.getKeys(), key;
@@ -151,12 +153,14 @@ var SimplenoteDB = {
                         this.log("_gotIndexChunk: had remote deletions.");
                     else
                         this.log("_gotIndexChunk: no remote deletions.");
+
+                    successObj.numKeys = SimplenoteDB._indexKeysTemp.length;
                 }
 
                 this._setSyncInProgress(false);
                 
                 if (this.syncCallbackFinished)
-                    this.syncCallbackFinished(true);                
+                    this.syncCallbackFinished(successObj);
                 
                 uiEvent("sync", {status: "done", changes : this._indexKeysChanged});
             } 

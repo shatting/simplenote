@@ -27,10 +27,10 @@ function backgroundSync(fullSync, callbackComplete, callbackPartial) {
     handleRequest({action:"login"}, {}, function(successObj) {        
         if (successObj.success) {
             log("backgroundSync: login request completed, requesting sync. fullSync=" + fullSync);
-            SimplenoteDB.sync(fullSync, function() {
+            SimplenoteDB.sync(fullSync, function(successObj) {
                 //log("backgroundSync: complete, setting timer for partial sync..");
                 if (callbackComplete)
-                    callbackComplete();
+                    callbackComplete(successObj);
                 //window.setTimeout("backgroundSync(false);", 2000);
             }, callbackPartial);
         } else {
@@ -143,39 +143,47 @@ $(document).ready(function() {
 chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (Page Url)",        contexts:['page'],
         onclick: function(info, tab){
             //createNoteFromBG({content:"Page Url:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab)});
+            _gaq.push(['_trackEvent', 'ContextMenu', 'create_url']);
             createNoteFromBG({content:info.pageUrl});
         }});
 chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (Selection)",  contexts:['selection'],
         onclick: function(info, tab){
             //createNoteFromBG({content:"Selection:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab)});
+            _gaq.push(['_trackEvent', 'ContextMenu', 'create_selection']);
             createNoteFromBG({content:info.selectionText + "\n\n" + "[Source: " + tab.url + "]"});
         }});
 chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (Link Url)",       contexts:['link'],
         onclick: function(info, tab){
             //createNoteFromBG({content:"Link URL:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab)});
+            _gaq.push(['_trackEvent', 'ContextMenu', 'create_link_url']);
             createNoteFromBG({content:info.linkUrl});
         }});
 chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (Image Url)",    contexts:['image'],
         onclick: function(info, tab){
+            _gaq.push(['_trackEvent', 'ContextMenu', 'create_image_url']);
             createNoteFromBG({content:info.srcUrl});
         }});
 chrome.contextMenus.create({type:"normal",title:"Append to last open (Page Url)",        contexts:['page'],
         onclick: function(info, tab){
             //appendToLastOpenNoteFromBG("Append Page:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab));
+            _gaq.push(['_trackEvent', 'ContextMenu', 'append_url']);
             appendToLastOpenNoteFromBG(info.pageUrl);
         }});
 chrome.contextMenus.create({type:"normal",title:"Append to last open (Selection)",  contexts:['selection'],
         onclick: function(info, tab){
             //appendToLastOpenNoteFromBG("Append Selection:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab));
+            _gaq.push(['_trackEvent', 'ContextMenu', 'append_selection']);
             appendToLastOpenNoteFromBG(info.selectionText + "\n\n" + "[Source: " + tab.url + "]");
         }});
 chrome.contextMenus.create({type:"normal",title:"Append to last open (Link Url)",       contexts:['link'],
         onclick: function(info, tab){
             //appendToLastOpenNoteFromBG("Append Link Url:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab));
+            _gaq.push(['_trackEvent', 'ContextMenu', 'append_link_url']);
             appendToLastOpenNoteFromBG(info.linkUrl);
         }});
 chrome.contextMenus.create({type:"normal",title:"Append to last open (Image Url)",    contexts:['image'],
         onclick: function(info, tab){
+            _gaq.push(['_trackEvent', 'ContextMenu', 'append_image_url']);
             appendToLastOpenNoteFromBG(info.srcUrl);
         }});
 
@@ -285,10 +293,10 @@ function handleRequest(request, sender, sendResponse) {
     if (request.action == "userchanged") {
         SimplenoteLS._reset();
         SimplenoteDB._reset();        
-        backgroundSync(true, function(success) {            
+        backgroundSync(true, function(successObj) {
             log("handleRequest:userchanged sync done.");
             if (sendResponse)
-                sendResponse(success);
+                sendResponse(successObj);
         });
     } else if (request.action === "login") {
 

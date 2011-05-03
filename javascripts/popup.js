@@ -887,7 +887,7 @@ function editorMakeContextMenu() {
 //            execCommand("paste");
 //      }},
 //      $.contextMenu.separator,
-      {'Insert tab URL (alt-v)':insertUrl},
+      {'Insert browser URL (alt-v)': insertUrl },
       
       {'Search for selection (alt-s)':
         {
