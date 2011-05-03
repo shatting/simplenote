@@ -115,14 +115,18 @@ function uiEventListener(eventData, sender, sendResponse) {
     }
 }
 
+jQuery.expr[':'].focus = function( elem ) {
+  return elem === document.activeElement && ( elem.type || elem.href );
+};
+
 $(document).keydown(shorcuts);
 function shorcuts(event) {
-//    "up": function() {alert("up");},
-//    "down": function() {}
-    var notesheight = $("div#notes").get(0).scrollHeight;
 
     if (currentView=="index") {
-//        - index: up, down, enter/right
+    // - index: up, down, enter/right, s search, ctrl-t tags, ctrl-a add
+        var notesheight = $("div#notes").get(0).scrollHeight;
+
+        if (!event.altKey && !event.ctrlKey && !event.shiftKey)
         switch(event.keyCode) {
             case 38: //up
                 $("div#notes").scrollTop($("div#notes").scrollTop()-notesheight/20)
@@ -132,35 +136,57 @@ function shorcuts(event) {
             break;
             case 39: //right
             break;
-        }
-    } else if (currentView=="editor") {
-        return; // still needs testing
-//        - editor: ctrl-s83, crtl-b66=back, crtl-d68=trash, ctrl-u85=undo, ctrl-p80=pin, ctrl-w87=wordwrap, ctrl-t84=tags
-//        - trap esc key and mouse side button for back in editor
-        //console.log(event.keyCode + "=" + event.keyIdentifier )
-        switch(event.keyCode) {
-            case 83:
-                break;
-            case 66: //b
-                $('div#note input#backtoindex').click();break;                
-            case 68: //d
-                if (event.shiftKey)
-                    $('div#note input#destroy').click();break;
-            case 85: //u
-                $('div#note input#undo').click();break;
-            case 80: //p
-                $('div#note input#pinned').attr("checked",!$('div#note input#pinned').attr("checked"));
-                $('div#note input#pinned').change();
-                break;
-            case 87: //w
-                $("div#note input#wordwrap").attr("checked",!$("div#note input#wordwrap").attr("checked"));
-                $("div#note input#wordwrap").change();
-                break;
             case 84: //t
-                 $("div#note input#tags").focus(); break;
-            case 69: //e
-                codeMirror.focus();break;
+                if (!$("div#index #notetags").is(":focus")) {
+                    $("div#index #notetags").focus();
+                    event.preventDefault();
+                }
+            break;
+            case 83: //s
+                if (!$("div#index input#q").is(":focus")) {
+                    $("div#index input#q").focus();
+                    event.preventDefault();
+                }
+                break;
+            case 65: //a
+                if (!$("div#index input#q").is(":focus")) {
+                    $("div#index #add").click();
+                    //event.preventDefault();
+                }
+            break;
         }
+    } else if (currentView=="editor") {        
+        // - editor: alt-b66=back, crtl-d68=trash, alt-u85=undo, alt-p80=pin, alt-w87=wordwrap, alt-t84=tags
+        if (event.altKey && !event.shiftKey)
+            switch(event.keyCode) {
+                case 83: //s
+                    break;
+                case 66: //b
+                    $('div#note input#backtoindex').click();break;
+                case 67: //c
+                    if (event.ctrlKey && $('div#note input#destroy').val()=="Cancel")
+                        $('div#note input#destroy').click();break;
+                case 68: //d
+                    if (event.ctrlKey && $('div#note input#destroy').val()=="Trash")
+                        $('div#note input#destroy').click();break;
+                case 85: //u
+                    $('div#note input#undo').click();break;
+                case 80: //p
+                    $('div#note input#pinned').attr("checked",!$('div#note input#pinned').attr("checked"));
+                    $('div#note input#pinned').change();
+                    break;
+                case 87: //w
+                    $("div#note input#wordwrap").attr("checked",!$("div#note input#wordwrap").attr("checked"));
+                    $("div#note input#wordwrap").change();
+                    break;
+                case 84: //t
+                    event.preventDefault();
+                    $("div#note input#tags").focus();break;
+                case 69: //e
+                    event.preventDefault();
+                    codeMirror.focus();
+                    break;
+            }
     }
 }
 
@@ -194,6 +220,8 @@ $(document).ready(function() {
                     });                    
                 }
                 
+                $("#note").hide();
+
                 fillTags(true);
 
                 // bind ADD button
@@ -620,8 +648,12 @@ function localeDateString(d) {
 function slideEditor(callback, duration) {
     if (duration == undefined)
         duration = 300;
+    $("#note").show();
     $('div#index').animate({left:"-=400"}, {duration: duration, complete: callback});
-    $('div#note').animate({left:"-=400"}, duration);
+    $('div#note').animate({left:"-=400"}, {duration: duration, complete: function() {
+        $("#index").hide();
+        
+    }});
     $('body').animate({width:"+=400"}, duration);
     currentView = "editor";
 }
@@ -631,10 +663,13 @@ function slideIndex(callback, duration) {
         duration = 300;
     localStorage.opentonotekey = "";
     editorClearDirty();
+    $("#index").show();
     $('div#index').animate({left:"+=400"}, {duration: duration, complete: callback});
-    $('div#note').animate({left:"+=400"}, duration);   
-    $('body').animate({width : "-=400"},duration);
-    currentView = "index";
+    $('div#note').animate({left:"+=400"}, {duration:duration, complete: function() {
+        $("#note").hide();        
+    }});
+    $('body').animate({width : "-=400"}, duration);
+    currentView = "index";   
 }
 //  ---------------------------------------
 function editorShowNote(note, duration) {
@@ -794,7 +829,7 @@ function editorShowNote(note, duration) {
         
         // delete button now cancel button
         $('div#note input#destroy').val("Cancel");
-        $('div#note input#destroy').attr("title","Dont save note, return to notes");
+        $('div#note input#destroy').attr("title","Dont save note, return to notes (ctrl-alt-c)");
         $('div#note input#destroy').unbind();
         $('div#note input#destroy').click(function() {
             slideIndex();
@@ -813,7 +848,7 @@ function editorShowNote(note, duration) {
         
         // bind TRASH button
         $('div#note input#destroy').val("Trash");
-        $('div#note input#destroy').attr("title","Send note to trash");
+        $('div#note input#destroy').attr("title","Send note to trash (ctrl-alt-d)");
         $('div#note input#destroy').unbind();
         $('div#note input#destroy').click(note,function(event) {
             editorTrashNote(event.data.key);

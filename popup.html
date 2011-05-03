@@ -24,24 +24,24 @@
   <body onselectstart="return false;">
     <div id="index">
         <div id="toolbar">
-          <input type="text" id="q" onsubmit="return false" placeholder="Search notes" spellcheck="false" title="Type here to search for notes"/>
-          <select id="notetags" title="Show notes by tag"><option value="#all#"></option></select>
-          <div id="add" title="Create a note"></div>
+          <input type="text" id="q" onsubmit="return false" placeholder="Search notes" spellcheck="false" title="Type here to search for notes (shortcut: s)"/>
+          <select id="notetags" title="Show notes by tag (shortcut: t)" ><option value="#all#"></option></select>
+          <div id="add" title="Create a note (shortcut: a)"></div>
         </div>
       <div id="notes"></div>
       <div id="statusbar"><div id="offline"></div><div id="sync" title="Click to sync"></div></div>
     </div>
     <div id="note">
         
-        <input type="button" id="backtoindex" value="Back" title="Back to notes (ctrl-b)"/>
-        <div id="wordwrapwrapper">
-            <input type="checkbox" id="wordwrap" title="Toggle wordwrap (ctrl-w)"/><label for="wordwrap">Wordwrap</label>
+        <input type="button" id="backtoindex" value="Back" title="Back to notes (alt-b)" tabindex="6"/>
+        <div id="wordwrapwrapper" title="Toggle wordwrap (alt-w)">
+            <input type="checkbox" id="wordwrap" tabindex="5"/><label for="wordwrap">Wordwrap</label>
         </div>
-        <input type="button" id="destroy" value="Trash" title="Send note to trash (ctrl-shift-d)"/>
-        <input type="button" id="undo" value="Undo changes" title="Revert note to state before opening (ctrl-u)"/>
-        <input type="text" id="tags" placeholder="Tag this note" spellcheck="false" title="Click here to enter tags for this note (ctrl-t to focus, ctrl-e to get back to editor)"/>
-        <div id="pinwrapper" title="Pin this note to always show on top (ctrl-p)">
-            <input type="checkbox" id="pinned" /><label for="pinned">Pin</label>
+        <input type="button" id="destroy" value="Trash" title="Send note to trash (ctrl-alt-d)" tabindex="4"/>
+        <input type="button" id="undo" value="Undo changes" title="Revert note to state before opening (alt-u)" tabindex="3"/>
+        <input type="text" id="tags" placeholder="Tag this note" spellcheck="false" title="Click here to enter tags for this note (alt-t to focus, alt-e to get back to editor)" tabindex="1"/>
+        <div id="pinwrapper" title="Pin this note to always show on top (alt-p)" >
+            <input type="checkbox" id="pinned" tabindex="2"/><label for="pinned">Pin</label>
         </div>
     </div>
     <script type="text/javascript">
@@ -58,7 +58,8 @@
                 electricChars : false
             });
         $(".cm-iframe").attr("id","cmiframe");
-        $(".CodeMirror-wrapping").attr("id","cmwrapper");        
+        $(".CodeMirror-wrapping").attr("id","cmwrapper");
+        $("#cmiframe").attr("tabindex","7");
 
     </script>
     <!--<div id="loader"></div>

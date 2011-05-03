@@ -38,13 +38,14 @@ div#index div#toolbar select#notetags {
     border-radius: 12px;
     border: 1px solid #999;
     border: 1px solid rgba(0, 0, 0, 0.3);
-    box-shadow: 0 1px 0 #fff;
+    ''box-shadow: 0 1px 0 #fff;
     padding: 2px 8px 2px 2px;
     background: rgba(255,255,255,0.1) url(/images/tag_dunkel.png) no-repeat 6px 50%;
 }
 
 div#index div#toolbar select#notetags:focus {
     outline: none;
+    border: 1px solid rgba(0, 0, 0, 0.4);
     -webkit-box-shadow: 0 0 3px #3c7ecf;
 }
 div#index div#toolbar select#notetags:hover {

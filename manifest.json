@@ -1,7 +1,7 @@
 {
   "name": "Syncpad for Simplenote",
   "version": "1.5.2.1",
-  "description": "Keep your notes in sync across computers and handhelds. Sycns transparently with Simplenote. Works offline as well.",
+  "description": "Keep your notes in sync across computers and handhelds. Automatically sycns with Simplenote, and lets you work offline as well.",
   "icons": {
     "96": "imanges/icon_96.png",
     "128": "images/icon_128.png",
@@ -18,7 +18,6 @@
   },
   "permissions": [
     "https://simple-note.appspot.com/",
-    "contextMenus",
-    "unlimitedStorage"
+    "contextMenus"
   ]
 }
