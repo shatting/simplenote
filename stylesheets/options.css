@@ -65,7 +65,7 @@ a, a:visited {
 .option, .optionheading {
     margin-top: 8px;
     margin-bottom: 8px;
-    font-size: 22px;
+    font-size: 18px;
     border-radius:4px;
     background:#EEE;    
     margin:7px 0;
@@ -143,6 +143,7 @@ input#email, input#password {
   padding: 8px;
   width: 83%;
   cursor:text;
+  font-size: 22px;
 }
 
 #loginmessage{

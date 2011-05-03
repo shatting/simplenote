@@ -5,7 +5,8 @@ body {
   height: 550px;
   width: 400px;
   overflow: hidden;
-  background: #4F4F59 url(/images/texture.png);
+  background: #4F4F59;
+  background-image: url(/images/texture.png);
 }
 
 /* index */
@@ -15,6 +16,7 @@ div#index {
     width: 400px;
     height:100%;
     left:0px;
+    
 }
 
 div#status {

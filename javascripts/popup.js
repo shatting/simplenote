@@ -280,6 +280,9 @@ $(document).ready(function() {
                     years: "%d years",
                     numbers: []
                 }
+
+                if (localStorage.option_color_index)
+                    $("body").css("background-color",localStorage.option_color_index);
                 
             }
             else {
@@ -705,7 +708,13 @@ function editorSetFont() {
 
     // set font shadow
     if (localStorage.option_editorfontshadow && localStorage.option_editorfontshadow == "true")
-        $editbox.css("text-shadow","2px 2px 2px #aaa" );
+        $editbox.css("text-shadow","1px 1px 1px #ccc" );
+
+    // set colors
+    if (localStorage.option_color_editor)
+        $editbox.css("background-color",localStorage.option_color_editor);
+    if (localStorage.option_color_editor)
+        $editbox.css("color",localStorage.option_color_editor_font);
 }
 
 function editorInitialize() {
@@ -902,7 +911,7 @@ function editorMakeContextMenu() {
         offsetX:0,
         offsetY:20,
         direction:'down',
-        beforeShow: function() {
+        beforeShow: function() {            
             if (codeMirror.selection().trim() == "")
                 $(this.menu).find('.disableonnoselection').each(function() {
                         $(this).toggleClass("context-menu-item-disabled", true);

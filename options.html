@@ -5,6 +5,7 @@
         <meta http-equiv='Content-type' content='text/html; charset=utf-8' />
         <link rel="stylesheet" href="stylesheets/options.css" type="text/css" media="all" />
         <script src="javascripts/lib/jquery.js"></script>
+        <script src="javascripts/lib/mcolorpicker/mColorPicker.js"></script>
         <script src="javascripts/options.js"></script>
         <script>
             var _gaq = _gaq || [];
@@ -34,7 +35,7 @@
                 </div>
             </div>
             <div class="option group">
-                <div class="optionheading">Options</div>
+                
                 <div class="option"><input type="checkbox" id="opentonote"/><label for="opentonote"> Open to last note</label></div>
                 <div class="option"><input type="checkbox" id="showdate"/><label for="showdate"> Show modification/creation date in index</label></div>
 
@@ -86,6 +87,11 @@
                         <option value="24">24</option>
                     </select> px.
                     <input type="checkbox" id="editorfontshadow"/><label for="editorfontshadow"> Font shadow</label>
+                </div>
+                <div class="option" style="font-size:16px">
+                    <input type="text" class="color" id="color_index" data-text="hidden" style="height:20px;width:40px;"><label for="color_index" > Background</label>
+                    <input type="text" class="color" id="color_editor" data-text="hidden" style="height:20px;width:40px;"><label for="color_index" > Editor Back</label>
+                    <input type="text" class="color" id="color_editor_font" data-text="hidden" style="height:20px;width:40px;"><label for="color_index" > Editor Font</label>
                 </div>
             </div>
             <div class="option">

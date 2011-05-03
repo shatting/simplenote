@@ -1,5 +1,6 @@
 html {
-    overflow: auto;    
+    overflow: auto;
+    border-radius: 12px 0px 0px 0px;
 }
 
 .editbox {

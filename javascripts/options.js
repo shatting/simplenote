@@ -29,6 +29,31 @@ $(document).ready(function() {
   if (localStorage.option_editorfontshadow != undefined && localStorage.option_editorfontshadow == "true")
     $("#editorfontshadow").attr("checked","true");
 
+  if (!localStorage.option_color_index)
+      localStorage.option_color_index = "#4F4F59";
+  if (!localStorage.option_color_editor)
+      localStorage.option_color_editor = "#ffffff";
+  if (!localStorage.option_color_editor_font)
+      localStorage.option_color_editor_font = "#010101";
+  
+  $('#color_index').attr("value",localStorage.option_color_index);
+  $('#color_editor').attr("value",localStorage.option_color_editor);
+  $('#color_editor_font').attr("value",localStorage.option_color_editor_font);
+  
+  $('input.color').mColorPicker({
+      swatches:[
+          "#4F4F59",
+          "#ffffff",
+          "#dddddd",
+          "#cccccc",
+          "#aaaaaa",
+          "#888888",
+          "#666666",
+          "#444444",
+          "#222222",
+          "#000000"]
+  });
+
   $("input, select").change(function(event) {      
       save_options();
   });
@@ -36,7 +61,7 @@ $(document).ready(function() {
   $("#save").click(save_clicked);
   $("#reset").click(reset_clicked);
   $("#donate").click(function () { _gaq.push(['_trackEvent', 'Options', 'donate_clicked']); });
-
+  
 });
 
 /*
@@ -54,7 +79,6 @@ function save_options() {
   localStorage.option_sortbydirection = $("#sortdirection").attr("checked")?-1:1;  
   localStorage.option_editorfont = $("#editorfont").val();
   localStorage.option_editorfontsize = $("#editorfontsize").val();
-
   // font stuff
   var fontinfo = { size: localStorage.option_editorfontsize + "px", letter_spacing: "0em", word_spacing: "0em", line_height: "1.5"};  
   switch (localStorage.option_editorfont) {
@@ -77,7 +101,10 @@ function save_options() {
 
   // font shadow
   localStorage.option_editorfontshadow  = $('#editorfontshadow').attr("checked");
-  
+
+  localStorage.option_color_index = $('#color_index').val();
+  localStorage.option_color_editor = $('#color_editor').val();
+  localStorage.option_color_editor_font = $('#color_editor_font').val();
 }
 
 function save_clicked() {
