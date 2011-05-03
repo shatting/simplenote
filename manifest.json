@@ -18,6 +18,7 @@
   },
   "permissions": [
     "https://simple-note.appspot.com/",
-    "contextMenus"
+    "contextMenus",
+    "tabs"
   ]
 }

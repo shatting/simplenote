@@ -115,6 +115,7 @@ function uiEventListener(eventData, sender, sendResponse) {
     }
 }
 
+// shortcuts
 jQuery.expr[':'].focus = function( elem ) {
   return elem === document.activeElement && ( elem.type || elem.href );
 };
@@ -276,7 +277,7 @@ $(document).ready(function() {
                     years: "%d years",
                     numbers: []
                 }
-
+                
             }
             else {
                 log("(ready): login error, message=" + result.message);
@@ -671,6 +672,11 @@ function slideIndex(callback, duration) {
     $('body').animate({width : "-=400"}, duration);
     currentView = "index";   
 }
+
+function prepareEditor() {
+    
+}
+
 //  ---------------------------------------
 function editorShowNote(note, duration) {
     log("showNote");      
@@ -756,7 +762,7 @@ function editorShowNote(note, duration) {
         }
     });
 
-//    $editbox.mousedown(function (event) {
+ //    $editbox.mousedown(function (event) {
 //        console.log(event);
 //    })
     
@@ -823,7 +829,10 @@ function editorShowNote(note, duration) {
         $("div#note input#wordwrap").attr("checked","");
     }
     $("div#note input#wordwrap").change();
-
+    
+    // add context menu
+    editorMakeContextMenu();
+    
     // get note contents
     if (note.key == "") { // new note
         
@@ -935,6 +944,47 @@ function editorTrashNote(key) {
                 $('div#note input').removeAttr('disabled');
             });
 }
+//  ---------------------------------------
+function editorMakeContextMenu() {
+
+    var $editbox = $(codeMirror.editor.container);
+    var menu1 = [
+      {'Insert browser tab URL':function(menuItem,menu) {
+            chrome.tabs.getSelected(undefined,function(tab) {
+                codeMirror.replaceSelection(tab.url);
+                $editbox.change();
+            });
+          }},
+      {'Google for selection':
+        {
+            onclick: function(menuItem,menu) {
+                openURLinTab("http://google.com/search?q=" + encodeURIComponent(codeMirror.selection().trim()));
+            },
+            className: "disableonnoselection"
+        }
+      }
+      //,$.contextMenu.separator
+    ];
+    $editbox.contextMenu(menu1,{
+        theme:'gloss',
+        offsetX:0,
+        offsetY:20,
+        direction:'down',
+        beforeShow: function() {
+            if (codeMirror.selection().trim() == "")
+                $(this.menu).find('.disableonnoselection').each(function() {
+                        $(this).toggleClass("context-menu-item-disabled", true);
+                 });
+            else
+                $(this.menu).find('.disableonnoselection').each(function() {
+                        $(this).toggleClass("context-menu-item-disabled", false);
+                 });
+
+            return true;
+        },
+    });
+}
+
 //  ---------------------------------------
 // from inview.js
 function getViewportSize() {
