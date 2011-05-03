@@ -151,8 +151,7 @@ function shorcuts(event) {
                 break;
             case 65: //a
                 if (!$("div#index input#q").is(":focus")) {
-                    $("div#index #add").click();
-                    //event.preventDefault();
+                    $("div#index #add").click();                    
                 }
             break;
         }
@@ -673,31 +672,10 @@ function slideIndex(callback, duration) {
     currentView = "index";   
 }
 
-function prepareEditor() {
-    
-}
-
-//  ---------------------------------------
-function editorShowNote(note, duration) {
-    log("showNote");      
-    
-    editorClearDirty();
-    
-    // new note dummy data
-    if (note==undefined)
-        note = {content:"",tags:[],systemtags:[], key:""};
-
+function editorSetFont() {
     var $head = $(codeMirror.editor.container.ownerDocument.head);
     var $editbox = $(codeMirror.editor.container);
     
-    $editbox.unbind();
-    // the following could be done with activeTokens config property
-    $(".sn-link",$editbox).die();
-    $(".sn-link",$editbox).live("click",function(event) {
-       var url = this.textContent;
-       openURLinTab(url);
-    });
-
     // get fontinfo if there
     var fontinfo;
     if (localStorage.editorfontinfo)
@@ -707,7 +685,7 @@ function editorShowNote(note, duration) {
     // keeping this so we can easily delete already loaded fonts
     // otherwise could add a fontinfo field for url
     var fontname = localStorage.option_editorfont?localStorage.option_editorfont:fontinfo.family;
-    for(var name in fontUrls) {        
+    for(var name in fontUrls) {
         if (fontname == name) {
             $head.append(fontUrls[name]);
             delete fontUrls[name];
@@ -728,24 +706,28 @@ function editorShowNote(note, duration) {
 
     // set font shadow
     if (localStorage.option_editorfontshadow && localStorage.option_editorfontshadow == "true")
-        $editbox.css("text-shadow","2px 2px 2px #aaa" );    
+        $editbox.css("text-shadow","2px 2px 2px #aaa" );
+}
 
-    codeMirror.note = note;
+function editorInitialize() {
 
+    if (codeMirror.initialized)
+        return;
+
+    var $editbox = $(codeMirror.editor.container);
+                
     // add note content change (dirty) event listeners
-    codeMirror.dirty = false;
-    $editbox.bind('change keyup paste cut', note, function(event) {
-        var note=event.data;        
-       
+    $editbox.unbind();
+    $editbox.bind('change keyup paste cut', function(event) {
+        var note = codeMirror.note;
+
         if (note.content != codeMirror.getCode()) {
             if (!codeMirror.dirty)
                 log("content dirty now (" + event.type + ")");
-            //$('div#note').attr('dirty', 'true');
             codeMirror.dirty = true;
         } else {
             if (codeMirror.dirty)
-                log("content not dirty now (" + event.type + ")");
-            //$('div#note #contenteditor').removeAttr('dirty');
+                log("content not dirty now (" + event.type + ")");;
             codeMirror.dirty = false;
         }
         if (editorIsNoteDirty())
@@ -755,21 +737,17 @@ function editorShowNote(note, duration) {
     });
 
     // fix for home not scrolling all to the left
-    $(codeMirror.editor.container,$editbox).keydown(shorcuts);
-    $(codeMirror.editor.container,$editbox).keyup(function(event) {
-        if (event.keyCode == 36) { //home key            
+    $editbox.keydown(shorcuts);
+    $editbox.keyup(function(event) {
+        if (event.keyCode == 36) { //home key
             $editbox.scrollLeft(Math.max(0,$editbox.scrollLeft()-300));
         }
     });
 
- //    $editbox.mousedown(function (event) {
-//        console.log(event);
-//    })
-    
-    // add note tags change (dirty) event listeners
+        // add note tags change (dirty) event listeners
     $('div#note input#tags').unbind();
-    $('div#note input#tags').bind('change keyup paste cut', note, function(event) {
-        var note = event.data;
+    $('div#note input#tags').bind('change keyup paste cut', function(event) {
+        var note = codeMirror.note;
         if (note.tags.join(" ") != $(this).val().trim()) {
             if ($('div#note input#tags').attr('dirty') != "true")
                 log("tags dirty now (" + event.type + ")");
@@ -783,13 +761,13 @@ function editorShowNote(note, duration) {
         else
             $('div#note input#undo').attr("disabled","disabled");
     });
-    
+
     // add note pinned (dirty) event listeners
     $('div#note input#pinned').unbind();
-    $('div#note input#pinned').bind('change', note, function(event) {
-        var note = event.data;
+    $('div#note input#pinned').bind('change', function(event) {
+        var note = codeMirror.note;
         var waspinned = note.systemtags.indexOf("pinned")>=0;
-        
+
         if (waspinned != $("div#note input#pinned").attr("checked")) {
             if ($('div#note input#pinned').attr('dirty') != "true")
                 log("pinned dirty now (" + event.type + ")");
@@ -806,89 +784,150 @@ function editorShowNote(note, duration) {
 
     // bind back button
     $('div#note input#backtoindex').unbind();
-    $('div#note input#backtoindex').click(note,function(event) {        
+    $('div#note input#backtoindex').click(function(event) {
         if (editorIsNoteDirty()) {
             log("back clicked, note dirty.");
-            editorNoteChanged(event.data.key);
+            editorNoteChanged(codeMirror.note.key);
         } else {
             log("back clicked, note not dirty.");
             slideIndex();
         }
     });
 
-    // bind word wrap           
+    // bind word wrap
     $("div#note input#wordwrap").unbind();
     $("div#note input#wordwrap").bind('change', function(event) {
         localStorage.wordwrap = $("#wordwrap").attr("checked");
         codeMirror.setTextWrapping($("div#note input#wordwrap").attr("checked"))
     });
-
     if (localStorage.wordwrap != undefined && localStorage.wordwrap == "true") {
         $("div#note input#wordwrap").attr("checked","true");
     } else {
         $("div#note input#wordwrap").attr("checked","");
     }
     $("div#note input#wordwrap").change();
+
     
+    // bind UNDO button
+    $('div#note input#undo').unbind();
+    $('div#note input#undo').click(function(event) {
+        // reset content
+        var note = codeMirror.note;
+        codeMirror.setCode(note.content);
+        // reset tags
+        $('div#note input#tags').val(note.tags.join(" "));
+        // reset pinned
+        if (note.systemtags.indexOf("pinned")>=0)
+            $('div#note input#pinned').attr("checked","checked");
+        else
+            $('div#note input#pinned').removeAttr("checked");
+
+        $('div#note input#undo').attr("disabled","disabled");
+        //editorClearDirty(); // should not dont need this here b/c of callbacks
+    });
+
+    // bind DELETE/CANCEL
+    $('div#note input#destroy').unbind();
+    $('div#note input#destroy').click(function(event) {
+        var note = codeMirror.note;
+        if (note.key != "")
+            editorTrashNote(note.key);
+        slideIndex();
+    });
+
+    // bind links
+    $(".sn-link",$editbox).die();
+    $(".sn-link",$editbox).live("click",function(event) {
+       var url = this.textContent;
+       openURLinTab(url);
+    });
+
     // add context menu
     editorMakeContextMenu();
-    
+
+    codeMirror.initialized = true;
+}
+
+//  ---------------------------------------
+function editorMakeContextMenu() {
+
+    var $editbox = $(codeMirror.editor.container);
+    var menu1 = [
+      {'Insert browser tab URL':function(menuItem,menu) {
+            chrome.tabs.getSelected(undefined,function(tab) {
+                codeMirror.replaceSelection(tab.url);
+                $editbox.change();
+            });
+          }},
+      {'Google for selection':
+        {
+            onclick: function(menuItem,menu) {
+                openURLinTab("http://google.com/search?q=" + encodeURIComponent(codeMirror.selection().trim()));
+            },
+            className: "disableonnoselection"
+        }
+      }
+      //,$.contextMenu.separator
+    ];
+    $editbox.contextMenu(menu1,{
+        theme:'gloss',
+        offsetX:0,
+        offsetY:20,
+        direction:'down',
+        beforeShow: function() {
+            if (codeMirror.selection().trim() == "")
+                $(this.menu).find('.disableonnoselection').each(function() {
+                        $(this).toggleClass("context-menu-item-disabled", true);
+                 });
+            else
+                $(this.menu).find('.disableonnoselection').each(function() {
+                        $(this).toggleClass("context-menu-item-disabled", false);
+                 });
+
+            return true;
+        },
+    });
+}
+
+//  ---------------------------------------
+function editorShowNote(note, duration) {
+    log("showNote");      
+            
+    // new note dummy data
+    if (note==undefined)
+        note = {content:"",tags:[],systemtags:[], key:""};
+
+    codeMirror.note = note;
+
+    editorClearDirty();
+    editorSetFont();
+    editorInitialize();
+
     // get note contents
     if (note.key == "") { // new note
         
         // delete button now cancel button
         $('div#note input#destroy').val("Cancel");
         $('div#note input#destroy').attr("title","Dont save note, return to notes (ctrl-alt-c)");
-        $('div#note input#destroy').unbind();
-        $('div#note input#destroy').click(function() {
-            slideIndex();
-        });
-    
-        // insert data
-        codeMirror.setCode("");
 
-        // show/hide elements        
-        $("div#note input#pinned").attr("checked","");        
-        $('div#note input#tags').val("");
-        $('div#note input#undo').unbind();
+        // hide undo
         $('div#note input#undo').hide();                
 
     } else { // existing note
         
-        // bind TRASH button
+        // delete button now delete button
         $('div#note input#destroy').val("Trash");
         $('div#note input#destroy').attr("title","Send note to trash (ctrl-alt-d)");
-        $('div#note input#destroy').unbind();
-        $('div#note input#destroy').click(note,function(event) {
-            editorTrashNote(event.data.key);
-            slideIndex();
-        });
 
-        // bind UNDO button
-        $('div#note input#undo').unbind();
-        $('div#note input#undo').click(note,function(event) {
-            // reset content
-            codeMirror.setCode(note.content);
-            // reset tags
-            $('div#note input#tags').val(note.tags.join(" "));
-            // reset pinned
-            if (note.systemtags.indexOf("pinned")>=0)
-                $('div#note input#pinned').attr("checked","checked");
-            else
-                $('div#note input#pinned').removeAttr("checked");
-             
-            $('div#note input#undo').attr("disabled","disabled");
-            editorClearDirty();
-        });
-
-        // trigger undo click-> fills everything
-        $('div#note input#undo').click();        
-
+        // show undo
         $('div#note input#undo').show();
         
         localStorage.opentonotekey = note.key;
     }
-   
+    
+    // trigger undo click-> fills everything
+    $('div#note input#undo').click();
+    
     slideEditor(function () {codeMirror.focus();}, duration);
 
 }
@@ -943,46 +982,6 @@ function editorTrashNote(key) {
             function() {
                 $('div#note input').removeAttr('disabled');
             });
-}
-//  ---------------------------------------
-function editorMakeContextMenu() {
-
-    var $editbox = $(codeMirror.editor.container);
-    var menu1 = [
-      {'Insert browser tab URL':function(menuItem,menu) {
-            chrome.tabs.getSelected(undefined,function(tab) {
-                codeMirror.replaceSelection(tab.url);
-                $editbox.change();
-            });
-          }},
-      {'Google for selection':
-        {
-            onclick: function(menuItem,menu) {
-                openURLinTab("http://google.com/search?q=" + encodeURIComponent(codeMirror.selection().trim()));
-            },
-            className: "disableonnoselection"
-        }
-      }
-      //,$.contextMenu.separator
-    ];
-    $editbox.contextMenu(menu1,{
-        theme:'gloss',
-        offsetX:0,
-        offsetY:20,
-        direction:'down',
-        beforeShow: function() {
-            if (codeMirror.selection().trim() == "")
-                $(this.menu).find('.disableonnoselection').each(function() {
-                        $(this).toggleClass("context-menu-item-disabled", true);
-                 });
-            else
-                $(this.menu).find('.disableonnoselection').each(function() {
-                        $(this).toggleClass("context-menu-item-disabled", false);
-                 });
-
-            return true;
-        },
-    });
 }
 
 //  ---------------------------------------
