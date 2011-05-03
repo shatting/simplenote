@@ -113,18 +113,24 @@ function save_clicked() {
     chrome.extension.sendRequest({action:"login"}, function(successObj) {
         if (successObj.success) {
             $("#loginmessage").html("Logged in, getting notes index from server..");
-            $("#loginmessage").css("color","green");
+            $("#loginmessage").css("color","yellow");
             delete localStorage.opentonotekey;
             chrome.extension.sendRequest({action:"userchanged"}, function(success) {
-                $("#loginmessage").html("Account info saved, initial sync done.<br><center>Happy Syncpad-ing</center>!");
+                if (success) {
+                    $("#loginmessage").html("Account info saved, initial sync done.<br><center>Happy Syncpad-ing</center>!");
+                    $("#loginmessage").css("color","green");
+                } else {
+                    $("#loginmessage").html("Logged in, but initial sync had problems. Might still work!");
+                    $("#loginmessage").css("color","red");
+                }
             });
         } else {
             if (successObj.reason=="timeout")
-                $("#loginmessage").html("Network timeout, please try again later.");
+                $("#loginmessage").html("Could not log in: network timeout, please try again later.");
             else if (successObj.reason=="logininvalid")
-                $("#loginmessage").html("Email or password incorrect.");
+                $("#loginmessage").html("Could not log in: email or password incorrect.");
             else
-                $("#loginmessage").html("Unknown error.");
+                $("#loginmessage").html("Could not log in: unknown error.");
 
             $("#loginmessage").css("color","red");
         }

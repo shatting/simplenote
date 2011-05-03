@@ -9,6 +9,8 @@ var codeMirror = null;
 // amount of vertical viewport size to add for preloading notes in index
 var preLoadFactor = 1/4;
 var currentView = "index";
+var slideEasing = "swing"; // swing or linear
+var slideDuration = 300;
 
 //  ---------------------------------------
 var fontUrls = {
@@ -649,28 +651,23 @@ function localeDateString(d) {
 //  ---------------------------------------
 function slideEditor(callback, duration) {
     if (duration == undefined)
-        duration = 300;
+        duration = slideDuration;
     $("#note").show();
-    $('div#index').animate({left:"-=400"}, {duration: duration, complete: callback});
-    $('div#note').animate({left:"-=400"}, {duration: duration, complete: function() {
-        $("#index").hide();
-        
-    }});
-    $('body').animate({width:"+=400"}, duration);
+    $('div#index').animate({left:"-=400"}, {duration: duration, complete: callback, easing: slideEasing});
+    $('div#note').animate({left:"-=400"}, {duration: duration, complete: function() { $("#index").hide(); },easing: slideEasing});
+    $('body').animate({width:"+=400"}, {duration: duration, easing: slideEasing});
     currentView = "editor";
 }
 //  ---------------------------------------
 function slideIndex(callback, duration) {
     if (duration == undefined)
-        duration = 300;
+        duration = slideDuration;
     localStorage.opentonotekey = "";
     editorClearDirty();
     $("#index").show();
-    $('div#index').animate({left:"+=400"}, {duration: duration, complete: callback});
-    $('div#note').animate({left:"+=400"}, {duration:duration, complete: function() {
-        $("#note").hide();        
-    }});
-    $('body').animate({width : "-=400"}, duration);
+    $('div#index').animate({left:"+=400"}, {duration: duration, complete: callback, easing: slideEasing});
+    $('div#note').animate({left:"+=400"}, {duration:duration, complete: function() { $("#note").hide(); }, easing: slideEasing});
+    $('body').animate({width : "-=400"}, {duration:duration, easing: slideEasing});
     currentView = "index";   
 }
 
