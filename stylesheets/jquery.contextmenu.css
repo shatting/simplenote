@@ -190,6 +190,7 @@
 	border:1px solid #f4f4f4;
 	padding:1px;
 	padding-right:0;
+        -webkit-border-radius: 3px;
 }
 .context-menu-theme-gloss .context-menu-item {
 	text-align:left;

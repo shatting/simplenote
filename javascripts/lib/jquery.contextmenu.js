@@ -200,7 +200,8 @@
 		
 		// Show the context menu
 		show: function(t,e) {
-			var cmenu=this, x=e.pageX, y=e.pageY;
+			//var cmenu=this, x=e.pageX, y=e.pageY;
+                        var cmenu=this, x=e.clientX, y=e.clientY; // above was buggy in an iframe
 			cmenu.target = t; // Preserve the object that triggered this context menu so menu item click methods can see it
 			if (cmenu.beforeShow()!==false) {
 				// If the menu content is a function, call it to populate the menu each time it is displayed
