@@ -162,9 +162,9 @@ function shorcuts(event) {
         if (event.altKey && !event.shiftKey)
             switch(event.keyCode) {
                 case 83: //s
-                    searchForSelection(); break;
+                    searchForSelection();break;
                 case 86: // v
-                    insertUrl(); break;
+                    insertUrl();break;
                 case 66: //b
                     $('div#note input#backtoindex').click();break;
                 case 67: //c
@@ -184,11 +184,12 @@ function shorcuts(event) {
                     $("div#note input#wordwrap").change();
                     break;
                 case 84: //t
-                    event.preventDefault();
+                    //event.preventDefault();
                     $("div#note input#tags").focus();break;
                 case 69: //e
-                    event.preventDefault();
-                    codeMirror.focus();
+                    //event.preventDefault();
+                    $(codeMirror.editor.container).focus();
+                    // codeMirror.focus(); didnt completely give up focus on #tags
                     break;
             }
     }
@@ -657,7 +658,7 @@ function slideEditor(callback, duration) {
         duration = slideDuration;
     $("#note").show();
     $('div#index').animate({left:"-=400"}, {duration: duration, complete: callback, easing: slideEasing});
-    $('div#note').animate({left:"-=400"}, {duration: duration, complete: function() { $("#index").hide(); },easing: slideEasing});
+    $('div#note').animate({left:"-=400"}, {duration: duration, complete: function() {$("#index").hide();},easing: slideEasing});
     $('body').animate({width:"+=400"}, {duration: duration, easing: slideEasing});
     currentView = "editor";
 }
@@ -669,7 +670,7 @@ function slideIndex(callback, duration) {
     editorClearDirty();
     $("#index").show();
     $('div#index').animate({left:"+=400"}, {duration: duration, complete: callback, easing: slideEasing});
-    $('div#note').animate({left:"+=400"}, {duration:duration, complete: function() { $("#note").hide(); }, easing: slideEasing});
+    $('div#note').animate({left:"+=400"}, {duration:duration, complete: function() {$("#note").hide();}, easing: slideEasing});
     $('body').animate({width : "-=400"}, {duration:duration, easing: slideEasing});
     currentView = "index";   
 }
@@ -896,7 +897,7 @@ function editorMakeContextMenu() {
 //            execCommand("paste");
 //      }},
 //      $.contextMenu.separator,
-      {'Insert browser URL (alt-v)': insertUrl },
+      {'Insert browser URL (alt-v)': insertUrl},
       
       {'Search for selection (alt-s)':
         {
