@@ -10,6 +10,9 @@ $(document).ready(function() {
   if (localStorage.option_opentonote == undefined || localStorage.option_opentonote == "true")
     $("#opentonote").attr("checked","true");
 
+  if (localStorage.option_remembercaret == undefined || localStorage.option_remembercaret == "true")
+    $("#remembercaret").attr("checked","true");
+
   if (localStorage.option_showdate== undefined || localStorage.option_showdate == "true")
     $("#showdate").attr("checked","true");
 
@@ -80,10 +83,19 @@ $(document).ready(function() {
  */
 function save_options() {  
   
-  localStorage.option_abstractlines = $("#abstractlines").val();  
+  localStorage.option_abstractlines = $("#abstractlines").val();
+  // clear key
   if ((localStorage.option_opentonote=="true") != $('#opentonote').attr("checked"))
     delete localStorage.opentonotekey;
   localStorage.option_opentonote  = $('#opentonote').attr("checked");
+
+  // clear carets
+  if ((localStorage.option_remembercaret=="true") != $('#remembercaret').attr("checked")) {
+      for (var key in localStorage)
+          if (key.match(/_caret$/))
+              delete localStorage[key];
+  }      
+  localStorage.option_remembercaret = $('#remembercaret').attr("checked");
   localStorage.option_showdate  = $('#showdate').attr("checked");
   localStorage.option_sortby = $("#sort").val();
   localStorage.option_sortbydirection = $("#sortdirection").attr("checked")?-1:1;  

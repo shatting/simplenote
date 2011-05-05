@@ -55,6 +55,8 @@ addEventListener("unload", function (event) {
         background.setTimeout("popupClosed()", 1);
     } else 
         log("(unload): no background save");
+    if (codeMirror.note)
+        saveCaretScroll();
 }, true);
 
 //  ---------------------------------------
@@ -674,7 +676,9 @@ function slideIndex(callback, duration) {
     $('div#index').animate({left:"+=400"}, {duration: duration, complete: callback, easing: slideEasing});
     $('div#note').animate({left:"+=400"}, {duration:duration, complete: function() {$("#note").hide();}, easing: slideEasing});
     $('body').animate({width : "-=400"}, {duration:duration, easing: slideEasing});
-    currentView = "index";   
+    currentView = "index";
+    saveCaretScroll();
+    delete codeMirror.note;
 }
 
 function editorSetFont() {
@@ -892,6 +896,28 @@ function editorInitialize() {
     codeMirror.initialized = true;
 }
 
+function saveCaretScroll() {
+    if (localStorage.option_remembercaret == "false")
+        return;
+    
+    var note = codeMirror.note;       
+    var caretScroll = codeMirror.cursorPosition();
+    caretScroll.line = codeMirror.lineNumber(caretScroll.line);
+    caretScroll.scrollTop = $(codeMirror.editor.container).scrollTop();
+    caretScroll.scrollLeft = $(codeMirror.editor.container).scrollLeft();    
+    localStorage[note.key + "_caret"] = JSON.stringify(caretScroll);
+}
+
+function restoreCaretScroll(key) {
+    if (localStorage[key + "_caret"] && localStorage.option_remembercaret == "true" ) {
+        var caretScroll = JSON.parse(localStorage[key + "_caret"]);
+        $(codeMirror.editor.container).scrollTop(caretScroll.scrollTop);
+        $(codeMirror.editor.container).scrollLeft(caretScroll.scrollLeft);
+        var lineH = codeMirror.nthLine(caretScroll.line);
+        codeMirror.selectLines(lineH, caretScroll.character);
+    }
+}
+
 function insertUrl() {
     var $editbox = $(codeMirror.editor.container);
     chrome.tabs.getSelected(undefined,function(tab) {
@@ -975,8 +1001,7 @@ function editorShowNote(note, duration) {
         // hide undo
         $('div#note input#undo').hide();                
 
-    } else { // existing note
-        
+    } else { // existing note        
         // delete button now delete button
         $('div#note input#destroy').val("Trash");
         $('div#note input#destroy').attr("title","Send note to trash (ctrl-alt-d)");
@@ -989,8 +1014,8 @@ function editorShowNote(note, duration) {
     
     // trigger undo click-> fills everything
     $('div#note input#undo').click();
-    
-    slideEditor(function () {codeMirror.focus();}, duration);
+        
+    slideEditor(function () {codeMirror.focus(); restoreCaretScroll(note.key);}, duration);
 
 }
 
