@@ -214,7 +214,7 @@ var SimplenoteDB = {
             }, 
             repeat:         function() {
                 SimplenoteDB.log("getIndex:repeat");
-                alert("SimplenoteDB::getIndex:repeat");
+                //alert("SimplenoteDB::getIndex:repeat");
                 SimplenoteDB._gotIndexChunk(undefined, false);                
             },
             timeout:        function() {                
@@ -258,7 +258,7 @@ var SimplenoteDB = {
                 repeat:         function() {
                     SimplenoteDB.offline(false);
                     SimplenoteDB.log('getNote::repeat');
-                    alert('SimplenoteDB::getNote::repeat');
+                    //alert('SimplenoteDB::getNote::repeat');
                     if (callback)
                         callback();                    
                 },
@@ -332,7 +332,7 @@ var SimplenoteDB = {
             repeat:         function() {
                 SimplenoteDB.offline(false);
                 SimplenoteDB.log('updateNote::repeat');
-                alert('SimplenoteDB::updateNote::repeat');
+                //alert('SimplenoteDB::updateNote::repeat');
             },
             noteNotExists:  function() {
                 SimplenoteDB.offline(false);
@@ -402,7 +402,7 @@ var SimplenoteDB = {
             repeat:         function() {
                 SimplenoteDB.offline(false);
                 SimplenoteDB.log("createNote::repeat")
-                alert('SimplenoteDB::createNote::repeat');
+                //alert('SimplenoteDB::createNote::repeat');
             },
             noteNotExists:  function() {
                 SimplenoteDB.offline(false);
@@ -443,7 +443,7 @@ var SimplenoteDB = {
             repeat:         function() {
                 SimplenoteDB.offline(false);
                 SimplenoteDB.log("deleteNote::repeat")
-                alert('SimplenoteDB::deleteNote::repeat');
+                //alert('SimplenoteDB::deleteNote::repeat');
             },
             noteNotExists:  function() {
                 SimplenoteDB.offline(false);
