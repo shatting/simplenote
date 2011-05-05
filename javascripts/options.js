@@ -29,6 +29,15 @@ $(document).ready(function() {
   if (localStorage.option_editorfontshadow != undefined && localStorage.option_editorfontshadow == "true")
     $("#editorfontshadow").attr("checked","true");
 
+//  if (localStorage.option_aes_enable!= undefined && localStorage.option_aes_enable == "true")
+//      $("#aes_enable").attr("checked","true");
+//  if (localStorage.option_aes_enable!= undefined && localStorage.option_aes_enable == "true") {
+//      $("#aes_key").val(localStorage.option_aes_key);
+//  } else {
+//      $("#aes_key").hide();
+//      $("#aes_key_label").hide();
+//  }
+
   if (!localStorage.option_color_index)
       localStorage.option_color_index = "#4F4F59";
   if (!localStorage.option_color_editor)
@@ -58,6 +67,7 @@ $(document).ready(function() {
       save_options();
   });
 
+//  $("#aes_key").keyup(save_options);
   $("#save").click(save_clicked);
   $("#reset").click(reset_clicked);
   $("#donate").click(function () { _gaq.push(['_trackEvent', 'Options', 'donate_clicked']); });
@@ -105,6 +115,17 @@ function save_options() {
   localStorage.option_color_index = $('#color_index').val();
   localStorage.option_color_editor = $('#color_editor').val();
   localStorage.option_color_editor_font = $('#color_editor_font').val();
+
+//  localStorage.option_aes_enable = $("#aes_enable").attr("checked");
+//  localStorage.option_aes_key = $("#aes_key").val();
+//
+//  if (localStorage.option_aes_enable!= undefined && localStorage.option_aes_enable == "true") {
+//      $("#aes_key").show();
+//      $("#aes_key_label").show();
+//  } else {
+//      $("#aes_key").hide();
+//      $("#aes_key_label").hide();
+//  }
 }
 
 function save_clicked() {

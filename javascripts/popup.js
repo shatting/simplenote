@@ -43,6 +43,8 @@ addEventListener("unload", function (event) {
             note.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[]; // todo: "read" systag       
         if ($('div#note input#tags').attr("dirty")=="true")
             note.tags = $('div#note input#tags').val().split(" ");
+//        if ($('div#note input#encrypted').attr("dirty")=="true")
+//            note.encrypted = $('div#note input#encrypted')?1:0;
         
         note.key = codeMirror.note.key;
 
@@ -771,7 +773,7 @@ function editorInitialize() {
             $('div#note input#undo').attr("disabled","disabled");
     });
 
-    // add note pinned (dirty) event listeners
+    // add note pinned (dirty) event listener
     $('div#note input#pinned').unbind();
     $('div#note input#pinned').bind('change', function(event) {
         var note = codeMirror.note;
@@ -790,6 +792,25 @@ function editorInitialize() {
         else
             $('div#note input#undo').attr("disabled","disabled");
     });
+
+//    // add note encrypted (dirty) event listener
+//    $('div#note input#encrypted').unbind();
+//    $('div#note input#encrypted').bind('change', function(event) {
+//        var note = codeMirror.note;
+//
+//        if ((note.encrypted==1) != $("div#note input#encrypted").attr("checked")) {
+//            if ($('div#note input#encrypted').attr('dirty') != "true")
+//                log("encrypted dirty now (" + event.type + ")");
+//            $('div#note input#encrypted').attr('dirty', 'true');
+//        } else {
+//            log("encrypted not dirty now (" + event.type + ")");
+//            $('div#note input#encrypted').removeAttr('dirty');
+//        }
+//        if (editorIsNoteDirty())
+//            $('div#note input#undo').removeAttr("disabled");
+//        else
+//            $('div#note input#undo').attr("disabled","disabled");
+//    });
 
     // bind back button
     $('div#note input#backtoindex').unbind();
@@ -980,6 +1001,8 @@ function editorNoteChanged(key) {
         noteData.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[];
     if ($('div#note input#tags').attr("dirty")=="true")
         noteData.tags = $('div#note input#tags').val().trim().split(" ");
+//    if ($('div#note input#encrypted').attr("dirty")=="true")
+//        noteData.encrypted = $('div#note input#encrypted')?1:0;
 
     log("editorNoteChanged:noteData:");
     log(noteData);
@@ -1003,7 +1026,7 @@ function editorNoteChanged(key) {
 }
 //  ---------------------------------------
 function editorIsNoteDirty() {
-    return codeMirror.dirty || $('div#note input#pinned').attr("dirty")=="true" || $('div#note input#tags').attr("dirty")=="true";
+    return codeMirror.dirty || $('div#note input#pinned').attr("dirty")=="true" || $('div#note input#tags').attr("dirty")=="true";// || $('div#note input#encrypted').attr("dirty")=="true";
 }
 //  ---------------------------------------
 function editorClearDirty() {
@@ -1011,6 +1034,7 @@ function editorClearDirty() {
     codeMirror.dirty = false;
     $('div#note input#pinned').removeAttr("dirty");
     $('div#note input#tags').removeAttr('dirty');
+    //$('div#note input#encrypted').removeAttr('dirty');
 }
 //  ---------------------------------------
 function editorTrashNote(key) {

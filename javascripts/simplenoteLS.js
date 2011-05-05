@@ -87,14 +87,17 @@ var SimplenoteLS = {
         }
         // see whether all fields are still there
         for (var storedField in storedNote) {
-            if (inputFields.indexOf(storedField)<0 && storedField != "content") {
+            if (inputFields.indexOf(storedField)<0 && storedField != "content" && storedField != "encrypted") {
                 changed.deleted.push(storedField);                
             }
         }
         changed.hadChanges = changed.added.length > 0 || changed.changed.length > 0 || changed.deleted.length > 0;
 
+//        if (storedNote.encrypted != undefined)
+//            inputNote.encrypted = storedNote.encrypted;
+
         var haveStored = false, onlyLocalContent;
-        if (source == "local" || source == "getnote") {            
+        if (source == "local" || source == "getnote") {
             haveStored = true;
             $.storage.set(inputNote.key,inputNote);
         } else if (source == "updateresponse" || source == "index") {

@@ -5,6 +5,8 @@
 var SimplenoteDB = {    
     offlineKey : "_offline",
 
+    //cypherReg : /^\-\-SYNCPADAES\-\-\n(.*)\n\-\-SYNCPADAES\-\-$/m,
+
     isDebug : true,
    
     log : function(s) {
@@ -239,8 +241,9 @@ var SimplenoteDB = {
         } else {
             this.log("getNote:getting note from server:" + key);
             var callbacks = {
-                success :       function(note) {
+                success :       function(note) {                                
                     SimplenoteDB.offline(false);
+                    //SimplenoteLS.updateNote(SimplenoteDB._decryptNote(note),"getnote");
                     SimplenoteLS.updateNote(note,"getnote");
                     if (callback)
                         callback(note);
@@ -297,12 +300,14 @@ var SimplenoteDB = {
             if (data.deleted != undefined)      note.deleted = data.deleted;
             if (data.tags != undefined)         note.tags = data.tags;
             if (data.systemtags != undefined)   note.systemtags = data.systemtags;
+            //if (data.encrypted != undefined)    note.encrypted = data.encrypted;
 
             if (data.content) {
                 note.modifydate = (new Date())/1000;
                 data.modifydate = note.modifydate;
                 // needed for merging
-                data.version = note.version;
+                //if (!data.encrypted || data.encrypted==0) // dont want merge on cyphertext
+                    data.version = note.version;
             }
 
             SimplenoteLS.updateNote(note, "local");            
@@ -312,6 +317,8 @@ var SimplenoteDB = {
         var callbacks = {
             success :       function(note) {
                 SimplenoteDB.offline(false);
+                // TODO: should not have to decrypt, since merging cant happen with cyphertext                                    
+                //SimplenoteLS.updateNote(SimplenoteDB._decryptNote(note),"updateresponse");
                 SimplenoteLS.updateNote(note,"updateresponse");
                 SimplenoteLS.removeFromSyncList(note.key);
                 if (callback)
@@ -339,7 +346,11 @@ var SimplenoteDB = {
                 if (callback)
                     callback(note);
             }                    
-        };        
+        };
+
+//        data = this._encryptNote(data);
+//        delete data.encrypted;
+
         SimplenoteAPI2.update(data, callbacks);
         
     },
@@ -361,18 +372,20 @@ var SimplenoteDB = {
             if (!note.systemtags)
                 note.systemtags = [];
 
-
             SimplenoteLS.addNote(note);            
             SimplenoteLS.addToSyncList(note.key);
         } else {
             tempkey = note.key;
         }
-        
+//        var tempencrypted = note.encrypted;
+
         var callbacks = {
             success :       function(newnote) {
                 SimplenoteDB.offline(false);
-                
-                newnote.content = note.content;                
+                newnote.content = note.content;
+//                newnote.content = cleartextcontent; // we never get content back on create
+//                if (tempencrypted)
+//                    newnote.encrypted = tempencrypted;
                 SimplenoteLS.addNote(newnote);
 
                 SimplenoteLS.delNote(tempkey);
@@ -404,7 +417,13 @@ var SimplenoteDB = {
                     callback();
             }                    
         };
-        delete note.key; // remove temp key        
+        delete note.key; // remove temp key
+//        var cleartextcontent = note.content;
+//        if (note.encrypted) {
+//            note = this._encryptNote(note);
+//            delete note.encrypted;
+//        }
+
         SimplenoteAPI2.create(note, callbacks);
     },
     
@@ -449,6 +468,25 @@ var SimplenoteDB = {
             note.deleted = 1;
             SimplenoteDB.updateNote(note, function(note) {SimplenoteDB.deleteNote(note.key);}, true);
         });
+//    },
+//    _decryptNote: function(note) {
+//        if (!note.content)
+//            return note;
+//
+//        var cypher = note.content.match(SimplenoteDB.cypherReg);
+//        if (cypher) {
+//            note.content = Aes.Ctr.decrypt(cypher[1], localStorage.option_aes_key, 256);
+//            note.encrypted = 1;
+//        }
+//        return note;
+//    },
+//    _encryptNote: function(note) {
+//        if (note.encrypted == 1 && note.content && localStorage.option_aes_enable) {
+//            var cypherText = Aes.Ctr.encrypt(note.content, localStorage.option_aes_key, 256);
+//            note.content = "--SYNCPADAES--\n" + cypherText + "\n--SYNCPADAES--";
+//        }
+//
+//        return note;
     }
 }
 

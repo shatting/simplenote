@@ -133,6 +133,7 @@ input[type=text], input[type=checkbox], select {
   padding: 4px;
   cursor:pointer;
 }
+input[type=text] { cursor: text}
 
 input#email, input#password {
   border-color: #8D8D8D;

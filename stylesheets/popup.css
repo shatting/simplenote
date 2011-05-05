@@ -313,15 +313,15 @@ div#note input#tags:focus {
     outline: none;
 }
 
-div#note div#pinwrapper, div#note div#wordwrapwrapper {
+#pinwrapper, #wordwrapwrapper, #encryptwrapper {
     padding: 5px;
-    margin-right:5px;
+    margin-right:3px;
     display:inline;
     cursor: pointer;
 }
-div#note div#wordwrapwrapper {
+#wordwrapwrapper {
     float:right;
-    margin-left:50px;    
+    margin-left:40px;
 }
 
 label, input[type=checkbox], input[type=button] {
