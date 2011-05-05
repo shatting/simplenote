@@ -209,17 +209,20 @@ var SimplenoteDB = {
             }, 
             loginInvalid:   function() {
                 SimplenoteDB.log("getIndex:loginInvalid");
+                _gaq.push(['_trackEvent', 'DB', 'getIndex','loginInvalid']);
                 alert("SimplenoteDB::getIndex:loginInvalid");
                 SimplenoteDB._gotIndexChunk(undefined, false);                
             }, 
             repeat:         function() {
                 SimplenoteDB.log("getIndex:repeat");
                 //alert("SimplenoteDB::getIndex:repeat");
+                _gaq.push(['_trackEvent', 'DB', 'getIndex','repeat']);
                 SimplenoteDB._gotIndexChunk(undefined, false);                
             },
             timeout:        function() {                
                 SimplenoteDB.log("getIndex:timeout");
                 SimplenoteDB.offline(true);
+                _gaq.push(['_trackEvent', 'DB', 'getIndex','timeout']);
                 //alert("SimplenoteDB::getIndex:timeout");
                 SimplenoteDB._gotIndexChunk(undefined, false);
             }
@@ -251,6 +254,7 @@ var SimplenoteDB = {
                 loginInvalid:   function() {
                     SimplenoteDB.offline(false);
                     SimplenoteDB.log('getNote::loginInvalid');
+                    _gaq.push(['_trackEvent', 'DB', 'getNote', 'loginInvalid']);
                     alert('SimplenoteDB::getNote::loginInvalid');
                     if (callback)
                         callback();
@@ -258,6 +262,7 @@ var SimplenoteDB = {
                 repeat:         function() {
                     SimplenoteDB.offline(false);
                     SimplenoteDB.log('getNote::repeat');
+                    _gaq.push(['_trackEvent', 'DB', 'getNote','repeat']);
                     //alert('SimplenoteDB::getNote::repeat');
                     if (callback)
                         callback();                    
@@ -267,6 +272,7 @@ var SimplenoteDB = {
                     SimplenoteDB.log('getNote::noteNotExists');
                     SimplenoteLS.removeFromSyncList(key);
                     SimplenoteLS.delNote(key);
+                    _gaq.push(['_trackEvent', 'DB', 'getNote','noteNoteExist']);
                     //alert('SimplenoteDB::getNote::noteNoteExist');
                     if (callback)
                         callback();                    
@@ -274,6 +280,7 @@ var SimplenoteDB = {
                 timeout: function(options) {
                     SimplenoteDB.offline(true);
                     SimplenoteDB.log('getNote::timeout');
+                    _gaq.push(['_trackEvent', 'DB', 'getNote','timeout']);
                     //alert('SimplenoteDB::getNote::timeout');
                     if (callback)
                         callback();
@@ -327,21 +334,25 @@ var SimplenoteDB = {
             loginInvalid:   function() {
                 SimplenoteDB.offline(false);
                 SimplenoteDB.log('updateNote::loginInvalid');
+                _gaq.push(['_trackEvent', 'DB', 'updateNote','loginInvalid']);
                 alert('SimplenoteDB::updateNote::loginInvalid');
             }, 
             repeat:         function() {
                 SimplenoteDB.offline(false);
                 SimplenoteDB.log('updateNote::repeat');
+                _gaq.push(['_trackEvent', 'DB', 'updateNote','repeat']);
                 //alert('SimplenoteDB::updateNote::repeat');
             },
             noteNotExists:  function() {
                 SimplenoteDB.offline(false);
                 SimplenoteDB.log('updateNote::noteNoteExists');
+                _gaq.push(['_trackEvent', 'DB', 'updateNote','noteNoteExits']);
                 alert('SimplenoteDB::updateNote::noteNoteExists');
             },
             timeout: function(note) {                                 
                 SimplenoteDB.offline(true);
                 SimplenoteDB.log('updateNote::timeout');
+                _gaq.push(['_trackEvent', 'DB', 'updateNote','timeout']);
                 //alert('SimplenoteDB::updateNote::timeout');
                 if (callback)
                     callback(note);
@@ -396,22 +407,20 @@ var SimplenoteDB = {
             }, 
             loginInvalid:   function() {
                 SimplenoteDB.offline(false);
-                SimplenoteDB.log("createNote::loginInvalid")
+                SimplenoteDB.log("createNote::loginInvalid");
+                _gaq.push(['_trackEvent', 'DB', 'createNote','loginInvalid']);
                 alert('SimplenoteDB::createNote::loginInvalid');                
             }, 
             repeat:         function() {
                 SimplenoteDB.offline(false);
-                SimplenoteDB.log("createNote::repeat")
+                SimplenoteDB.log("createNote::repeat");
+                _gaq.push(['_trackEvent', 'DB', 'createNote','repeat']);
                 //alert('SimplenoteDB::createNote::repeat');
-            },
-            noteNotExists:  function() {
-                SimplenoteDB.offline(false);
-                SimplenoteDB.log("createNote::noteNotExists")
-                alert('SimplenoteDB::createNote::noteNotExists');
             },
             timeout: function(note) {             
                 SimplenoteDB.offline(true);
-                SimplenoteDB.log("createNote::timeout")
+                SimplenoteDB.log("createNote::timeout");
+                _gaq.push(['_trackEvent', 'DB', 'createNote','timeout']);
                 //alert('SimplenoteDB::createNote::timeout');
                 if (callback)
                     callback();
@@ -427,39 +436,39 @@ var SimplenoteDB = {
         SimplenoteAPI2.create(note, callbacks);
     },
     
-    deleteNote : function(key, callback) {
-        var callbacks = {
-            success :       function(data) {
-                SimplenoteDB.offline(false);                
-                SimplenoteLS.delNote(key);
-                if (callback)
-                    callback(true);
-            }, 
-            loginInvalid:   function() {
-                SimplenoteDB.offline(false);
-                SimplenoteDB.log("deleteNote::loginInvalid")
-                alert('SimplenoteDB::deleteNote::loginInvalid');
-            }, 
-            repeat:         function() {
-                SimplenoteDB.offline(false);
-                SimplenoteDB.log("deleteNote::repeat")
-                //alert('SimplenoteDB::deleteNote::repeat');
-            },
-            noteNotExists:  function() {
-                SimplenoteDB.offline(false);
-                SimplenoteDB.log("deleteNote::noteNotExists")
-                alert('SimplenoteDB::deleteNote::noteNotExists');
-            },
-            timeout: function(key) { 
-                SimplenoteDB.offline(true);
-                SimplenoteDB.log("deleteNote::timeout")
-                alert('SimplenoteDB::deleteNote::timeout');
-                if (callback)
-                    callback(false);
-            }                    
-        };        
-        SimplenoteAPI2.destroy(key, callbacks);
-    },
+//    deleteNote : function(key, callback) {
+//        var callbacks = {
+//            success :       function(data) {
+//                SimplenoteDB.offline(false);
+//                SimplenoteLS.delNote(key);
+//                if (callback)
+//                    callback(true);
+//            },
+//            loginInvalid:   function() {
+//                SimplenoteDB.offline(false);
+//                SimplenoteDB.log("deleteNote::loginInvalid")
+//                alert('SimplenoteDB::deleteNote::loginInvalid');
+//            },
+//            repeat:         function() {
+//                SimplenoteDB.offline(false);
+//                SimplenoteDB.log("deleteNote::repeat")
+//                //alert('SimplenoteDB::deleteNote::repeat');
+//            },
+//            noteNotExists:  function() {
+//                SimplenoteDB.offline(false);
+//                SimplenoteDB.log("deleteNote::noteNotExists")
+//                alert('SimplenoteDB::deleteNote::noteNotExists');
+//            },
+//            timeout: function(key) {
+//                SimplenoteDB.offline(true);
+//                SimplenoteDB.log("deleteNote::timeout")
+//                alert('SimplenoteDB::deleteNote::timeout');
+//                if (callback)
+//                    callback(false);
+//            }
+//        };
+//        SimplenoteAPI2.destroy(key, callbacks);
+//    },
 
     _deleteAllRemote : function() {
         var note;

@@ -291,6 +291,7 @@ function handleRequest(request, sender, sendResponse) {
     log(request);
     var callbacks;
     if (request.action == "userchanged") {
+        _gaq.push(['_trackEvent', 'background', 'request','userchanged']);
         SimplenoteLS._reset();
         SimplenoteDB._reset();        
         backgroundSync(true, function(successObj) {

@@ -210,10 +210,11 @@ $(document).ready(function() {
     if ( !localStorage.option_email || !localStorage.option_password) {
         var message = "Please " + signUpLink + " for a Simplenote account and enter your credentials on the " + optionsLink + ".";
         displayStatusMessage(message);
+        _gaq.push(['_trackEvent', 'popup', 'ready', 'displayWelcomeMessage']);
     } else {
         chrome.extension.sendRequest({action : "login"}, function(result) {
             if (result.success) {
-                
+                _gaq.push(['_trackEvent', 'popup', 'ready', 'login_success']);
                 log("(ready): login success, requesting full sync.");                
                 chrome.extension.sendRequest({action: "sync", fullsync:true}, function() {
                     log("(ready): sync request complete");
@@ -291,6 +292,7 @@ $(document).ready(function() {
                 
             }
             else {
+                _gaq.push(['_trackEvent', 'popup', 'ready', 'login_err']);
                 log("(ready): login error, message=" + result.message);
                 if (!result.message)
                     result.message = "Login for email '" + localStorage.option_email + "' failed, please check your Simplenote email address and password on the " + optionsLink + "!";
@@ -919,6 +921,7 @@ function restoreCaretScroll(key) {
 }
 
 function insertUrl() {
+    _gaq.push(['_trackEvent', 'popup', 'insertUrl']);
     var $editbox = $(codeMirror.editor.container);
     chrome.tabs.getSelected(undefined,function(tab) {
         codeMirror.replaceSelection(tab.url);
@@ -927,6 +930,7 @@ function insertUrl() {
 }
 
 function searchForSelection() {
+    _gaq.push(['_trackEvent', 'popup', 'searchForSelection']);
     openURLinTab("http://google.com/search?q=" + encodeURIComponent(codeMirror.selection().trim()));
 }
 
