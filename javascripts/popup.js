@@ -899,7 +899,7 @@ function editorInitialize() {
 }
 
 function saveCaretScroll() {
-    if (localStorage.option_remembercaret == "false")
+    if (localStorage.option_remembercaret != undefined && localStorage.option_remembercaret == "false")
         return;
     
     var note = codeMirror.note;       
@@ -911,7 +911,7 @@ function saveCaretScroll() {
 }
 
 function restoreCaretScroll(key) {
-    if (localStorage[key + "_caret"] && localStorage.option_remembercaret == "true" ) {
+    if (localStorage[key + "_caret"] && (localStorage.option_remembercaret == undefined || localStorage.option_remembercaret == "true")) {
         var caretScroll = JSON.parse(localStorage[key + "_caret"]);
         $(codeMirror.editor.container).scrollTop(caretScroll.scrollTop);
         $(codeMirror.editor.container).scrollLeft(caretScroll.scrollLeft);
