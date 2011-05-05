@@ -74,7 +74,10 @@ $(document).ready(function() {
   $("#save").click(save_clicked);
   $("#reset").click(reset_clicked);
   $("#donate").click(function () { _gaq.push(['_trackEvent', 'Options', 'donate_clicked']); });
-  
+
+  get_manifest(function (mf) {
+      $("#version").html(mf.version);
+  });
 });
 
 /*

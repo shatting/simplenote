@@ -229,3 +229,12 @@ RegExp.escape = function(text) {
 //        return  {url:"", protocol:"",host:"",path:"",file:"",hash:""};
 //    }
 //}
+
+function get_manifest(callback) {
+  var xhr = new XMLHttpRequest();
+  xhr.onload = function () {
+    callback(JSON.parse(xhr.responseText));
+  };
+  xhr.open('GET', '../manifest.json', true);
+  xhr.send(null);
+}
