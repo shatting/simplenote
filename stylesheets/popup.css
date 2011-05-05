@@ -132,6 +132,12 @@ div.noterow:hover {
     -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);    
 } 
 
+div.syncnote {
+    background-image: url(/images/sync.png);
+    background-position: right center;
+    background-repeat: no-repeat;
+}
+
 abbr.notetime {
     min-width: 40px;
     color: #aaa;

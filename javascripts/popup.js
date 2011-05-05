@@ -554,7 +554,7 @@ function indexFillNoteReqComplete(note) {
 
         // sync note 
         if (note._syncNote)
-            $noterow.css("background","#ccc");        
+            $noteheading.addClass("syncnote");
 
         //$noterow.hover(maximize,minimize);
                 
@@ -791,6 +791,8 @@ function editorInitialize() {
             $('div#note input#undo').removeAttr("disabled");
         else
             $('div#note input#undo').attr("disabled","disabled");
+
+        $(codeMirror.editor.container).focus();
     });
 
 //    // add note encrypted (dirty) event listener
@@ -828,7 +830,8 @@ function editorInitialize() {
     $("div#note input#wordwrap").unbind();
     $("div#note input#wordwrap").bind('change', function(event) {
         localStorage.wordwrap = $("#wordwrap").attr("checked");
-        codeMirror.setTextWrapping($("div#note input#wordwrap").attr("checked"))
+        codeMirror.setTextWrapping($("div#note input#wordwrap").attr("checked"));
+        $(codeMirror.editor.container).focus();
     });
     if (localStorage.wordwrap != undefined && localStorage.wordwrap == "true") {
         $("div#note input#wordwrap").attr("checked","true");
