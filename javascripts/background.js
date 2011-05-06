@@ -40,7 +40,10 @@ function backgroundSync(fullSync, callbackComplete, callbackPartial) {
 }
 // sync on browser start
 $(document).ready(function() {
-    backgroundSync(true);    
+    
+    setcontextmenus(true);
+
+    backgroundSync(true);
 });
 
 //        Selection ###############################
@@ -138,89 +141,117 @@ $(document).ready(function() {
 //            "windowId":1
 //        }
 
-// add context menus
-// contexts : Legal values are: 'all', 'page', 'selection', 'link', 'editable', 'image', 'video', and 'audio'. Defaults to ['page'].
-chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (Page Url)",        contexts:['page'],
-        onclick: function(info, tab){
-            //createNoteFromBG({content:"Page Url:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab)});
-            _gaq.push(['_trackEvent', 'ContextMenu', 'create_url']);
-            createNoteFromBG({content:info.pageUrl});
-        }});
-chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (Selection)",  contexts:['selection'],
-        onclick: function(info, tab){
-            //createNoteFromBG({content:"Selection:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab)});
-            _gaq.push(['_trackEvent', 'ContextMenu', 'create_selection']);
-            createNoteFromBG({content:info.selectionText + "\n\n" + "[Source: " + tab.url + "]"});
-        }});
-chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (Link Url)",       contexts:['link'],
-        onclick: function(info, tab){
-            //createNoteFromBG({content:"Link URL:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab)});
-            _gaq.push(['_trackEvent', 'ContextMenu', 'create_link_url']);
-            createNoteFromBG({content:info.linkUrl});
-        }});
-chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (Image Url)",    contexts:['image'],
-        onclick: function(info, tab){
-            _gaq.push(['_trackEvent', 'ContextMenu', 'create_image_url']);
-            createNoteFromBG({content:info.srcUrl});
-        }});
-chrome.contextMenus.create({type:"normal",title:"Append to last open (Page Url)",        contexts:['page'],
-        onclick: function(info, tab){
-            //appendToLastOpenNoteFromBG("Append Page:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab));
-            _gaq.push(['_trackEvent', 'ContextMenu', 'append_url']);
-            appendToLastOpenNoteFromBG(info.pageUrl);
-        }});
-chrome.contextMenus.create({type:"normal",title:"Append to last open (Selection)",  contexts:['selection'],
-        onclick: function(info, tab){
-            //appendToLastOpenNoteFromBG("Append Selection:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab));
-            _gaq.push(['_trackEvent', 'ContextMenu', 'append_selection']);
-            appendToLastOpenNoteFromBG(info.selectionText + "\n\n" + "[Source: " + tab.url + "]");
-        }});
-chrome.contextMenus.create({type:"normal",title:"Append to last open (Link Url)",       contexts:['link'],
-        onclick: function(info, tab){
-            //appendToLastOpenNoteFromBG("Append Link Url:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab));
-            _gaq.push(['_trackEvent', 'ContextMenu', 'append_link_url']);
-            appendToLastOpenNoteFromBG(info.linkUrl);
-        }});
-chrome.contextMenus.create({type:"normal",title:"Append to last open (Image Url)",    contexts:['image'],
-        onclick: function(info, tab){
-            _gaq.push(['_trackEvent', 'ContextMenu', 'append_image_url']);
-            appendToLastOpenNoteFromBG(info.srcUrl);
-        }});
 
-//chrome.contextMenus.create({type:"normal",title:"Insert a Simplenote",contexts:['editable'],onclick:handleContextMenu})
-//function handleContextMenu(info, tab) {
-//    var content = "";
-//    var gotSelection = info.selectionText != undefined;
-////    console.log(info)
-////    console.log(tab)
-//    if (info.linkUrl) {
-//        if (gotSelection)
-//            content += info.selectionText + ": ";
-//        content += info.linkUrl;
-//    } else {
-//        if (gotSelection) {
-//            content += info.selectionText + "\n";
-//            content += "(Source: " + tab.title + "\n" + info.pageUrl + ")";
-//        } else
-//            content += tab.title + " (" + info.pageUrl + ")";
-//    }
-//
-//    createNoteFromBG({content:content});
-//}
+var contextmenus = {};
+function setcontextmenus(on) {
+    // add context menus
+    // contexts : Legal values are: 'all', 'page', 'selection', 'link', 'editable', 'image', 'video', and 'audio'. Defaults to ['page'].
+    chrome.contextMenus.removeAll();
+    if (localStorage.option_contextmenu != undefined && localStorage.option_contextmenu == "false")
+        return;
+    
+    if (on) {                               
+        addCreateMenus();
+        if (localStorage.lastopennote_key) {
+            addAppendMenus();            
+            updateAppendMenus();
+        } else
+            removeAppendMenus();
+            
+    } else {
+        contextmenus = {};
+    }
+}
+
+function addAppendMenus() {
+    contextmenus.append_pageurl = chrome.contextMenus.create({type:"normal",title:"Append to last open (Page Url)",        contexts:['page'],
+                onclick: function(info, tab){
+                    //appendToLastOpenNoteFromBG("Append Page:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab));
+                    _gaq.push(['_trackEvent', 'ContextMenu', 'append_url']);
+                    appendToLastOpenNoteFromBG(info.pageUrl);
+                }});
+    contextmenus.append_selection = chrome.contextMenus.create({type:"normal",title:"Append to last open (Selection)",  contexts:['selection'],
+            onclick: function(info, tab){
+                //appendToLastOpenNoteFromBG("Append Selection:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab));
+                _gaq.push(['_trackEvent', 'ContextMenu', 'append_selection']);
+                appendToLastOpenNoteFromBG(info.selectionText + "\n" + "[Source: " + tab.url + "]");
+            }});
+    contextmenus.append_linkurl = chrome.contextMenus.create({type:"normal",title:"Append to last open (Link Url)",       contexts:['link'],
+            onclick: function(info, tab){
+                //appendToLastOpenNoteFromBG("Append Link Url:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab));
+                _gaq.push(['_trackEvent', 'ContextMenu', 'append_link_url']);
+                appendToLastOpenNoteFromBG(info.linkUrl);
+            }});
+    contextmenus.append_imageurl = chrome.contextMenus.create({type:"normal",title:"Append to last open (Image Url)",    contexts:['image'],
+            onclick: function(info, tab){
+                _gaq.push(['_trackEvent', 'ContextMenu', 'append_image_url']);
+                appendToLastOpenNoteFromBG(info.srcUrl);
+            }});
+}
+function removeAppendMenus() {
+    if (contextmenus.append_pageurl) { chrome.contextMenus.remove(contextmenus.append_pageurl);delete contextmenus.append_pageurl; }
+    if (contextmenus.append_selection) { chrome.contextMenus.remove(contextmenus.append_selection);delete contextmenus.append_selection; }
+    if (contextmenus.append_linkurl) { chrome.contextMenus.remove(contextmenus.append_linkurl);delete contextmenus.append_linkurl; }
+    if (contextmenus.append_imageurl) { chrome.contextMenus.remove(contextmenus.append_imageurl);delete contextmenus.append_imageurl; }
+}
+function updateAppendMenus() {
+    var titlelength = 25;
+    var note = SimplenoteLS.getNote(localStorage.lastopennote_key);
+    var nonemptylines = note.content.split("\n").filter(function(line) {return line.trim().length > 0;});
+    var title = "last open"
+    if (nonemptylines.length > 0 && nonemptylines[0].length <= titlelength)
+        title= '"' + nonemptylines[0].trim() + '"';
+    else if (nonemptylines.length > 0)
+        title = '"' + nonemptylines[0].trim().substring(0, titlelength-3) + '.."';
+
+    chrome.contextMenus.update(contextmenus.append_pageurl,   {title:"Append to " + title + " (Page Url)"});
+    chrome.contextMenus.update(contextmenus.append_selection, {title:"Append to " + title + " (Selection)"});
+    chrome.contextMenus.update(contextmenus.append_linkurl,   {title:"Append to " + title + " (Link Url)"});
+    chrome.contextMenus.update(contextmenus.append_imageurl,  {title:"Append to " + title + " (Image Url)"});
+}
+
+function addCreateMenus() {
+    contextmenus.create_pageurl = chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (Page Url)",        contexts:['page'],
+                onclick: function(info, tab){
+                    //createNoteFromBG({content:"Page Url:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab)});
+                    _gaq.push(['_trackEvent', 'ContextMenu', 'create_url']);
+                    createNoteFromBG({content:info.pageUrl});
+                }});
+    contextmenus.create_selection = chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (Selection)",  contexts:['selection'],
+            onclick: function(info, tab){
+                //createNoteFromBG({content:"Selection:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab)});
+                _gaq.push(['_trackEvent', 'ContextMenu', 'create_selection']);
+                createNoteFromBG({content:info.selectionText + "\n" + "[Source: " + tab.url + "]"});
+            }});
+    contextmenus.create_linkurl = chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (Link Url)",       contexts:['link'],
+            onclick: function(info, tab){
+                //createNoteFromBG({content:"Link URL:\n\nINFO:-------\n" + JSON.stringify(info) + "\n\nTAB:--------\n" + JSON.stringify(tab)});
+                _gaq.push(['_trackEvent', 'ContextMenu', 'create_link_url']);
+                createNoteFromBG({content:info.linkUrl});
+            }});
+    contextmenus.create_imageurl = chrome.contextMenus.create({type:"normal",title:"Create a Simplenote (Image Url)",    contexts:['image'],
+            onclick: function(info, tab){
+                _gaq.push(['_trackEvent', 'ContextMenu', 'create_image_url']);
+                createNoteFromBG({content:info.srcUrl});
+            }});
+}
 
 function appendToLastOpenNoteFromBG(string) {
 
-    if (!localStorage.opentonotekey || localStorage.opentonotekey == '') {
+    if (!localStorage.lastopennote_key) { // shouldnt happen
         signalError();
         return;
     }    
 
     signalProcessing();
-    SimplenoteDB.getNote(localStorage.opentonotekey,function(oldnote) {
+    SimplenoteDB.getNote(localStorage.lastopennote_key,function(oldnote) {
         oldnote.content += "\n" + string;
         SimplenoteDB.updateNote(oldnote, function(note) {
-            if (note) {
-                localStorage.opentonotekey = note.key;
+            if (note) {                
+                localStorage.lastopennote_open = "true";
+                var lines = note.content.split("\n");
+                var caretScroll = {line:"lastline", character: lines[lines.length-1].length};
+                localStorage[note.key+"_caret"] = JSON.stringify(caretScroll);                
                 signalSuccess();
             } else 
                 signalError()
@@ -233,7 +264,9 @@ function createNoteFromBG(note) {
     signalProcessing();
     SimplenoteDB.createNote(note, function(note) {
         if (note) {
-            localStorage.opentonotekey = note.key;
+            localStorage.lastopennote_key = note.key;
+            localStorage.lastopennote_open = "true";
+            handleRequest({action:"lastopen_keychanged"});
             signalSuccess();
         } else
             signalError();
@@ -315,14 +348,14 @@ function handleRequest(request, sender, sendResponse) {
             },
             loginInvalid:     function() {
                 SimplenoteDB.offline(false);
-                sendResponse({ success:false, reason:"logininvalid" });
+                sendResponse({success:false, reason:"logininvalid"});
             },
             timeout: function() { 
                                         
                 SimplenoteDB.offline(true);
                                         
                 if (localStorage.token) // offline mode despite token older than 24hrs
-                    sendResponse({ success:true })
+                    sendResponse({success:true})
                 else
                     sendResponse({
                         success:false,
@@ -358,6 +391,14 @@ function handleRequest(request, sender, sendResponse) {
         sendResponse(SimplenoteLS.getTags());
     } else if (request.action === "isoffline") {
         sendResponse(SimplenoteDB.isOffline());
+    } else if (request.action == "setcontextmenu") {
+        setcontextmenus(request.on);
+    } else if (request.action == "lastopen_keychanged") {
+        if (request.on == undefined || request.on == true) {
+            setcontextmenus(true);
+        } else {
+            removeAppendMenus();
+        }
     }
 }
 
@@ -369,13 +410,17 @@ function popupClosed() {
     
     if (saveNote.key && saveNote.key != "")
         SimplenoteDB.updateNote(saveNote, function(note) {
-            localStorage.opentonotekey = note.key;
+            localStorage.lastopennote_key = note.key;
+            localStorage.lastopennote_open = "true";
+            handleRequest({action:"lastopen_keychanged"});
             saveNote = undefined;
             log("popupClosed: update success.");
         });
     else
         SimplenoteDB.createNote(saveNote, function(note) {
-            localStorage.opentonotekey = note.key;
+            localStorage.lastopennote_key = note.key;
+            localStorage.lastopennote_open = "true";
+            handleRequest({action:"lastopen_keychanged"});
             saveNote = undefined;
             log("popupClosed: create success.");
         });

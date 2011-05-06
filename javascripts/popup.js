@@ -122,10 +122,6 @@ function uiEventListener(eventData, sender, sendResponse) {
 }
 
 // shortcuts
-jQuery.expr[':'].focus = function( elem ) {
-  return elem === document.activeElement && ( elem.type || elem.href );
-};
-
 $(document).keydown(shorcuts);
 function shorcuts(event) {
 
@@ -221,9 +217,9 @@ $(document).ready(function() {
                     chrome.extension.onRequest.addListener(uiEventListener);
                 });
                                 
-                if (localStorage.opentonotekey && localStorage.opentonotekey != "" && localStorage.option_opentonote == "true") {
+                if (localStorage.lastopennote_key != undefined && localStorage.lastopennote_open == "true" && localStorage.option_opentonote == "true") {
                     log("(ready): sending request for open to note");
-                    chrome.extension.sendRequest({action:"note",key:localStorage.opentonotekey}, function(note) {
+                    chrome.extension.sendRequest({action:"note",key:localStorage.lastopennote_key}, function(note) {
                         //fillTags(true);
                         if (note)
                             editorShowNote(note,0);
@@ -672,7 +668,7 @@ function slideEditor(callback, duration) {
 function slideIndex(callback, duration) {
     if (duration == undefined)
         duration = slideDuration;
-    localStorage.opentonotekey = "";
+    localStorage.lastopennote_open = "false";
     editorClearDirty();
     $("#index").show();
     $('div#index').animate({left:"+=400"}, {duration: duration, complete: callback, easing: slideEasing});
@@ -913,9 +909,16 @@ function saveCaretScroll() {
 function restoreCaretScroll(key) {
     if (localStorage[key + "_caret"] && (localStorage.option_remembercaret == undefined || localStorage.option_remembercaret == "true")) {
         var caretScroll = JSON.parse(localStorage[key + "_caret"]);
-        $(codeMirror.editor.container).scrollTop(caretScroll.scrollTop);
-        $(codeMirror.editor.container).scrollLeft(caretScroll.scrollLeft);
-        var lineH = codeMirror.nthLine(caretScroll.line);
+        if (caretScroll.scrollTop)
+            $(codeMirror.editor.container).scrollTop(caretScroll.scrollTop);
+        if (caretScroll.scrollLeft)
+            $(codeMirror.editor.container).scrollLeft(caretScroll.scrollLeft);
+        
+        var lineH;
+        if (caretScroll.line == "lastline")
+            lineH = codeMirror.lastLine();        
+        else
+            lineH = codeMirror.nthLine(caretScroll.line);
         codeMirror.selectLines(lineH, caretScroll.character);
     }
 }
@@ -1013,7 +1016,9 @@ function editorShowNote(note, duration) {
         // show undo
         $('div#note input#undo').show();
         
-        localStorage.opentonotekey = note.key;
+        localStorage.lastopennote_key = note.key;
+        localStorage.lastopennote_open = "true";
+        chrome.extension.sendRequest({action:"lastopen_keychanged"});
     }
     
     // trigger undo click-> fills everything

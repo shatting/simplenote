@@ -238,3 +238,6 @@ function get_manifest(callback) {
   xhr.open('GET', '../manifest.json', true);
   xhr.send(null);
 }
+
+// jquery ":focus" selector
+jQuery.expr[':'].focus = function( elem ) { return elem === document.activeElement && ( elem.type || elem.href );  };

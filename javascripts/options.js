@@ -13,6 +13,9 @@ $(document).ready(function() {
   if (localStorage.option_remembercaret == undefined || localStorage.option_remembercaret == "true")
     $("#remembercaret").attr("checked","true");
 
+  if (localStorage.option_contextmenu == undefined || localStorage.option_contextmenu == "true")
+    $("#contextmenu").attr("checked","true");
+
   if (localStorage.option_showdate== undefined || localStorage.option_showdate == "true")
     $("#showdate").attr("checked","true");
 
@@ -85,13 +88,17 @@ $(document).ready(function() {
  * @param ms Milliseconds to fade in the status message.
  */
 function save_options() {  
-  
+
+  // abstract lines
   localStorage.option_abstractlines = $("#abstractlines").val();
+
+  // open to note
   // clear key
   if ((localStorage.option_opentonote=="true") != $('#opentonote').attr("checked"))
-    delete localStorage.opentonotekey;
+    localStorage.lastopennote_open = "false";
   localStorage.option_opentonote  = $('#opentonote').attr("checked");
 
+  // editor caret
   // clear carets
   if ((localStorage.option_remembercaret=="true") != $('#remembercaret').attr("checked")) {
       for (var key in localStorage)
@@ -99,6 +106,14 @@ function save_options() {
               delete localStorage[key];
   }      
   localStorage.option_remembercaret = $('#remembercaret').attr("checked");
+
+  // context menu
+  if ((localStorage.option_contextmenu=="true") != $('#contextmenu').attr("checked")) {
+      chrome.extension.sendRequest({action:"setcontextmenu",on:$('#contextmenu').attr("checked")});
+  }
+  localStorage.option_contextmenu = $('#contextmenu').attr("checked");
+  
+
   localStorage.option_showdate  = $('#showdate').attr("checked");
   localStorage.option_sortby = $("#sort").val();
   localStorage.option_sortbydirection = $("#sortdirection").attr("checked")?-1:1;  
@@ -185,7 +200,9 @@ function save_clicked() {
 
             $("#loginmessage").html("<center>Logged in, getting notes index from server..</center>");
             $("#loginmessage").css("color","#ff66ff");
-            delete localStorage.opentonotekey;
+            delete localStorage.lastopennote_key;
+            chrome.extension.sendRequest({action:"lastopen_keychanged"});
+            localStorage.lastopennote_open = "false";
             chrome.extension.sendRequest({action:"userchanged"}, function(successObj) {
                 if (successObj && successObj.success) {
                     _gaq.push(['_trackEvent', 'Options', 'save_clicked','sync_success',successObj.numKeys]);
