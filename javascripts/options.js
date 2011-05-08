@@ -109,7 +109,7 @@ function save_options() {
 
   // context menu
   if ((localStorage.option_contextmenu=="true") != $('#contextmenu').attr("checked")) {
-      chrome.extension.sendRequest({action:"setcontextmenu",on:$('#contextmenu').attr("checked")});
+      chrome.extension.sendRequest({action:"cm_populate",on:$('#contextmenu').attr("checked")});
   }
   localStorage.option_contextmenu = $('#contextmenu').attr("checked");
   

@@ -153,7 +153,8 @@ function shorcuts(event) {
                 break;
             case 65: //a
                 if (!$("div#index input#q").is(":focus")) {
-                    $("div#index #add").click();                    
+                    $("div#index #add").click();
+                    event.preventDefault();
                 }
             break;
         }
@@ -1018,7 +1019,7 @@ function editorShowNote(note, duration) {
         
         localStorage.lastopennote_key = note.key;
         localStorage.lastopennote_open = "true";
-        chrome.extension.sendRequest({action:"lastopen_keychanged"});
+        chrome.extension.sendRequest({action:"cm_updatelastopen"});
     }
     
     // trigger undo click-> fills everything
