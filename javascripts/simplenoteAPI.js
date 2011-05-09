@@ -173,6 +173,10 @@ var SimplenoteAPI2 = {
         
         return true;
     },
+
+    resetCredentials : function() {
+        delete this.credentials;
+    },
     /**
      * gets note index from server
      *      

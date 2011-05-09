@@ -425,21 +425,26 @@ function indexAddNote(mode, note){
         html+=      "<abbr class='notetime' id='" + note.key + "time' title='" + ISODateString(date) + "'>" + prefix + localeDateString(date) + "</abbr>";
     }
     // pin/shared/published
-    if (note.deleted == 0) {
-        html+=      "<div title='Click to pin/unpin' class='" + (note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + "' id='" + note.key + "pin'>&nbsp;</div>";
+    //if (note.deleted == 0) {
+        html+=      "<div class='" + (note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + "' id='" + note.key + "pin'>&nbsp;</div>";
         html+=      "<div title='Click to view published version of this note' class='" + (note.publishkey != undefined?"published":"unpublished") + "' id='" + note.key + "published'>&nbsp;</div>";
-        $.each(note.tags, function (i,tag) {
-            if (validateEmail(tag)) {
-                shareds.push(tag);                
-            }
-        });
-        if (shareds.length > 0)
-            html+= "<div class='shared' id='" + note.key + "shared' title='You shared this note with " + shareds.join(", ") + "'>&nbsp;</div>";
-        else if (note.systemtags.indexOf("shared") > 0)
-            html+= "<div class='shared' id='" + note.key + "shared' title='Someone shared this note with you'>&nbsp;</div>";
-    } else {
-        $("div#" + note.key).attr("title", "Click to undelete");
-    }
+
+        if (note.systemtags.indexOf("shared") >= 0) {
+
+
+            $.each(note.tags, function (i,tag) {
+                if (validateEmail(tag)) {
+                    shareds.push(tag);
+                }
+            });
+            if (shareds.length > 0)
+                html+= "<div class='shared' id='" + note.key + "shared' title='You shared this note with " + shareds.join(", ") + "'>&nbsp;</div>";
+            else
+                html+= "<div class='shared' id='" + note.key + "shared' title='Someone shared this note with you'>&nbsp;</div>";
+        }
+    //} else {
+        
+    //}
     // note heading div
     html+=          "<div class='noteheading' id='" + note.key + "heading'></div>";
     // note abstract div
@@ -461,7 +466,11 @@ function indexAddNote(mode, note){
     if (localStorage.option_showdate == "true")
         $("#" + note.key + "time").timeago();
     
-    if (note.deleted != 0) return;
+    if (note.deleted != 0) {
+        $("div#" + note.key).attr("title", "Click to undelete");
+        return;
+    }
+    $("div#" + note.key + "pin").attr("title","Click to pin/unpin");
 
     // bind pinned klick
     $("#" + note.key +"pin").unbind();
@@ -487,6 +496,9 @@ function indexAddNote(mode, note){
             openURLinTab("http://simp.ly/publish/"+event.data);
         }); 
     }
+
+    if (note.systemtags.indexOf("unread")>0)
+         $("#" + note.key).addClass("unread");
 }
 
 /*
@@ -902,6 +914,10 @@ function editorInitialize() {
             $(".sn-link",$editbox).removeClass("sn-link-unhot");
     });
 
+    $('div#note input#popout').click(function(event) {
+        chrome.tabs.create({url:chrome.extension.getURL("/popup.html")});
+    });
+
     // add context menu
     editorMakeContextMenu();
 
@@ -1038,7 +1054,17 @@ function editorShowNote(note, duration) {
     // trigger undo click-> fills everything
     $('div#note input#undo').click();
         
-    slideEditor(function () {codeMirror.focus(); restoreCaretScroll(note.key);}, duration);
+    slideEditor(function () {
+        codeMirror.focus();
+        restoreCaretScroll(note.key);
+        if (note.systemtags.indexOf("unread")>0) {
+            
+            note.systemtags.splice(note.systemtags.indexOf("unread"),1);
+            chrome.extension.sendRequest({action:"update", key:note.key, systemtags:note.systemtags}, function() {
+                $("#" + note.key).removeClass("unread");
+            });
+        }
+    }, duration);
 
 }
 

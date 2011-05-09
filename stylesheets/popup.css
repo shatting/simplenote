@@ -130,7 +130,11 @@ div.noterow:hover {
     background: rgba(0,80,128,0.5);
     background: #4F92EB -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
     -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);    
-} 
+}
+
+div.unread {    
+    background: #aaeeaa;
+}
 
 div.syncnote {
     background-image: url(/images/sync.png);

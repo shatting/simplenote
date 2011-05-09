@@ -210,7 +210,10 @@ var SimplenoteDB = {
             loginInvalid:   function() {
                 SimplenoteDB.log("getIndex:loginInvalid");
                 _gaq.push(['_trackEvent', 'DB', 'getIndex','loginInvalid']);
-                alert("SimplenoteDB::getIndex:loginInvalid");
+                //alert("SimplenoteDB::getIndex:loginInvalid");
+                SimplenoteAPI2.resetCredentials();
+                delete localStorage.token;
+                delete localStorage.tokentime;
                 SimplenoteDB._gotIndexChunk(undefined, false);                
             }, 
             repeat:         function() {
