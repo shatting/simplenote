@@ -39,8 +39,10 @@ addEventListener("unload", function (event) {
                 
         if (codeMirror.dirty)
             note.content = codeMirror.getCode();
-        if ($('div#note input#pinned').attr("dirty")=="true")
-            note.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[]; // todo: "read" systag       
+        if ($('div#note input#pinned').attr("dirty")=="true") {
+            background.needCMRefresh = true;
+            note.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[];
+        }
         if ($('div#note input#tags').attr("dirty")=="true")
             note.tags = $('div#note input#tags').val().split(" ");
 //        if ($('div#note input#encrypted').attr("dirty")=="true")
@@ -51,12 +53,14 @@ addEventListener("unload", function (event) {
         log("(unload): note:");
         log(note);
         
-        background.saveNote = note;
-        background.setTimeout("popupClosed()", 1);
+        background.saveNote = note;        
     } else 
         log("(unload): no background save");
+    
     if (codeMirror.note)
-        saveCaretScroll();
+        saveCaretScroll();    
+
+    background.setTimeout("popupClosed()", 1);
 }, true);
 
 //  ---------------------------------------
@@ -430,7 +434,9 @@ function indexAddNote(mode, note){
             }
         });
         if (shareds.length > 0)
-            html+= "<div class='shared' id='" + note.key + "shared' title='Shared with " + shareds.join(", ") + "'>&nbsp;</div>";
+            html+= "<div class='shared' id='" + note.key + "shared' title='You shared this note with " + shareds.join(", ") + "'>&nbsp;</div>";
+        else if (note.systemtags.indexOf("shared") > 0)
+            html+= "<div class='shared' id='" + note.key + "shared' title='Someone shared this note with you'>&nbsp;</div>";
     } else {
         $("div#" + note.key).attr("title", "Click to undelete");
     }
@@ -459,11 +465,18 @@ function indexAddNote(mode, note){
 
     // bind pinned klick
     $("#" + note.key +"pin").unbind();
-    $("#" + note.key +"pin").click(note.key,function(event) {
-            var tag = $(this).attr("class")=="pinned"?[]:["pinned"];
-            event.stopPropagation();
-            chrome.extension.sendRequest({action:"update",key:event.data,systemtags:tag}, function (note) {
-                $("#" + note.key +"pin").attr("class",note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned");                
+    $("#" + note.key +"pin").click(note,function(event) {
+            var note = event.data;
+            if ($(this).attr("class")=="pinned") {
+                note.systemtags.splice(note.systemtags.indexOf("pinned"),1);
+            } else {
+                note.systemtags.push("pinned");
+            }                        
+
+            event.stopPropagation();            
+            chrome.extension.sendRequest({action:"update",key:note.key,systemtags:note.systemtags}, function (note) {
+                $("#" + note.key +"pin").attr("class",note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned");
+                background.needCMRefresh = true;
             });
         });
     // bind published click
@@ -1019,7 +1032,7 @@ function editorShowNote(note, duration) {
         
         localStorage.lastopennote_key = note.key;
         localStorage.lastopennote_open = "true";
-        chrome.extension.sendRequest({action:"cm_updatelastopen"});
+        background.needLastOpenRefresh = true;
     }
     
     // trigger undo click-> fills everything
@@ -1035,8 +1048,10 @@ function editorNoteChanged(key) {
     var noteData = {};
     if (codeMirror.dirty)
         noteData.content = codeMirror.getCode();
-    if ($('div#note input#pinned').attr("dirty")=="true")
+    if ($('div#note input#pinned').attr("dirty")=="true") {
+        background.needCMRefresh = true;
         noteData.systemtags = $('div#note input#pinned').attr("checked")?["pinned"]:[];
+    }
     if ($('div#note input#tags').attr("dirty")=="true")
         noteData.tags = $('div#note input#tags').val().trim().split(" ");
 //    if ($('div#note input#encrypted').attr("dirty")=="true")

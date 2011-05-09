@@ -129,24 +129,39 @@ function handleRequest(request, sender, sendResponse) {
 
 // function for popup close saving from background
 var saveNote;
+var needLastOpenRefresh = false;
+var needCMRefresh = false;
 function popupClosed() {
-    if (!saveNote)
-        return;
-    
-    if (saveNote.key && saveNote.key != "")
-        SimplenoteDB.updateNote(saveNote, function(note) {
-            localStorage.lastopennote_key = note.key;
-            localStorage.lastopennote_open = "true";
-            handleRequest({action:"lastopen_keychanged"});
-            saveNote = undefined;
-            log("popupClosed: update success.");
-        });
-    else
-        SimplenoteDB.createNote(saveNote, function(note) {
-            localStorage.lastopennote_key = note.key;
-            localStorage.lastopennote_open = "true";
-            handleRequest({action:"lastopen_keychanged"});
-            saveNote = undefined;
-            log("popupClosed: create success.");
-        });
+    if (saveNote) {
+        
+        if (saveNote.key && saveNote.key != "")
+            SimplenoteDB.updateNote(saveNote, function(note) {
+                localStorage.lastopennote_key = note.key;
+                localStorage.lastopennote_open = "true";
+                handleRequest({action:"lastopen_keychanged"});
+                saveNote = undefined;
+                checkRefreshs();
+                log("popupClosed: update success.");
+            });
+        else
+            SimplenoteDB.createNote(saveNote, function(note) {
+                localStorage.lastopennote_key = note.key;
+                localStorage.lastopennote_open = "true";
+                handleRequest({action:"lastopen_keychanged"});
+                saveNote = undefined;
+                checkRefreshs();
+                log("popupClosed: create success.");
+            });
+    } else
+        checkRefreshs();
+}
+
+function checkRefreshs() {
+    if (needCMRefresh)
+        handleRequest({action:"cm_populate"});
+    else if (needLastOpenRefresh)
+        handleRequest({action:"cm_updatelastopen"});
+
+    needLastOpenRefresh = false;
+    needCMRefresh = false;
 }
