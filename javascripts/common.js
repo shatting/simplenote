@@ -241,3 +241,9 @@ function get_manifest(callback) {
 
 // jquery ":focus" selector
 jQuery.expr[':'].focus = function( elem ) { return elem === document.activeElement && ( elem.type || elem.href );  };
+
+function arrayEqual(arr1,arr2) {
+    arr1.sort();
+    arr2.sort();
+    return arr1.join(" ") == arr2.join(" ");
+}

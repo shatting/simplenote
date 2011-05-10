@@ -54,7 +54,7 @@ var SimplenoteLS = {
         uiEvent("noteadded", {note:note});
     },
 
-    // source: local, getnote, updateresponse, index
+    // source: local, getnote, updateresponse, index, cm
     updateNote : function(inputNote, source) {
 
         if (!inputNote || !inputNote.key) {
@@ -75,11 +75,11 @@ var SimplenoteLS = {
 
         // look at inputNote, compare fields to storedNote
         for (var inputField in inputNote) {
-            inputFields.push(inputField);
-
+            inputFields.push(inputField);            
+            
             if (storedNote[inputField] === undefined ) {
                 changed.added.push(inputField);                
-            } else if ((storedNote[inputField] instanceof Array) && storedNote[inputField].join(" ") != inputNote[inputField].join(" ")) {
+            } else if ((storedNote[inputField] instanceof Array) && !arrayEqual(storedNote[inputField],inputNote[inputField])) {
                 changed.changed.push(inputField);                
             } else if (!(storedNote[inputField] instanceof Array) && storedNote[inputField] != inputNote[inputField]) {
                 changed.changed.push(inputField);                
@@ -97,8 +97,10 @@ var SimplenoteLS = {
 //            inputNote.encrypted = storedNote.encrypted;
 
         var haveStored = false, onlyLocalContent;
-        if (source == "local" || source == "getnote") {
+        if (source == "local" || source == "getnote" || source=="cm") {
             haveStored = true;
+            if (source=="local")
+                inputNote.systemtags.sort();
             $.storage.set(inputNote.key,inputNote);
         } else if (source == "updateresponse" || source == "index") {
             onlyLocalContent = inputNote.content == undefined && storedNote.content != undefined;
@@ -125,7 +127,7 @@ var SimplenoteLS = {
             this.log("updateNote: deleted: " + changed.deleted.join(", "));
         
         if (haveStored)
-            uiEvent("noteupdated", {newnote:inputNote, oldnote: storedNote, changes:changed});
+            uiEvent("noteupdated", {newnote:inputNote, oldnote: storedNote, changes:changed, source:source});
 
         return changed;
     },

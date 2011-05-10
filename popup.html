@@ -45,26 +45,29 @@
         <div id="pinwrapper" title="Pin this note to always show on top (alt-p)" >
             <input type="checkbox" id="pinned" tabindex="2"/><label for="pinned">Pin</label>
         </div>
-        <input type="button" id="popout" value="Popout" title="" tabindex="9"/>
+        <input type="button" id="popout" value="Popout (beta)" title="Opens Syncpad in a browser tab. Close the tab to get the popup again." tabindex="9"/>
 <!--        <div id="encryptwrapper" title="Encrypt this note locally (crtl-alt-e)">
             <input type="checkbox" id="encrypted" tabindex="3"/><label for="encrypted">Enc</label>
         </div>-->
     </div>
-    <script type="text/javascript">
+    <script type="text/javascript">        
         codeMirror = new CodeMirror(document.getElementById("note"),{
                 parserfile: "parsesimple.js",
                 path: "javascripts/lib/codemirror1/",
-                iframeClass: "cm-iframe",                
-                height: "503px",
+                iframeClass: "cm-iframe",                                
                 content: "",
                 stylesheet: "stylesheets/editor.css",
                 tabMode: "shift",
                 indentUnit: 4,
                 enterMode: "keep",
-                electricChars : false
+                electricChars : false,
+                onChange: editorNoteChanged
             });
         $(".cm-iframe").attr("id","cmiframe");
         $(".CodeMirror-wrapping").attr("id","cmwrapper");
+
+        $("#cmwrapper").css("position","");
+        $("#cmwrapper").css("height","");
         $("#cmiframe").attr("tabindex","7");
 
     </script>

@@ -136,6 +136,11 @@ div.unread {
     background: #aaeeaa;
 }
 
+div.selectednote {
+    background: rgba(79,146,235,0.5);
+    background: #4F92EB -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
+}
+
 div.syncnote {
     background-image: url(/images/sync.png);
     background-position: right center;
@@ -242,7 +247,7 @@ div.shared {
 #statusbar {
     color: #aaa;
     position: absolute;
-    top:524px;
+    bottom:2px;
     width: 98%;
     height:18px;    
     margin-right: 2px;
@@ -259,12 +264,10 @@ div.shared {
 
 div#note {
     position: absolute;
-    left:400px;
-    width:792px;
-    height: 542px;
-    margin-right: 2px;
-    margin-left: 2px;
-    margin-top: 2px;
+    left:402px;
+    right: 2px;
+    bottom: 2px;
+    top: 2px;
     background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
     outline-color: black;
     -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
@@ -280,7 +283,12 @@ div#note {
     ''box-shadow: 0 1px 0 #fff;
     ''margin-left: 2px;
     ''margin-right: 2px;    
-    margin-top: 4px;    
+    margin-top: 4px;
+    position: absolute;
+    bottom: 2px;
+    top: 30px;
+    right: 2px;
+    left:2px;
 }
 
 .CodeMirror-wrapping:focus {
@@ -305,7 +313,9 @@ div#note input#backtoindex {
 div#note input#tags {
     padding: 4px 0px 4px 34px;
     display: inline;
-    width: 35%;
+    position: absolute;
+    right: 440px;
+    left: 2px;
     color: #333;
     font-size: 13px;    
     border-radius: 12px;
@@ -322,6 +332,15 @@ div#note input#tags:focus {
     -webkit-box-shadow: 0 0 3px #3c7ecf;
     outline: none;
 }
+#pinwrapper {
+    position: absolute;
+    right: 390px;
+}
+#popout {
+    position: absolute;
+    right: 290px;
+}
+
 
 #pinwrapper, #wordwrapwrapper, #encryptwrapper {
     padding: 5px;
@@ -331,7 +350,7 @@ div#note input#tags:focus {
 }
 #wordwrapwrapper {
     float:right;
-    margin-left:40px;
+    margin-left:15px;
 }
 
 label, input[type=checkbox], input[type=button] {

@@ -319,8 +319,13 @@ var SimplenoteDB = {
                 //if (!data.encrypted || data.encrypted==0) // dont want merge on cyphertext
                     data.version = note.version;
             }
+            var source = "local";
+            if (data.source) {
+                source = data.source;
+                delete data.source;
+            }
 
-            SimplenoteLS.updateNote(note, "local");            
+            SimplenoteLS.updateNote(note,source);
             SimplenoteLS.addToSyncList(note.key);
         }
         

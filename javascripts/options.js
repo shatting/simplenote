@@ -16,6 +16,9 @@ $(document).ready(function() {
   if (localStorage.option_contextmenu == undefined || localStorage.option_contextmenu == "true")
     $("#contextmenu").attr("checked","true");
 
+  if (localStorage.option_alwaystab != undefined && localStorage.option_alwaystab == "true")
+    $("#alwaystab").attr("checked","true");
+
   if (localStorage.option_showdate== undefined || localStorage.option_showdate == "true")
     $("#showdate").attr("checked","true");
 
@@ -113,6 +116,7 @@ function save_options() {
   }
   localStorage.option_contextmenu = $('#contextmenu').attr("checked");
   
+  localStorage.option_alwaystab = $('#alwaystab').attr("checked");
 
   localStorage.option_showdate  = $('#showdate').attr("checked");
   localStorage.option_sortby = $("#sort").val();

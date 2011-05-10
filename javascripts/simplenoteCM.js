@@ -202,6 +202,9 @@ function getNoteHeading(key,maxlength) {
         return "last open";
     
     var note = SimplenoteLS.getNote(key);
+
+    if(note.content == "")
+        return "(empty note)";
        
     var nonemptylines = note.content.split("\n").filter(function(line) {return line.trim().length > 0;});
     var title = "last open"
@@ -247,7 +250,7 @@ var SimplenoteCM = {
                 }}, this.create_root);
 
         // append last open
-        if (localStorage.lastopennote_key) {
+        if (localStorage.lastopennote_key && SimplenoteLS.getNote(localStorage.lastopennote_key)) {
             title = getNoteHeading(localStorage.lastopennote_key,25);
             this.append_root = new CMitem({title:"Append to " + title + "", contexts:["selection","page","image","link"]});
 
@@ -311,6 +314,7 @@ var SimplenoteCM = {
 
         SimplenoteDB.getNote(key,function(oldnote) {
             oldnote.content += "\n" + string;
+            oldnote.source = "cm";
             SimplenoteDB.updateNote(oldnote, function(note) {
                 if (note) {
                     localStorage.lastopennote_open = "true";
