@@ -1,6 +1,6 @@
 body {
   font-family: Verdana, Helvetica, Arial;
-  font-size: 14px;  
+  font-size: 14px;
   margin: 0;
   height: 550px;
   width: 400px;
@@ -11,26 +11,26 @@ body {
 
 /* index */
 
-div#index {    
+div#index {
     position: absolute;
     width: 400px;
     height:100%;
     left:0px;
-    
+
 }
 
 div#status {
-    
+
 }
 
 div#toolbar {
     margin-right: 2px;
     margin-left: 2px;
-    margin-top: 2px;    
-    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));        
+    margin-top: 2px;
+    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
     outline-color: black;
     -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
-    border: 2px solid #F5F6FD;    
+    border: 2px solid #F5F6FD;
     border-radius: 3px;
     width:392px;
 }
@@ -55,29 +55,29 @@ div#index div#toolbar select#notetags:hover {
 }
 
 div#index div#toolbar input#q {
-    padding: 4px 6px 4px 24px; 
-    color: #33; 
-    font-size: 13px; 
+    padding: 4px 6px 4px 24px;
+    color: #33;
+    font-size: 13px;
     width:55%;
-    border-radius: 12px; 
-    border: 1px solid #999; 
-    border: 1px solid rgba(0, 0, 0, 0.3); 
+    border-radius: 12px;
+    border: 1px solid #999;
+    border: 1px solid rgba(0, 0, 0, 0.3);
     margin-left: 4px;
-    box-shadow: 0 1px 0 #fff; 
+    box-shadow: 0 1px 0 #fff;
     background: transparent url(/images/searchfield.png) no-repeat 6px 50%;
 }
 
 div#index div#toolbar input#q:focus {
-    border: 1px solid #666; 
-    border: 1px solid rgba(0, 0, 0, 0.4); 
-    -webkit-box-shadow: 0 0 3px #3c7ecf; 
+    border: 1px solid #666;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    -webkit-box-shadow: 0 0 3px #3c7ecf;
     outline: none;
 }
 
 #add {
     -webkit-transition-duration:0.2s;
     -webkit-transition-property:background-color;
-    -webkit-user-select:none;    
+    -webkit-user-select:none;
     background-image:url(/images/add.png);
     background-repeat:no-repeat no-repeat;
     float:right;
@@ -96,7 +96,7 @@ div#index div#toolbar input#q:focus {
     cursor: pointer;
 }
 
-div#notes {  
+div#notes {
     width: 398px;
     margin-bottom: 27px;
     position: absolute;
@@ -109,7 +109,7 @@ div#notes {
 div#nonotes {
   color: #aaa;
   width:100%;
-  text-align: center;  
+  text-align: center;
   padding-top : 30px ;
 }
 
@@ -126,13 +126,13 @@ div.noterow {
     padding-bottom: 8px;
 }
 
-div.noterow:hover { 
+div.noterow:hover {
     background: rgba(0,80,128,0.5);
     background: #4F92EB -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
-    -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);    
+    -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
 }
 
-div.unread {    
+div.unread {
     background: #aaeeaa;
 }
 
@@ -163,7 +163,7 @@ div.noteheading, div.abstract {
     overflow: hidden;
     width: auto;
     margin-right: 0px;
-    white-space: nowrap;    
+    white-space: nowrap;
 }
 
 div.noteheading { color:#111;}
@@ -195,7 +195,7 @@ div.pinned {
 }
 
 div.unpinned {
-    background: transparent url(/images/unpinned.png) no-repeat;  
+    background: transparent url(/images/unpinned.png) no-repeat;
 }
 
 div.unpublished {
@@ -211,7 +211,7 @@ div.published, div.shared {
     height: 12px;
     margin-right: 5px;
     float:left;
-    cursor:pointer;    
+    cursor:pointer;
 }
 
 div.published {
@@ -224,7 +224,7 @@ div.shared {
 
 .abstract {
   color: #999;
-  font-size: 10px;  
+  font-size: 10px;
 }
 
 #loader {
@@ -249,7 +249,7 @@ div.shared {
     position: absolute;
     bottom:2px;
     width: 98%;
-    height:18px;    
+    height:18px;
     margin-right: 2px;
     margin-left: 2px;
     margin-top: 2px;
@@ -272,17 +272,17 @@ div#note {
     outline-color: black;
     -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
     border: 2px solid #F5F6FD;
-    border-radius: 3px;    
+    border-radius: 3px;
 }
 
 .CodeMirror-wrapping {
-    padding: 1px;    
+    padding: 1px;
     border-radius: 12px 0px 0px 0px;
     border: 1px solid #999;
     ''border: 1px solid rgba(0, 0, 0, 0.3);
     ''box-shadow: 0 1px 0 #fff;
     ''margin-left: 2px;
-    ''margin-right: 2px;    
+    ''margin-right: 2px;
     margin-top: 4px;
     position: absolute;
     bottom: 2px;
@@ -317,7 +317,7 @@ div#note input#tags {
     right: 440px;
     left: 2px;
     color: #333;
-    font-size: 13px;    
+    font-size: 13px;
     border-radius: 12px;
     border: 1px solid #999;
     border: 1px solid rgba(0, 0, 0, 0.3);
@@ -328,7 +328,7 @@ div#note input#tags {
 
 div#note input#tags:focus {
     border: 1px solid #666;
-    border: 1px solid rgba(0, 0, 0, 0.4);    
+    border: 1px solid rgba(0, 0, 0, 0.4);
     -webkit-box-shadow: 0 0 3px #3c7ecf;
     outline: none;
 }
@@ -361,7 +361,7 @@ label, input[type=checkbox], input[type=button] {
 ::-webkit-scrollbar {
     width: 14px;
     height: 14px;
-    background-color: transparent;    
+    background-color: transparent;
 }
 
 ::-webkit-scrollbar-track-piece  {
@@ -374,15 +374,15 @@ label, input[type=checkbox], input[type=button] {
 ::-webkit-scrollbar-button:end:increment  {
     height: 1px;
     display: block;
-    background-color: #FAA;    
+    background-color: #FAA;
 }*/
 
-::-webkit-scrollbar-thumb:vertical {      
+::-webkit-scrollbar-thumb:vertical {
     background: -webkit-gradient(linear, right top, left top,color-stop(0.0, #F7F8FF),color-stop(1.0, #FFF));
     border: 1px solid #CACFDE;
     -webkit-border-radius: 6px;
 }
-::-webkit-scrollbar-thumb:horizontal {    
+::-webkit-scrollbar-thumb:horizontal {
     background: -webkit-gradient(linear, right top, left top,color-stop(0.0, #F7F8FF),color-stop(1.0, #FFF));
     border: 1px solid #CACFDE;
     -webkit-border-radius: 6px;

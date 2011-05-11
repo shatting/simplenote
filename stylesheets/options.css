@@ -2,7 +2,7 @@ body {
   -webkit-box-pack: center;
   -webkit-box-align: center;
   display: -webkit-box;
-  font-family: Verdana, Helvetica, Arial;	
+  font-family: Verdana, Helvetica, Arial;
   font-size: 2em;
   height: 900px;
   margin: 0;
@@ -22,7 +22,7 @@ body {
   -webkit-box-shadow: 3px 3px 8px #A7A7A7;
   padding: .5em;
   max-width: 18.5em;
-  background: #4F4F59 url(/images/texture.png);  
+  background: #4F4F59 url(/images/texture.png);
 }
 
 a, a:visited {
@@ -34,7 +34,7 @@ a, a:visited {
 	background:#E5ECFF;
 	border:1px solid #FFF;
 	padding:0px 10px 0px 10px;
-        margin:3px;        
+        margin:3px;
 	text-decoration:none !important;
 	cursor: pointer;
 	-moz-border-radius: 4px;
@@ -43,9 +43,9 @@ a, a:visited {
 	text-shadow: 1px 0px 1px #FFF;
 	-webkit-box-shadow: 0 0px 3px rgba(0,0,0,0.5);
 	background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #FFF),color-stop(1.0, #E5ECFF));
-        float:right;          
+        float:right;
         height: 90px;
-        
+
 }
 #save:hover{
 	color: #000 !important;
@@ -67,7 +67,7 @@ a, a:visited {
     margin-bottom: 8px;
     font-size: 18px;
     border-radius:4px;
-    background:#EEE;    
+    background:#EEE;
     margin:7px 0;
     padding:2px 2px 5px 6px;
     padding:6px;
@@ -91,7 +91,7 @@ a, a:visited {
 
 .tip {
   font-size:small;
-  color:#666;  
+  color:#666;
 }
 
 label, input {
@@ -100,7 +100,7 @@ label, input {
 
 .option input[type=checkbox] {
         border: 1px solid #555;
-        padding: 0.5em;        
+        padding: 0.5em;
         line-height: 1.2em;
         width: 80%;
         background: #fff;
@@ -110,7 +110,7 @@ label, input {
         -webkit-border-radius: 0.5em;
      display: inline-block;
      font-size: 15px;
-     line-height: 1em;     
+     line-height: 1em;
      padding: 0;
      width: 1.25em;
      height: 1.25em;
@@ -161,6 +161,6 @@ input#email, input#password {
     border-style: hidden;
     border-width: 0px;
     font-size: medium;
-    width: auto;    
+    width: auto;
     margin:4px;
 }

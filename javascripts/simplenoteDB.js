@@ -2,34 +2,34 @@
 // Simplenote Database interface.
 // ------------------------------------------------------------------------------------------------
 
-var SimplenoteDB = {    
+var SimplenoteDB = {
     offlineKey : "_offline",
 
     //cypherReg : /^\-\-SYNCPADAES\-\-\n(.*)\n\-\-SYNCPADAES\-\-$/m,
 
     isDebug : true,
-   
+
     log : function(s) {
-        if (this.isDebug)       
+        if (this.isDebug)
             logGeneral(s,"SimplenoteDB");
     },
 
-    isOffline : function() {        
+    isOffline : function() {
         return $.storage.get(this.offlineKey) == "true";
     },
-        
+
     offline : function(isOffline) {
-        
+
         if(isOffline==undefined)
             throw("SimplenoteDB.offline: please query via .isOffline()");
-        
+
         var oldIsOffline = this.isOffline();
-        
+
         if (isOffline != oldIsOffline) {
             this.log("offline:mode change to offline=" + isOffline);
             uiEvent("offlinechanged", {status:isOffline});
             $.storage.set(this.offlineKey,isOffline==true);
-        }              
+        }
     },
     _setSyncInProgress: function(val) {
         this.log("_setSyncInProgress:" + val);
@@ -50,19 +50,19 @@ var SimplenoteDB = {
     hadSync : function() {
         return localStorage[SimplenoteLS.indexTimeKey] != undefined;
     },
-   
+
     sync : function(fullSync, callbackFinished, callbackChunk) {
         if (this.getSyncInProgress()) {
-            log("sync: sync already in progress, returning");            
+            log("sync: sync already in progress, returning");
             return;
         }
-        
+
         this._reset();
-        this._setSyncInProgress(true);        
+        this._setSyncInProgress(true);
 
         var syncKeys = SimplenoteLS.getSyncKeys();
         var note;
-        
+
         this.log("sync: fullSync = " + fullSync);
 
         this.syncCallbackChunk = callbackChunk;
@@ -88,10 +88,10 @@ var SimplenoteDB = {
                 apioptions.since = indexTime;
             }
         }
-        apioptions.length = 100;        
+        apioptions.length = 100;
 
         uiEvent("sync", {status: "started", changes : this._indexKeysChanged});
-        
+
         this.getIndex(apioptions, fullSync);
 
     },
@@ -100,7 +100,7 @@ var SimplenoteDB = {
     //  mark: "agtzaW1wbGUtbm90ZXINCxIETm90ZRiElc0HDB"
     //  time: "1302261452.277224"
     _gotIndexChunk : function(indexData, havemore, fullSync) {
-        
+
         if (!indexData) {
             if (this.syncCallbackFinished)
                 this.syncCallbackFinished({success:false, fullSync:fullSync});
@@ -110,14 +110,14 @@ var SimplenoteDB = {
             uiEvent("sync", {status: "error", changes : this._indexKeysChanged});
         } else {
             var thisHadChanges = false, note;
-            
+
             for (var i=0; i<indexData.data.length; i++) {
                 note = indexData.data[i];
-                
+
                 if (fullSync)
                     this._indexKeysTemp.push(note.key);
-                
-                if (!SimplenoteLS.haveNote(note.key)) {                                                            
+
+                if (!SimplenoteLS.haveNote(note.key)) {
                     SimplenoteLS.addNote(note);
                     this._indexKeysChanged.hadchanges = true;
                     this._indexKeysChanged.added.push(note.key);
@@ -125,7 +125,7 @@ var SimplenoteDB = {
                     thisHadChanges = SimplenoteLS.updateNote(note,"index");
                     if (thisHadChanges.hadChanges) {
                         this._indexKeysChanged.hadchanges = true;
-                        this._indexKeysChanged.changed.push(note.key);                        
+                        this._indexKeysChanged.changed.push(note.key);
                     }
                 }
             }
@@ -135,11 +135,11 @@ var SimplenoteDB = {
 
             if (!havemore) {
                 var successObj = {success:true, fullSync:fullSync};
-                
+
                 if (indexData.data.length > 0) // check for indextime sync, most often we get 0 back
                     SimplenoteLS.indexTime(indexData.time);
-                                
-                if (fullSync) {                    
+
+                if (fullSync) {
                     // check for deletions
                     var lskeys = SimplenoteLS.getKeys(), key;
                     this.log("_gotIndexChunk: checking for remote deletions (got " + SimplenoteDB._indexKeysTemp.length + " notes, have " + SimplenoteLS.getKeys().length + ")");
@@ -160,12 +160,12 @@ var SimplenoteDB = {
                 }
 
                 this._setSyncInProgress(false);
-                
+
                 if (this.syncCallbackFinished)
                     this.syncCallbackFinished(successObj);
-                
+
                 uiEvent("sync", {status: "done", changes : this._indexKeysChanged});
-            } 
+            }
         }
 
         if (!havemore) {
@@ -183,16 +183,16 @@ var SimplenoteDB = {
     // callback : function(noteData), called after every index chunk
     // mark : (optional) marked note for more
     getIndex : function(apioptions, fullSync) {
-            
+
         var callbacks = {
 
             //  count: 20
             //  data: Array[20]
             //  mark: "agtzaW1wbGUtbm90ZXINCxIETm90ZRiElc0HDB"
             //  time: "1302261452.277224"
-            success :       function(indexData) {    
+            success :       function(indexData) {
                 SimplenoteDB.offline(false);
-                
+
                 SimplenoteDB.log("getIndex:success:got " + indexData.count + " keys from server.");
 
                 if (indexData.mark != undefined) {
@@ -201,12 +201,12 @@ var SimplenoteDB = {
                     SimplenoteDB._gotIndexChunk(indexData, true, fullSync);
 
                     SimplenoteDB.getIndex(apioptions, fullSync);
-                    
-                } else {                    
+
+                } else {
                     SimplenoteDB.log("getIndex:success:no mark, done.");
                     SimplenoteDB._gotIndexChunk(indexData, false, fullSync);
                 }
-            }, 
+            },
             loginInvalid:   function() {
                 SimplenoteDB.log("getIndex:loginInvalid");
                 _gaq.push(['_trackEvent', 'DB', 'getIndex','loginInvalid']);
@@ -214,15 +214,15 @@ var SimplenoteDB = {
                 SimplenoteAPI2.resetCredentials();
                 delete localStorage.token;
                 delete localStorage.tokentime;
-                SimplenoteDB._gotIndexChunk(undefined, false);                
-            }, 
+                SimplenoteDB._gotIndexChunk(undefined, false);
+            },
             repeat:         function() {
                 SimplenoteDB.log("getIndex:repeat");
                 //alert("SimplenoteDB::getIndex:repeat");
                 _gaq.push(['_trackEvent', 'DB', 'getIndex','repeat']);
-                SimplenoteDB._gotIndexChunk(undefined, false);                
+                SimplenoteDB._gotIndexChunk(undefined, false);
             },
-            timeout:        function() {                
+            timeout:        function() {
                 SimplenoteDB.log("getIndex:timeout");
                 SimplenoteDB.offline(true);
                 _gaq.push(['_trackEvent', 'DB', 'getIndex','timeout']);
@@ -233,27 +233,27 @@ var SimplenoteDB = {
 
         // set defaults
         if (!apioptions) apioptions = {};
-        if (!apioptions.length) apioptions.length = 100;        
-                
+        if (!apioptions.length) apioptions.length = 100;
+
         SimplenoteAPI2.index(apioptions,callbacks);
     },
-    
+
     getNote : function(key,callback) {
         var note = SimplenoteLS.getNote(key);
-        if (note && note.content) {         
+        if (note && note.content) {
             this.log("getNote:returning note from storage:" + key);
             if (callback)
                 callback(note);
         } else {
             this.log("getNote:getting note from server:" + key);
             var callbacks = {
-                success :       function(note) {                                
+                success :       function(note) {
                     SimplenoteDB.offline(false);
                     //SimplenoteLS.updateNote(SimplenoteDB._decryptNote(note),"getnote");
                     SimplenoteLS.updateNote(note,"getnote");
                     if (callback)
                         callback(note);
-                }, 
+                },
                 loginInvalid:   function() {
                     SimplenoteDB.offline(false);
                     SimplenoteDB.log('getNote::loginInvalid');
@@ -261,14 +261,14 @@ var SimplenoteDB = {
                     //alert('SimplenoteDB::getNote::loginInvalid');
                     if (callback)
                         callback();
-                }, 
+                },
                 repeat:         function() {
                     SimplenoteDB.offline(false);
                     SimplenoteDB.log('getNote::repeat');
                     _gaq.push(['_trackEvent', 'DB', 'getNote','repeat']);
                     //alert('SimplenoteDB::getNote::repeat');
                     if (callback)
-                        callback();                    
+                        callback();
                 },
                 noteNotExist:  function(key) {
                     SimplenoteDB.offline(false);
@@ -278,7 +278,7 @@ var SimplenoteDB = {
                     _gaq.push(['_trackEvent', 'DB', 'getNote','noteNoteExist']);
                     //alert('SimplenoteDB::getNote::noteNoteExist');
                     if (callback)
-                        callback();                    
+                        callback();
                 },
                 timeout: function(options) {
                     SimplenoteDB.offline(true);
@@ -287,16 +287,16 @@ var SimplenoteDB = {
                     //alert('SimplenoteDB::getNote::timeout');
                     if (callback)
                         callback();
-                }                    
-            };        
+                }
+            };
             SimplenoteAPI2.retrieve(key, callbacks);
         }
     },
-    
+
     updateNote : function(data,callback,syncmode) {
         this.log("updateNote, syncMode = " + syncmode + " update data:");
         this.log(data);
-        
+
         if (!syncmode) {
             // get local note version
             var note = SimplenoteLS.getNote(data.key);
@@ -328,23 +328,23 @@ var SimplenoteDB = {
             SimplenoteLS.updateNote(note,source);
             SimplenoteLS.addToSyncList(note.key);
         }
-        
+
         var callbacks = {
             success :       function(note) {
                 SimplenoteDB.offline(false);
-                // TODO: should not have to decrypt, since merging cant happen with cyphertext                                    
+                // TODO: should not have to decrypt, since merging cant happen with cyphertext
                 //SimplenoteLS.updateNote(SimplenoteDB._decryptNote(note),"updateresponse");
                 SimplenoteLS.updateNote(note,"updateresponse");
                 SimplenoteLS.removeFromSyncList(note.key);
                 if (callback)
                     callback(note);
-            }, 
+            },
             loginInvalid:   function() {
                 SimplenoteDB.offline(false);
                 SimplenoteDB.log('updateNote::loginInvalid');
                 _gaq.push(['_trackEvent', 'DB', 'updateNote','loginInvalid']);
                 alert('SimplenoteDB::updateNote::loginInvalid');
-            }, 
+            },
             repeat:         function() {
                 SimplenoteDB.offline(false);
                 SimplenoteDB.log('updateNote::repeat');
@@ -357,23 +357,23 @@ var SimplenoteDB = {
                 _gaq.push(['_trackEvent', 'DB', 'updateNote','noteNoteExits']);
                 alert('SimplenoteDB::updateNote::noteNoteExists');
             },
-            timeout: function(note) {                                 
+            timeout: function(note) {
                 SimplenoteDB.offline(true);
                 SimplenoteDB.log('updateNote::timeout');
                 _gaq.push(['_trackEvent', 'DB', 'updateNote','timeout']);
                 //alert('SimplenoteDB::updateNote::timeout');
                 if (callback)
                     callback(note);
-            }                    
+            }
         };
 
 //        data = this._encryptNote(data);
 //        delete data.encrypted;
 
         SimplenoteAPI2.update(data, callbacks);
-        
+
     },
-    
+
     createNote : function(note,callback,syncmode) {
         this.log("createNote, note data below, syncmode = " +  syncmode);
         this.log(note2str(note,true));
@@ -391,7 +391,7 @@ var SimplenoteDB = {
             if (!note.systemtags)
                 note.systemtags = [];
 
-            SimplenoteLS.addNote(note);            
+            SimplenoteLS.addNote(note);
             SimplenoteLS.addToSyncList(note.key);
         } else {
             tempkey = note.key;
@@ -412,27 +412,27 @@ var SimplenoteDB = {
 
                 if (callback)
                     callback(newnote);
-            }, 
+            },
             loginInvalid:   function() {
                 SimplenoteDB.offline(false);
                 SimplenoteDB.log("createNote::loginInvalid");
                 _gaq.push(['_trackEvent', 'DB', 'createNote','loginInvalid']);
-                alert('SimplenoteDB::createNote::loginInvalid');                
-            }, 
+                alert('SimplenoteDB::createNote::loginInvalid');
+            },
             repeat:         function() {
                 SimplenoteDB.offline(false);
                 SimplenoteDB.log("createNote::repeat");
                 _gaq.push(['_trackEvent', 'DB', 'createNote','repeat']);
                 //alert('SimplenoteDB::createNote::repeat');
             },
-            timeout: function(note) {             
+            timeout: function(note) {
                 SimplenoteDB.offline(true);
                 SimplenoteDB.log("createNote::timeout");
                 _gaq.push(['_trackEvent', 'DB', 'createNote','timeout']);
                 //alert('SimplenoteDB::createNote::timeout');
                 if (callback)
                     callback();
-            }                    
+            }
         };
         delete note.key; // remove temp key
 //        var cleartextcontent = note.content;
@@ -443,7 +443,7 @@ var SimplenoteDB = {
 
         SimplenoteAPI2.create(note, callbacks);
     },
-    
+
 //    deleteNote : function(key, callback) {
 //        var callbacks = {
 //            success :       function(data) {

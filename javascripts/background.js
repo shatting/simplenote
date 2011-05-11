@@ -15,16 +15,16 @@ function backgroundSync(fullSync, callbackComplete, callbackPartial) {
         if (callbackComplete)
             callbackComplete();
         return;
-    }        
+    }
 
     if (!fullSync && !SimplenoteDB.hadSync())
         fullSync = true;
 
     log("backgroundSync: starting..");
     log("backgroundSync: offlinemode: " + SimplenoteDB.isOffline());
-    log("backgroundSync: fullsync: " + fullSync);    
+    log("backgroundSync: fullsync: " + fullSync);
 
-    handleRequest({action:"login"}, {}, function(successObj) {        
+    handleRequest({action:"login"}, {}, function(successObj) {
         if (successObj.success) {
             log("backgroundSync: login request completed, requesting sync. fullSync=" + fullSync);
             SimplenoteDB.sync(fullSync, function(successObj) {
@@ -35,19 +35,19 @@ function backgroundSync(fullSync, callbackComplete, callbackPartial) {
             }, callbackPartial);
         } else {
             log("backgroundSync: login request failed.");
-        }               
+        }
     });
 }
 // sync on browser start
 $(document).ready(function() {
-    
+
     SimplenoteCM.populate();
 
     backgroundSync(true);
 });
 
 chrome.extension.onRequest.addListener(handleRequest);
-function handleRequest(request, sender, sendResponse) {    
+function handleRequest(request, sender, sendResponse) {
 
     log("request: " + request.action);
     log(request);
@@ -55,20 +55,21 @@ function handleRequest(request, sender, sendResponse) {
     if (request.action == "userchanged") {
         _gaq.push(['_trackEvent', 'background', 'request','userchanged']);
         SimplenoteLS._reset();
-        SimplenoteDB._reset();        
+        SimplenoteDB._reset();
         backgroundSync(true, function(successObj) {
             log("handleRequest:userchanged sync done.");
+            handleRequest({action:"cm_populate"});
             if (sendResponse)
                 sendResponse(successObj);
         });
     } else if (request.action === "login") {
 
         callbacks = {
-            success:   function(credentials) { 
-                     
+            success:   function(credentials) {
+
                 if (credentials) // callback cause of token returns no credentials
-                    SimplenoteDB.offline(false);                
-                                    
+                    SimplenoteDB.offline(false);
+
                 if (credentials) {
                     localStorage.token = credentials.token;
                     localStorage.tokenTime = credentials.tokenTime;
@@ -79,10 +80,10 @@ function handleRequest(request, sender, sendResponse) {
                 SimplenoteDB.offline(false);
                 sendResponse({success:false, reason:"logininvalid"});
             },
-            timeout: function() { 
-                                        
+            timeout: function() {
+
                 SimplenoteDB.offline(true);
-                                        
+
                 if (localStorage.token) // offline mode despite token older than 24hrs
                     sendResponse({success:true})
                 else
@@ -93,7 +94,7 @@ function handleRequest(request, sender, sendResponse) {
                     });
             }
         };
-        
+
         var credentials = {
             email: localStorage.option_email,
             password: localStorage.option_password
@@ -104,15 +105,15 @@ function handleRequest(request, sender, sendResponse) {
         }
 
         SimplenoteAPI2.login(credentials, callbacks);
-    } else if (request.action === "sync") {        
+    } else if (request.action === "sync") {
         backgroundSync(request.fullsync, sendResponse);
     } else if (request.action === "note") {
-        SimplenoteDB.getNote(request.key,sendResponse);    
-    } else if (request.action === "getnotes") {                
+        SimplenoteDB.getNote(request.key,sendResponse);
+    } else if (request.action === "getnotes") {
         sendResponse(SimplenoteLS.getNotes(request));
     } else if (request.action === "delete") {
         SimplenoteDB.deleteNote(request, sendResponse);
-    } else if (request.action === "update") {               
+    } else if (request.action === "update") {
         SimplenoteDB.updateNote(request, sendResponse);
     } else if (request.action === "create") {
         SimplenoteDB.createNote(request, sendResponse);
@@ -133,7 +134,7 @@ var needLastOpenRefresh = false;
 var needCMRefresh = false;
 function popupClosed() {
     if (saveNote) {
-        
+
         if (saveNote.key && saveNote.key != "")
             SimplenoteDB.updateNote(saveNote, function(note) {
                 localStorage.lastopennote_key = note.key;
