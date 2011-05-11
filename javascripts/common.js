@@ -3,24 +3,24 @@
 // ------------------------------------------------------------------------------------------------
 
 // global debug switch
-var commonDebug = true;
+var commonDebug = false;
 
 function logGeneral(s,prefix,target) {
     if (!commonDebug)
         return;
-    
+
     if (!target)
         target=console;
     if (!prefix)
         prefix="";
-    
+
     if (typeof s == "string")
         target.log( prefix + '::' + s);
     else
         target.log(s);
 }
 
-function convertDate(serverDate) {    
+function convertDate(serverDate) {
     return new Date(serverDate*1000);
 }
 
@@ -156,76 +156,10 @@ jQuery.fn.sortElements = (function(){
 
 })();
 
-function indentSelection(indent) {
-    var sel, range;
-    
-    sel = window.getSelection();
-    console.log("selection");
-    console.log(sel);
-    if (sel.getRangeAt && sel.rangeCount) {
-        range = sel.getRangeAt(0);
-
-        console.log("range")
-        console.log(range)
-        console.log("Ancestor: " + range.commonAncestorContainer.id);
-        console.log(range.startContainer.nodeValue);
-        console.log(range.endContainer.nodeValue);
-        if (range.startContainer == range.endContainer) {
-            sel.anchorNode.parentElement.innerHTML = indentHTML(sel.anchorNode.parentElement.innerHTML,indent);            
-        } else {
-            var inrange = false;
-            for (var i=0;i<range.commonAncestorContainer.children.length;i++) {
-                if (range.commonAncestorContainer.children[i] == range.startContainer.parentElement)
-                    inrange = true;
-                else if (range.commonAncestorContainer.children[i-1] == range.endContainer.parentElement)
-                    inrange = false;
-
-                if (inrange)
-                    range.commonAncestorContainer.children[i].innerHTML = indentHTML(range.commonAncestorContainer.children[i].innerHTML,indent);
-            }                
-        }
-        range.setStart(range.startContainer, range.startOffset + indent);
-        range.setEnd(range.endContainer, range.endOffset + indent);
-        range.startContainer.parentElement.focus();
-    }
-
-}
-
-function insertHtmlAtCursor(html) {
-    var range, node;
-    if (window.getSelection && window.getSelection().getRangeAt) {
-        range = window.getSelection().getRangeAt(0);
-        node = range.createContextualFragment(html);
-        x = range.insertNode(node);
-    } else if (document.selection && document.selection.createRange) {
-        document.selection.createRange().pasteHTML(html);
-    }
-}
-
-function indentHTML(html,amount) {
-    
-    if (amount<0) {
-        for (var i=0;i<-amount;i++)
-            if (html.indexOf("&nbsp;") == 0)
-                html=html.substring(6);
-            else
-                break;
-            
-        return html;
-    } else if (amount>0) {
-        var indent = "&nbsp";
-        for (var i=1;i<amount;i++)
-            indent+="&nbsp";
-        return indent + html;
-    }
-    else
-        return html;
-}
-
 function uiEvent(name,data) {
     if (name == undefined)
         throw "uiEvent must have name supplied"
-    
+
     if (data == undefined || data.name)
         throw "uiEvent data must not be empty and must not have name field"
 
@@ -282,7 +216,12 @@ function get_manifest(callback) {
 jQuery.expr[':'].focus = function( elem ) { return elem === document.activeElement && ( elem.type || elem.href );  };
 
 function arrayEqual(arr1,arr2) {
-    arr1.sort();
-    arr2.sort();
-    return arr1.join(" ") == arr2.join(" ");
+    if (arr1.length != arr2.length)
+        return false;
+
+    for (var i in arr1)
+        if (arr1[i]!=arr2[i])
+            return false;
+
+    return true;
 }

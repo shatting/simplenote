@@ -200,12 +200,12 @@ CMitem.prototype._removeChild = function(childId) {
 function getNoteHeading(key,maxlength) {
     if (!key)
         return "last open";
-    
+
     var note = SimplenoteLS.getNote(key);
 
     if(note.content == "")
         return "(empty note)";
-       
+
     var nonemptylines = note.content.split("\n").filter(function(line) {return line.trim().length > 0;});
     var title = "last open"
     if (nonemptylines.length > 0 && nonemptylines[0].length <= maxlength)
@@ -216,7 +216,7 @@ function getNoteHeading(key,maxlength) {
 }
 
 var SimplenoteCM = {
-    
+
     contextmenu_ids : {},
 
     create_root: null,
@@ -224,8 +224,12 @@ var SimplenoteCM = {
     append_pinned_root: null,
 
     populate: function(on) {
-        
+
         chrome.contextMenus.removeAll();
+        
+        if (!localStorage.option_email)
+            return;
+        
         if ((on != undefined && !on) || (localStorage.option_contextmenu != undefined && localStorage.option_contextmenu == "false"))
             return;
 
@@ -301,14 +305,21 @@ var SimplenoteCM = {
 
             }
         }
-              
+
     },
 
     updateLastOpen: function() {
         var title = getNoteHeading(localStorage.lastopennote_key,25);
-        this.append_root.update({title:"Append to " + title + ""});
+        if (!title)
+            return;
+        
+        if (!this.append_root)
+            this.populate();
+        
+        if (this.append_root)
+            this.append_root.update({title:"Append to " + title + ""});
     },
-   
+
     appendToNoteFromBG: function(string, key, setLastOpen) {
         SimplenoteCM.signalProcessing();
 
@@ -318,7 +329,7 @@ var SimplenoteCM = {
             SimplenoteDB.updateNote(oldnote, function(note) {
                 if (note) {
                     localStorage.lastopennote_open = "true";
-                       
+
                     var lines = note.content.split("\n");
                     var caretScroll = {line:"lastline", character: lines[lines.length-1].length};
                     localStorage[note.key+"_caret"] = JSON.stringify(caretScroll);

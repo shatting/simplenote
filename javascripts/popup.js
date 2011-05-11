@@ -1,17 +1,17 @@
-var background = chrome.extension.getBackgroundPage();
+var background;
 var popup = this;
 
 var isDebug = true && commonDebug;
 var isDebugToBg =  true && isDebug;
 
-// this will hold the CodeMirror instance
-var codeMirror = null;
 // amount of vertical viewport size to add for preloading notes in index
 var preLoadFactor = 1/4;
 var currentView = "index";
 var slideEasing = "swing"; // swing or linear
 var slideDuration = 300;
 var isTab = false;
+
+var snEditor;
 
 //  ---------------------------------------
 var fontUrls = {
@@ -36,27 +36,27 @@ function log(s) {
 addEventListener("unload", unloadListener, true);
 
 function unloadListener() {
-    if (editorIsNoteDirty()) {
+    if (snEditor.isNoteDirty()) {
         var note = {};
         log("(unload): requesting background save");
 
-        if (codeMirror.dirty)
-            note.content = codeMirror.getCode();
-        if ($('div#note input#pinned').attr("dirty")=="true") {
-            background.needCMRefresh = true;
-            note.systemtags = codeMirror.note.systemtags;
+        if (snEditor.dirty.content)
+            note.content = snEditor.codeMirror.getCode();
+        if (snEditor.dirty.pinned) {
+            snEditor.needCMRefresh("pinned");
+            note.systemtags = snEditor.note.systemtags;
             if (!$('div#note input#pinned').attr("checked")) {
                 note.systemtags.splice(note.systemtags.indexOf("pinned"),1);
             } else {
                 note.systemtags.push("pinned");
             }
         }
-        if ($('div#note input#tags').attr("dirty")=="true")
-            note.tags = $('div#note input#tags').val().split(" ");
+        if (snEditor.dirty.tags)
+            note.tags = snEditor.getTags();
 //        if ($('div#note input#encrypted').attr("dirty")=="true")
 //            note.encrypted = $('div#note input#encrypted')?1:0;
 
-        note.key = codeMirror.note.key;
+        note.key = snEditor.note.key;
 
         log("(unload): note:");
         log(note);
@@ -65,8 +65,7 @@ function unloadListener() {
     } else
         log("(unload): no background save");
 
-    if (codeMirror.note)
-        saveCaretScroll();
+    snEditor.saveCaretScroll();
 
     if (isTab)
         delete background.popouttab;
@@ -84,9 +83,9 @@ function unloadListener() {
 // {name:"offlinechanged", status:true|false}
 // {name:"synclistchanged", added|removed:key}
 function uiEventListener(eventData, sender, sendResponse) {
-        
+
     if (eventData.name == "sync") {
-        
+
         log("EventListener:sync:" + eventData.status + ", hadChanges=" + eventData.changes.hadchanges );
 
         if (eventData.status == "started") {
@@ -97,7 +96,7 @@ function uiEventListener(eventData, sender, sendResponse) {
                 $("#sync").html("sync done, had changes");
             } else {
                 $("#sync").html("sync done");
-            }            
+            }
         } else if (eventData.status == "error") {
             $("#sync").html("sync error");
         }
@@ -106,14 +105,15 @@ function uiEventListener(eventData, sender, sendResponse) {
         log("EventListener:" + eventData.name);
         fillTags(true);
 //        if (!eventData.note.key.match(/created/))
-//             editorShowNote(eventData.note);
+//             SNEditor.setNote(eventData.note);
     } else if (eventData.name == "noteupdated") {
-        log("EventListener:" + eventData.name);
+        log("EventListener:noteupdated, source=" + eventData.source + ", changed=[" + eventData.changes.changed.join(",") + "]");
+
         if (eventData.changes.changed.indexOf("deleted")>=0) {
             $('div.noterow#' + eventData.newnote.key).remove();
             if (localStorage.lastopennote_key == eventData.newnote.key)
                 chrome.extension.sendRequest({action: "cm_updatelastopen"});
-            
+
             fillTags(false);
         } else if (eventData.changes.changed.indexOf("tags")>=0 || eventData.changes.changed.indexOf("systemtags")>=0 || eventData.changes.changed.indexOf("modifydate")>=0) {
             fillTags(true);
@@ -124,18 +124,18 @@ function uiEventListener(eventData, sender, sendResponse) {
         if (isTab) {
             var pinnedChanged = eventData.changes.changed.indexOf("systemtags")>=0 && (eventData.oldnote.systemtags.indexOf("pinned")>=0) != (eventData.newnote.systemtags.indexOf("pinned")>=0);
 
-            if (pinnedChanged && codeMirror && codeMirror.note && codeMirror.note.key == eventData.newnote.key)
+            if (pinnedChanged && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key)
                 $("div#note input#pinned").attr("checked",(eventData.newnote.systemtags.indexOf("pinned")>=0));
 
             if (pinnedChanged)
                 chrome.extension.sendRequest({action: "cm_populate"});
 
-            if (eventData.source != "local" && codeMirror && codeMirror.note && codeMirror.note.key == eventData.newnote.key) {
+            if (eventData.source != "local" && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key) {
 
                 var contentChanged = eventData.changes.changed.indexOf("content")>=0;
                 var tagsChanged = eventData.changes.changed.indexOf("tags")>=0;
                 if ( pinnedChanged || contentChanged || tagsChanged )
-                    editorShowNote(eventData.newnote);
+                    snEditor.setNote(eventData.newnote);
             }
         }
     } else if (eventData.name == "offlinechanged") {
@@ -145,13 +145,16 @@ function uiEventListener(eventData, sender, sendResponse) {
         else
             $("#offline").html("");
     } else if (eventData.name == "synclistchanged") {
-        log("EventListener:" + eventData.name);
-        if (eventData.added)            
-            $('div.noterow#' + eventData.added + "heading").addClass("syncnote");
-        if (eventData.removed)            
-            $('div.noterow#' + eventData.removed + "heading").removeClass("syncnote");
+        if (eventData.added) {
+            $('div#' + eventData.added + "heading").addClass("syncnote");
+            log("EventListener:synclistchanged, added=" + eventData.added);
+        }
+        if (eventData.removed) {
+            $('div#' + eventData.removed + "heading").removeClass("syncnote");
+            log("EventListener:synclistchanged, removed=" + eventData.removed);
+        }
     } else if (eventData.name == "notedeleted") {
-        log("EventListener:" + eventData.name);
+        log("EventListener:notedeleted:" + eventData.key);
         $('div.noterow#' + eventData.key).remove();
     } else {
         log("EventListener:" + eventData.name);
@@ -166,7 +169,7 @@ function shorcuts(event) {
     // - index: up, down, enter/right, s search, ctrl-t tags, ctrl-a add
         var notesheight = $("div#notes").get(0).scrollHeight;
 
-        if (!event.altKey && !event.ctrlKey && !event.shiftKey)
+        if (!event.altKey && event.ctrlKey && !event.shiftKey)
             switch(event.keyCode) {
                 case 38: //up
                     $("div#notes").scrollTop($("div#notes").scrollTop()-notesheight/20)
@@ -177,32 +180,26 @@ function shorcuts(event) {
                 case 39: //right
                 break;
                 case 84: //t
-                    if (!$("div#index #notetags").is(":focus")) {
-                        $("div#index #notetags").focus();
-                        event.preventDefault();
-                    }
-                break;
+                    event.preventDefault();
+                    $("div#index #notetags").focus();
+                    break;
                 case 83: //s
-                    if (!$("div#index input#q").is(":focus")) {
-                        $("div#index input#q").focus();
-                        event.preventDefault();
-                    }
+                    event.preventDefault();
+                    $("div#index input#q").focus();
                     break;
                 case 65: //a
-                    if (!$("div#index input#q").is(":focus")) {
-                        $("div#index #add").click();
-                        event.preventDefault();
-                    }
-                break;
+                    event.preventDefault();
+                    $("div#index #add").click();
+                    break;
             }
-    } else if (currentView=="editor") {        
+    } else if (currentView=="editor") {
         // - editor: alt-b66=back, crtl-d68=trash, alt-u85=undo, alt-p80=pin, alt-w87=wordwrap, alt-t84=tags
         if (event.altKey && !event.shiftKey)
             switch(event.keyCode) {
                 case 83: //s
-                    searchForSelection();break;
+                    snEditor.searchForSelection();break;
                 case 86: // v
-                    insertUrl();break;
+                    snEditor.insertUrl();break;
                 case 66: //b
                     $('div#note input#backtoindex').click();break;
                 case 67: //c
@@ -226,16 +223,25 @@ function shorcuts(event) {
                     $("div#note input#tags").focus();break;
                 case 69: //e
                     //event.preventDefault();
-                    $(codeMirror.editor.container).focus();
-                    // codeMirror.focus(); didnt completely give up focus on #tags
+                    snEditor.focus();
+                    // snEditor.codeMirror.focus(); didnt completely give up focus on #tags
                     break;
             }
     }
 }
-    
+
 //  ---------------------------------------
-$(document).ready(function() {
-           
+$(document).ready(readyListener);
+
+function readyListener() {
+
+    background = chrome.extension.getBackgroundPage();
+
+    if (!background) {
+        console.log("deferring listener a bit");        
+        setTimeout("readyListener()",500);
+    }
+
     chrome.tabs.getCurrent(function(tab) {
             if (tab) {
                 log("---------------- tab opened ---------------------");
@@ -245,124 +251,123 @@ $(document).ready(function() {
                 log("---------------- popup opened ---------------------");
                 if (background.popouttab) {
                     log("--> deferring to tab");
-                    chrome.tabs.update(background.popouttab.id, {selected:true}, function() {
+                    chrome.tabs.update(background.popouttab.id, {selected:true, pinned:localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true"}, function() {
                         window.close();
                         return;
                     });
                 } else if (localStorage.option_alwaystab == "true") {
-                    log("--> no tab, but alwaystab -> creating tab");
-                    chrome.tabs.create({url:chrome.extension.getURL("/popup.html"), pinned:true}, function(tab) {
+                    log("--> no tab, but alwaystab -> creating tab");                    
+                    chrome.tabs.create({url:chrome.extension.getURL("/popup.html"), pinned: localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true"}, function(tab) {
                         background.popouttab = tab;
                         window.close();
                     });
                 } else
                     log("--> no tab, opening popup");
-                
+
+            }
+
+            var signUpLink =  "<a href='https://simple-note.appspot.com/create/'>signup</a>";
+            var optionsLink = "<a href='options.html'>options page</a>";
+
+            if ( !localStorage.option_email || !localStorage.option_password) {
+                var message = "Please " + signUpLink + " for a Simplenote account and/or enter your credentials on the " + optionsLink + ".";
+                displayStatusMessage(message);
+                _gaq.push(['_trackEvent', 'popup', 'ready', 'displayWelcomeMessage']);
+            } else {
+                chrome.extension.sendRequest({action : "login"}, function(result) {
+                    if (result.success) {
+                        _gaq.push(['_trackEvent', 'popup', 'ready', 'login_success']);
+
+                        snEditor = new SNEditor();
+
+                        log("(ready): requesting full sync.");
+                        chrome.extension.sendRequest({action: "sync", fullsync:true}, function() {
+                            log("(ready): sync request complete");
+                            chrome.extension.onRequest.addListener(uiEventListener);
+                        });
+
+                        if (localStorage.lastopennote_key != undefined && localStorage.lastopennote_key != "" && localStorage.lastopennote_open == "true" && localStorage.option_opentonote == "true") {
+                            log("(ready): sending request for open to note");
+                            chrome.extension.sendRequest({action:"note",key:localStorage.lastopennote_key}, function(note) {
+                                if (note)
+                                    snEditor.setNote(note,0);
+                            });
+                        }
+
+                        $("#note").hide();
+
+                        fillTags(true);
+
+                        // bind ADD button
+                        $('div#index div#toolbar div#add').click(function() {
+                            snEditor.setNote();
+                        });
+
+                        // bind SYNC div
+                        $("#sync").click( function() {
+                            chrome.extension.sendRequest({action: "sync", fullsync:true});
+                        })
+
+                        $("div.noterow").live("mouseover", function(event) {
+                            $("abbr.notetime",this).css("color","#ddd");
+                            $("div.abstract",this).css("color","#ccc");
+                            $("div.noteheading",this).css("color","#fff");
+                        });
+
+                        $("div.noterow").live("mouseleave", function(event) {
+                            $("abbr.notetime",this).css("color","");
+                            $("div.abstract",this).css("color","");
+                            $("div.noteheading",this).css("color","");
+                        });
+
+                        // bind SEARCH field
+                        var options = {
+                            callback : function() {
+                                log("typewatch: calling fillIndex");
+                                fillIndex();
+                            },
+                            wait : 250,
+                            highlight : false,
+                            captureLength : -1 // needed for empty string ('') capture
+                        };
+                        $('div#index div#toolbar input#q').typeWatch(options);
+
+                        $.timeago.settings.strings= {
+                            prefixAgo: null,
+                            prefixFromNow: null,
+                            suffixAgo: "",
+                            suffixFromNow: "from now",
+                            seconds: "<1 min",
+                            minute: "1 min",
+                            minutes: "%d min",
+                            hour: "1 h",
+                            hours: "%d h",
+                            day: "1 d",
+                            days: "%d d",
+                            month: "1 month",
+                            months: "%d months",
+                            year: "1 year",
+                            years: "%d years",
+                            numbers: []
+                        }
+
+                        if (localStorage.option_color_index)
+                            $("body").css("background-color",localStorage.option_color_index);
+
+                    }
+                    else {
+                        _gaq.push(['_trackEvent', 'popup', 'ready', 'login_err']);
+                        log("(ready): login error, message=" + result.message);
+                        if (!result.message)
+                            result.message = "Login for email '" + localStorage.option_email + "' failed, please check your Simplenote email address and password on the " + optionsLink + "!";
+                        else
+                            result.message += "<br><br>Alternatively you can try to correct your username and password on the " + optionsLink + "!";
+                        displayStatusMessage(result.message);
+                    }
+                });
             }
         });
-    
-
-    var signUpLink =  "<a href='https://simple-note.appspot.com/create/'>signup</a>";
-    var optionsLink = "<a href='options.html'>options page</a>";
-    
-    if ( !localStorage.option_email || !localStorage.option_password) {
-        var message = "Please " + signUpLink + " for a Simplenote account and/or enter your credentials on the " + optionsLink + ".";
-        displayStatusMessage(message);
-        _gaq.push(['_trackEvent', 'popup', 'ready', 'displayWelcomeMessage']);
-    } else {
-        chrome.extension.sendRequest({action : "login"}, function(result) {
-            if (result.success) {
-                _gaq.push(['_trackEvent', 'popup', 'ready', 'login_success']);
-                log("(ready): login success, requesting full sync.");                
-                chrome.extension.sendRequest({action: "sync", fullsync:true}, function() {
-                    log("(ready): sync request complete");
-                    chrome.extension.onRequest.addListener(uiEventListener);
-                });
-                                
-                if (localStorage.lastopennote_key != undefined && localStorage.lastopennote_open == "true" && localStorage.option_opentonote == "true") {
-                    log("(ready): sending request for open to note");
-                    chrome.extension.sendRequest({action:"note",key:localStorage.lastopennote_key}, function(note) {
-                        //fillTags(true);
-                        if (note)
-                            editorShowNote(note,0);
-                    });                    
-                } else if (isTab) {
-                    editorShowNote();
-                }
-                
-                $("#note").hide();
-
-                fillTags(true);
-
-                // bind ADD button
-                $('div#index div#toolbar div#add').click(function() {
-                    editorShowNote();
-                });
-
-                // bind SYNC div
-                $("#sync").click( function() {
-                    chrome.extension.sendRequest({action: "sync", fullsync:true});
-                })
-
-                $("div.noterow").live("mouseover", function(event) {                    
-                    $("abbr.notetime",this).css("color","#ddd");
-                    $("div.abstract",this).css("color","#ccc");
-                    $("div.noteheading",this).css("color","#fff");
-                });
-
-                $("div.noterow").live("mouseleave", function(event) {
-                    $("abbr.notetime",this).css("color","");
-                    $("div.abstract",this).css("color","");
-                    $("div.noteheading",this).css("color","");
-                });
-
-                // bind SEARCH field
-                var options = {
-                    callback : function() {
-                        log("typewatch: calling fillIndex");
-                        fillIndex();
-                    },
-                    wait : 250,
-                    highlight : false,
-                    captureLength : -1 // needed for empty string ('') capture
-                };
-                $('div#index div#toolbar input#q').typeWatch(options);                                                
-
-                $.timeago.settings.strings= {
-                    prefixAgo: null,
-                    prefixFromNow: null,
-                    suffixAgo: "",
-                    suffixFromNow: "from now",
-                    seconds: "<1 min",
-                    minute: "1 min",
-                    minutes: "%d min",
-                    hour: "1 h",
-                    hours: "%d h",
-                    day: "1 d",
-                    days: "%d d",
-                    month: "1 month",
-                    months: "%d months",
-                    year: "1 year",
-                    years: "%d years",
-                    numbers: []
-                }
-
-                if (localStorage.option_color_index)
-                    $("body").css("background-color",localStorage.option_color_index);
-                
-            }
-            else {
-                _gaq.push(['_trackEvent', 'popup', 'ready', 'login_err']);
-                log("(ready): login error, message=" + result.message);
-                if (!result.message)
-                    result.message = "Login for email '" + localStorage.option_email + "' failed, please check your Simplenote email address and password on the " + optionsLink + "!";
-                else
-                    result.message += "<br><br>Alternatively you can try to correct your username and password on the " + optionsLink + "!";
-                displayStatusMessage(result.message);
-            }
-        });
-    }
-});
+}
 
 
 /*
@@ -371,7 +376,7 @@ $(document).ready(function() {
  *     in the message are be adjusted to open in a new window and close the
  *     popup.
  */
-function displayStatusMessage(message) {    
+function displayStatusMessage(message) {
     $('#toolbar').hide();
     $('#statusbar').hide();
     $('#note').hide();
@@ -409,11 +414,11 @@ function fillTags(callFillIndex) {
 
             if (oldval == taginfo.tag)
                 stillhavetag = true;
-        });        
+        });
         if (!stillhavetag) {
             oldval = "#all#";
         }
-       // add handler        
+       // add handler
         $("#notetags").val(oldval);
         $("#notetags").change(function(event) {
             log("#notetags:changed: calling fillIndex");
@@ -427,22 +432,22 @@ function fillTags(callFillIndex) {
 /*
  * Fills the index pane with noterows.
  */
-function fillIndex() {    
-    
+function fillIndex() {
+
     var req =               {action : "getnotes", deleted : 0};
     req     = mergeobj(req, {tag : $("#notetags").val()});
     req     = mergeobj(req, {contentquery : $('#q').val()});
     req     = mergeobj(req, {sort:localStorage.option_sortby, sortdirection:localStorage.option_sortbydirection});
 
     log("fillIndex:");
-    log(req);       
-    
+    log(req);
+
     chrome.extension.sendRequest(req, function(notes) {
         log("fillIndex:request complete");
         var note;
 
         $('div#index div#notes').empty();
-        
+
         if (notes.length > 0) {
             for(var i = 0; i < notes.length; i ++ ) {
                 note = notes[i];
@@ -456,10 +461,10 @@ function fillIndex() {
 
         $('div#notes').scroll(checkInView);
 
-        editorHideIfNotInIndex();
-       
+        snEditor.hideIfNotInIndex();
+
     });
-  
+
 }
 /*
  * Appends/prepends/replaces a noterow div in the index pane.
@@ -472,7 +477,7 @@ function indexAddNote(mode, note){
 
     // assemble noterow html string
     if (mode!= "replace")
-        html = "<div class='noterow' id='" + note.key  + "' >";    
+        html = "<div class='noterow' id='" + note.key  + "' >";
 
     // date abbr
     if (localStorage.option_showdate == "true") {
@@ -483,7 +488,7 @@ function indexAddNote(mode, note){
             date = convertDate(note.modifydate);
             prefix = "modified: ";
         }
-        
+
         html+=      "<abbr class='notetime' id='" + note.key + "time' title='" + ISODateString(date) + "'>" + prefix + localeDateString(date) + "</abbr>";
     }
     // pin/shared/published
@@ -505,7 +510,7 @@ function indexAddNote(mode, note){
                 html+= "<div class='shared' id='" + note.key + "shared' title='Someone shared this note with you'>&nbsp;</div>";
         }
     //} else {
-        
+
     //}
     // note heading div
     html+=          "<div class='noteheading' id='" + note.key + "heading'></div>";
@@ -518,9 +523,9 @@ function indexAddNote(mode, note){
     // insert the html string into document
     if (mode=="delteAndPrepend") {
         $('div.noterow#' + note.key).remove();
-        $('#notes').prepend(html);                
+        $('#notes').prepend(html);
     } else if (mode=="append") {
-        $('#notes').append(html);        
+        $('#notes').append(html);
     } else if (mode=="replace")
         $('div.noterow#' + note.key).html(html);
 
@@ -540,23 +545,24 @@ function indexAddNote(mode, note){
         $noterow.attr("title", "Click to undelete");
         return;
     }
-    
+
     $notepin.attr("title","Click to pin/unpin");
 
     // bind pinned klick
     $notepin.unbind();
     $notepin.click(note,function(event) {
             var note = event.data;
+
+            event.stopPropagation();
+
             if ($(this).attr("class")=="pinned") {
                 note.systemtags.splice(note.systemtags.indexOf("pinned"),1);
             } else {
-                note.systemtags.push("pinned").sort();
-            }                        
-
-            event.stopPropagation();            
+                note.systemtags.push("pinned");
+            }
             chrome.extension.sendRequest({action:"update",key:note.key,systemtags:note.systemtags}, function (note) {
                 $notepin.attr("class",note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned");
-                background.needCMRefresh = true;
+                snEditor.needCMRefresh("pinned");
             });
         });
     // bind published click
@@ -565,7 +571,7 @@ function indexAddNote(mode, note){
         $notepublished.click(note.publishkey,function(event) {
             event.stopPropagation();
             openURLinTab("http://simp.ly/publish/"+event.data);
-        }); 
+        });
     }
 
     // unread
@@ -573,7 +579,7 @@ function indexAddNote(mode, note){
          $noterow.addClass("unread");
 
     // tab selected
-    if (isTab && codeMirror.note && codeMirror.note.key == note.key) {
+    if (isTab && snEditor.note && snEditor.note.key == note.key) {
         $noterow.addClass("selectednote");
     }
 
@@ -589,7 +595,7 @@ function indexAddNote(mode, note){
  */
 function indexFillNote(elementOrNote) {
 
-    if (elementOrNote.key) {//note        
+    if (elementOrNote.key) {//note
         indexFillNoteReqComplete(elementOrNote);
     } else {
         var key = elementOrNote.attr("id");
@@ -612,11 +618,11 @@ function indexFillNote(elementOrNote) {
  *  @param note note with .content, .key and .deleted
  */
 function indexFillNoteReqComplete(note) {
-        
+
         var $noterow = $('#' + note.key);
         var $noteheading = $('#' + note.key + "heading");
         var $noteabstract = $('#' + note.key + "abstract");
-        
+
         var lines = note.content.split("\n").filter(function(line) {
             return ( line.trim().length > 0 )
             });
@@ -646,13 +652,12 @@ function indexFillNoteReqComplete(note) {
         //$noterow.css("height",$noterow.height());
         //$noterow.data('origheight',$noterow.height());
         //$noterow.dblclick(maximize);
-                
-        // add click binding        
+
+        // add click binding
         if (note.deleted == 0)
             $noterow.click(note, function(event) {
-                if (isTab)
-                    saveCaretScroll();
-                editorShowNote(event.data);
+                snEditor.saveCaretScroll();
+                snEditor.setNote(event.data);
             });
         else {
             $noterow.attr("title", "Click to undelete");
@@ -663,8 +668,8 @@ function indexFillNoteReqComplete(note) {
 
         // check new inview, might have changed due to reflow
         $noterow.data('loaded',true);
-        
-        checkInView();    
+
+        checkInView();
 }
 
 // encode string or string array into html equivalent
@@ -674,7 +679,7 @@ function htmlEncode(s, maxchars)
         return "";
     if (!maxchars)
         maxchars = 1000000;
-        
+
     if (s instanceof Array)
         return s.map(function(s) {
             return htmlSafe(s.substring(0,maxchars)).replace(/\n/g,"<br>").replace(/\s/g,"&nbsp;");
@@ -753,12 +758,13 @@ function ISODateString(d) {
     return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+ pad(d.getUTCDate())+'T'+ pad(d.getUTCHours())+':'+ pad(d.getUTCMinutes())+':'+ pad(d.getUTCSeconds())+'Z'
 }
 //  ---------------------------------------
-function localeDateString(d) {    
+function localeDateString(d) {
     var s = d.toLocaleString();
     return s.substring(0, s.indexOf("GMT")-1);
 }
 //  ---------------------------------------
 function slideEditor(callback, duration) {
+    log("slideEditor");
     if (duration == undefined)
         duration = slideDuration;
     $("#note").show();
@@ -769,14 +775,15 @@ function slideEditor(callback, duration) {
     } else
         if (callback) callback();
     currentView = "editor";
-    editorShow();
+    snEditor.show();
 }
 //  ---------------------------------------
 function slideIndex(callback, duration) {
+    log("slideIndex");
     if (duration == undefined)
         duration = slideDuration;
     localStorage.lastopennote_open = "false";
-    editorClearDirty();
+    snEditor.clearDirty();
     $("#index").show();
     if (!isTab) {
         $('div#index').animate({left:"+=400"}, {duration: duration, complete: callback, easing: slideEasing});
@@ -784,14 +791,45 @@ function slideIndex(callback, duration) {
         $('body').animate({width : "-=400"}, {duration:duration, easing: slideEasing});
     }
     currentView = "index";
-    saveCaretScroll();
-    delete codeMirror.note;
+    snEditor.saveCaretScroll();
+    delete snEditor.note;
 }
 
-function editorSetFont() {
-    var $head = $(codeMirror.editor.container.ownerDocument.head);
-    var $editbox = $(codeMirror.editor.container);
-    
+//  ---------------------------------------
+//  SNEditor
+//  ---------------------------------------
+
+function SNEditor() {
+    log("SNEditor:create");
+    var that = this;
+    this.codeMirror = new CodeMirror(document.getElementById("note"),{
+                    parserfile: "parsesimple.js",
+                    path: "javascripts/lib/codemirror1/",
+                    iframeClass: "cm-iframe",
+                    content: "",
+                    stylesheet: "stylesheets/editor.css",
+                    tabMode: "shift",
+                    indentUnit: 4,
+                    enterMode: "keep",
+                    electricChars : false,
+                    onChange: function() {that.saveNote();}
+                });
+
+    // set ids for important nodes
+    $(".cm-iframe").attr("id","cmiframe");
+    $(".CodeMirror-wrapping").attr("id","cmwrapper");
+
+    $("#cmwrapper").css("position","");
+    $("#cmwrapper").css("height","");
+    $("#cmiframe").attr("tabindex","7");
+
+    this.dirty={content: false, tags: false, pinned: false};
+}
+//  ---------------------------------------
+SNEditor.prototype.setFont = function() {
+    log("CodeMirror.setFont")
+    var $head = $(this.codeMirror.editor.container.ownerDocument.head);
+    var $editbox = $(this.codeMirror.editor.container);
     // get fontinfo if there
     var fontinfo;
     if (localStorage.editorfontinfo)
@@ -830,160 +868,145 @@ function editorSetFont() {
     if (localStorage.option_color_editor)
         $editbox.css("color",localStorage.option_color_editor_font);
 }
+//  ---------------------------------------
+SNEditor.prototype.getTags = function() {
+    log("CodeMirror.getTags")
+    var tags = $("div#note input#tags").val().trim().split(" ").map(function(e) {return e.trim();});
+    return tags;
+}
 
-function editorInitialize() {
+//  ---------------------------------------
+SNEditor.prototype.initialize = function() {
 
-    if (codeMirror.initialized)
+    if (this.initialized)
         return;
 
-    var $editbox = $(codeMirror.editor.container);
-                
+    log("CodeMirror.intitalize");
+
+    var $editbox = $(this.codeMirror.editor.container);
+    var that = this;
+
+
     // add note content change (dirty) event listeners
     if (!isTab)
         $editbox.unbind();
-    $editbox.bind('change keyup paste cut', function(event) {
-        var note = codeMirror.note;
 
-        if (note.content != codeMirror.getCode()) {
-            if (!codeMirror.dirty)
-                log("content dirty now (" + event.type + ")");
-            codeMirror.dirty = true;
-        } else {
-            if (codeMirror.dirty)
-                log("content not dirty now (" + event.type + ")");;
-            codeMirror.dirty = false;
-        }
-        if (editorIsNoteDirty())
-            $('div#note input#undo').removeAttr("disabled");
-        else
-            $('div#note input#undo').attr("disabled","disabled");
+    $editbox.bind('change keyup paste cut', function(event) {
+        that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);
     });
 
     // fix for home not scrolling all to the left
     $editbox.keydown(shorcuts);
-    $editbox.keyup(function(event) {
-        if (event.keyCode == 36) { //home key
-            $editbox.scrollLeft(Math.max(0,$editbox.scrollLeft()-300));
+    $editbox.bind("keydown keyup",function(event) {
+        //alert(event.keyCode)
+        switch(event.keyCode) {
+            case 36: //home key
+                $editbox.scrollLeft(Math.max(0,$editbox.scrollLeft()-300));
+                if (event.ctrlKey)
+                    $editbox.scrollTop(Math.max(0,$editbox.scrollTop()-30));
+                break;
+            case 35: //end key
+                if (event.ctrlKey) {
+                    $editbox.scrollTop($editbox.scrollTop() + 20);
+                    $editbox.scrollLeft(Math.max(0,$editbox.scrollLeft()-300));
+                }
+                break;
+            case 37: //left key
+                pos = that.codeMirror.cursorPosition(true);
+                if (pos.character == 0)
+                    $editbox.scrollLeft(0);
+                break;
+            case 38: //up key
+                line = that.codeMirror.lineNumber(that.codeMirror.cursorLine());
+                if (line == 1)
+                    $editbox.scrollTop(0);
+                break;
+            case 40: //down key
+                if (that.codeMirror.lastLine() == that.codeMirror.cursorLine())
+                    $editbox.scrollTop($editbox.scrollTop() + 20);
+                break;
         }
     });
 
-        // add note tags change (dirty) event listeners
-    //$('div#note input#tags').unbind();
+    // add note tags change (dirty) event listeners
+    $('div#note input#tags').unbind();
     $('div#note input#tags').bind('change keyup paste cut', function(event) {
-        var note = codeMirror.note;
-        if (note.tags.join(" ") != $(this).val().trim()) {
-            if ($('div#note input#tags').attr('dirty') != "true")
-                log("tags dirty now (" + event.type + ")");
-            $('div#note input#tags').attr('dirty', 'true');
-        } else {
-            log("tags not dirty now (" + event.type + ")");
-            $('div#note input#tags').removeAttr('dirty');
-        }
-        if (editorIsNoteDirty())
-            $('div#note input#undo').removeAttr("disabled");
-        else
-            $('div#note input#undo').attr("disabled","disabled");
+        that.setDirty("tags", !arrayEqual(that.note.tags,that.getTags()), event);
     });
 
     // add note pinned (dirty) event listener
     $('div#note input#pinned').unbind();
     $('div#note input#pinned').bind('change', function(event) {
-        var note = codeMirror.note;
-        var waspinned = note.systemtags.indexOf("pinned")>=0;
 
-        if (waspinned != $("div#note input#pinned").attr("checked")) {
-            if ($('div#note input#pinned').attr('dirty') != "true")
-                log("pinned dirty now (" + event.type + ")");
-            $('div#note input#pinned').attr('dirty', 'true');
-            if (isTab)
-                editorNoteChanged();
-        } else {
-            log("pinned not dirty now (" + event.type + ")");
-            $('div#note input#pinned').removeAttr('dirty');
-        }
-        if (editorIsNoteDirty())
-            $('div#note input#undo').removeAttr("disabled");
-        else
-            $('div#note input#undo').attr("disabled","disabled");
+        var changed = that.setDirty("pinned", (that.note.systemtags.indexOf("pinned")>=0) != $("div#note input#pinned").attr("checked") , event);
 
-        $(codeMirror.editor.container).focus();
+        if (changed && isTab)
+            that.saveNote();
+
+        that.focus();
     });
-
-//    // add note encrypted (dirty) event listener
-//    $('div#note input#encrypted').unbind();
-//    $('div#note input#encrypted').bind('change', function(event) {
-//        var note = codeMirror.note;
-//
-//        if ((note.encrypted==1) != $("div#note input#encrypted").attr("checked")) {
-//            if ($('div#note input#encrypted').attr('dirty') != "true")
-//                log("encrypted dirty now (" + event.type + ")");
-//            $('div#note input#encrypted').attr('dirty', 'true');
-//        } else {
-//            log("encrypted not dirty now (" + event.type + ")");
-//            $('div#note input#encrypted').removeAttr('dirty');
-//        }
-//        if (editorIsNoteDirty())
-//            $('div#note input#undo').removeAttr("disabled");
-//        else
-//            $('div#note input#undo').attr("disabled","disabled");
-//    });
 
     // bind back button
     $('div#note input#backtoindex').unbind();
     $('div#note input#backtoindex').click(function(event) {
-        if (editorIsNoteDirty()) {
-            log("back clicked, note dirty.");
-            editorNoteChanged();
-            slideIndex();
-        } else {
-            log("back clicked, note not dirty.");
-            slideIndex();
-        }
+        if (that.isNoteDirty())
+            that.saveNote();
+
+        slideIndex();
     });
 
     // bind word wrap
     $("div#note input#wordwrap").unbind();
     $("div#note input#wordwrap").bind('change', function(event) {
         localStorage.wordwrap = $("#wordwrap").attr("checked");
-        codeMirror.setTextWrapping($("div#note input#wordwrap").attr("checked"));
-        $(codeMirror.editor.container).focus();
+        that.codeMirror.setTextWrapping($("div#note input#wordwrap").attr("checked"));
+        that.focus();
     });
     if (localStorage.wordwrap != undefined && localStorage.wordwrap == "true") {
-        $("div#note input#wordwrap").attr("checked","true");
+        $("div#note input#wordwrap").attr("checked","checked");
     } else {
-        $("div#note input#wordwrap").attr("checked","");
+        $("div#note input#wordwrap").removeAttr("checked");
     }
     $("div#note input#wordwrap").change();
 
-    
+
     // bind UNDO button
     $('div#note input#undo').unbind();
     $('div#note input#undo').click(function(event) {
         // reset content
-        var note = codeMirror.note;
-        codeMirror.setCode(note.content);
+        log("CodeMirror.initialize:undo clicked");
+        var note = that.note;
+        if (that.dirty.content) {
+            that.saveCaretScroll();
+            that.codeMirror.setCode(note.content);
+            that.restoreCaretScroll();
+        }
         // reset tags
-        $('div#note input#tags').val(note.tags.join(" "));
+        if (that.dirty.tags)
+            $('div#note input#tags').val(note.tags.join(" "));
         // reset pinned
-        if (note.systemtags.indexOf("pinned")>=0)
-            $('div#note input#pinned').attr("checked","checked");
-        else
-            $('div#note input#pinned').removeAttr("checked");
+        if (that.dirty.pinned) {
+            if (note.systemtags.indexOf("pinned")>=0)
+                $('div#note input#pinned').attr("checked","checked");
+            else
+                $('div#note input#pinned').removeAttr("checked");
+        }
 
         $('div#note input#undo').attr("disabled","disabled");
-        //editorClearDirty(); // should not dont need this here b/c of callbacks
+
+        snEditor.clearDirty(); // should not dont need this here b/c of callbacks
+        that.focus();
     });
+    $('div#note input#undo').attr("disabled","disabled");
 
     // bind DELETE/CANCEL
     $('div#note input#destroy').unbind();
     $('div#note input#destroy').click(function(event) {
-        var note = codeMirror.note;
-        if (note.key != "")
-            editorTrashNote(note.key);
+        that.trashNote();
         slideIndex();
     });
 
-    // bind links
+    // bind link clicks
     $(".sn-link",$editbox).die();
     $(".sn-link",$editbox).live("click",function(event) {
        if (event.ctrlKey)
@@ -991,11 +1014,12 @@ function editorInitialize() {
        var url = this.textContent.trim();
        openURLinTab(url);
     });
+    // bind ctrl link disable
     $editbox.bind('keydown', function(event) {
         if (event.keyCode == 17) // ctrl
             $(".sn-link",$editbox).addClass("sn-link-unhot");
     });
-
+    // bind ctrl link disable disable
     $editbox.bind('keyup', function(event) {
         if (event.keyCode == 17) // ctrl
             $(".sn-link",$editbox).removeClass("sn-link-unhot");
@@ -1003,7 +1027,7 @@ function editorInitialize() {
 
     if (!isTab)
         $('div#note input#popout').click(function(event) {
-            chrome.tabs.create({url:chrome.extension.getURL("/popup.html"), pinned:true}, function(tab) {
+            chrome.tabs.create({url:chrome.extension.getURL("/popup.html"), pinned:localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true"}, function(tab) {
                 background.popouttab = tab;
             });
         });
@@ -1014,14 +1038,14 @@ function editorInitialize() {
         $('div#note input#backtoindex').attr("title","Close the Tab (alt-b)");
         $('div#note input#backtoindex').unbind();
         $('div#note input#backtoindex').click(function(event) {
-            window.close();            
+            window.close();
         });
 
         // bind typewatch TAGS field
         var options = {
             callback : function() {
                 log("typewatch: tags changed");
-                editorNoteChanged();
+                that.saveNote();
             },
             wait : 800,
             highlight : false,
@@ -1030,82 +1054,106 @@ function editorInitialize() {
         $('div#note input#tags').typeWatch(options);
     }
     // add context menu
-    editorMakeContextMenu();
+    this.makeContextMenu();
 
-    codeMirror.initialized = true;
+    this.initialized = true;
 }
 
-function saveCaretScroll() {
-    if (localStorage.option_remembercaret != undefined && localStorage.option_remembercaret == "false" || !codeMirror.note)
+//  ---------------------------------------
+SNEditor.prototype.saveCaretScroll = function() {
+    log("CodeMirror.saveCaretScroll")
+    if (localStorage.option_remembercaret != undefined && localStorage.option_remembercaret == "false" || !this.note)
         return;
-    
-    var note = codeMirror.note;       
-    var caretScroll = codeMirror.cursorPosition();
-    caretScroll.line = codeMirror.lineNumber(caretScroll.line);
-    caretScroll.scrollTop = $(codeMirror.editor.container).scrollTop();
-    caretScroll.scrollLeft = $(codeMirror.editor.container).scrollLeft();    
-    localStorage[note.key + "_caret"] = JSON.stringify(caretScroll);
+
+    var caretScroll = this.codeMirror.cursorPosition();
+    caretScroll.line = this.codeMirror.lineNumber(caretScroll.line);
+    caretScroll.scrollTop = $(this.codeMirror.editor.container).scrollTop();
+    caretScroll.scrollLeft = $(this.codeMirror.editor.container).scrollLeft();
+    localStorage[this.note.key + "_caret"] = JSON.stringify(caretScroll);
 }
 
-function restoreCaretScroll(key) {
-    if (localStorage[key + "_caret"] && (localStorage.option_remembercaret == undefined || localStorage.option_remembercaret == "true")) {
-        var caretScroll = JSON.parse(localStorage[key + "_caret"]);
+//  ---------------------------------------
+SNEditor.prototype.restoreCaretScroll = function () {
+    log("CodeMirror.restoreCaretScroll")
+
+    if (this.note && localStorage[this.note.key + "_caret"] && (localStorage.option_remembercaret == undefined || localStorage.option_remembercaret == "true")) {
+        var caretScroll = JSON.parse(localStorage[this.note.key + "_caret"]);
         if (caretScroll.scrollTop)
-            $(codeMirror.editor.container).scrollTop(caretScroll.scrollTop);
+            $(this.codeMirror.editor.container).scrollTop(caretScroll.scrollTop);
         if (caretScroll.scrollLeft)
-            $(codeMirror.editor.container).scrollLeft(caretScroll.scrollLeft);
-        
+            $(this.codeMirror.editor.container).scrollLeft(caretScroll.scrollLeft);
+
         var lineH;
         if (caretScroll.line == "lastline")
-            lineH = codeMirror.lastLine();        
+            lineH = this.codeMirror.lastLine();
         else
-            lineH = codeMirror.nthLine(caretScroll.line);
-        codeMirror.selectLines(lineH, caretScroll.character);
+            lineH = this.codeMirror.nthLine(caretScroll.line);
+
+        var character = Math.min(this.codeMirror.lineContent(lineH).length,caretScroll.character);
+        this.codeMirror.selectLines(lineH, character);
     }
 }
 
-function insertUrl() {
+//  ---------------------------------------
+SNEditor.prototype.insertUrl = function() {
+    log("CodeMirror.insertUrl")
     _gaq.push(['_trackEvent', 'popup', 'insertUrl']);
-    var $editbox = $(codeMirror.editor.container);
+
+    var that = this;
     chrome.tabs.getSelected(undefined,function(tab) {
-        codeMirror.replaceSelection(tab.url);
-        $editbox.change();
+        that.codeMirror.replaceSelection(tab.url);
+        $(that.codeMirror.editor.container).change();
     });
 }
 
-function searchForSelection() {
+//  ---------------------------------------
+SNEditor.prototype.searchForSelection = function () {
+    log("CodeMirror.searchForSelection")
     _gaq.push(['_trackEvent', 'popup', 'searchForSelection']);
-    openURLinTab("http://google.com/search?q=" + encodeURIComponent(codeMirror.selection().trim()));
+
+    openURLinTab("http://google.com/search?q=" + encodeURIComponent(this.codeMirror.selection().trim()));
 }
 
-function editorHideIfNotInIndex() {
+//  ---------------------------------------
+SNEditor.prototype.hideIfNotInIndex = function () {
     if (!isTab)
         return;
 
+    log("CodeMirror.hideIfNotInIndex")
+
     var keys = $("div#index div.noterow").map(function(i,e) {return this.id;}).get();
-    
-    if (!codeMirror.note || (codeMirror.note.key != "" && keys.indexOf(codeMirror.note.key)<0)) {
+    var that = this;
+
+    if (!this.note || (this.note.key != "" && keys.indexOf(this.note.key)<0)) {
         if (keys.length > 0)
             chrome.extension.sendRequest({action:"note", key:keys[0]}, function(note) {
                 if (note.deleted != 1)
-                    editorShowNote(note)
+                    that.setNote(note);
                 else
                     $("div#note").hide();
                 });
         else
             $("div#note").hide();
-    } else if (codeMirror.note)
-        $("div#note").show();    
-}
-
-function editorShow() {
-    $("div#note").show();
+    } else if (this.note)
+        this.show();
 }
 
 //  ---------------------------------------
-function editorMakeContextMenu() {
+SNEditor.prototype.show = function() {
+    $("div#note").show();
+}
 
-    var $editbox = $(codeMirror.editor.container);
+SNEditor.prototype.focus = function() {
+    $(this.codeMirror.editor.container).focus();
+}
+
+//  ---------------------------------------
+SNEditor.prototype.makeContextMenu = function() {
+
+    log("CodeMirror.makeContextMenu")
+
+    var $editbox = $(this.codeMirror.editor.container);
+    var that = this;
     var menu1 = [
 //      {'Cut (crtl-x)': function(menuItem,menu) {
 //              console.log($editbox);
@@ -1121,26 +1169,27 @@ function editorMakeContextMenu() {
 //      $.contextMenu.separator,
       {'Insert browser URL (alt-v)':
         {
-              onclick:insertUrl,
+              onclick: function() {that.insertUrl();},
               disabled: isTab
         }
       },
-      
+
       {'Search for selection (alt-s)':
         {
-            onclick: searchForSelection,
-            className: "disableonnoselection"            
+            onclick: function() {that.searchForSelection();},
+            className: "disableonnoselection"
         }
       }
       //,$.contextMenu.separator
     ];
+
     $editbox.contextMenu(menu1,{
         theme:'gloss',
         offsetX:isTab?200:0,
         offsetY:20,
         direction:'down',
-        beforeShow: function() {            
-            if (codeMirror.selection().trim() == "")
+        beforeShow: function() {
+            if (that.codeMirror.selection().trim() == "")
                 $(this.menu).find('.disableonnoselection').each(function() {
                         $(this).toggleClass("context-menu-item-disabled", true);
                  });
@@ -1155,29 +1204,29 @@ function editorMakeContextMenu() {
 }
 
 //  ---------------------------------------
-function editorShowNote(note, duration) {
-    log("showNote");      
-            
+SNEditor.prototype.setNote = function(note, duration) {
+
     // new note dummy data
     if (note==undefined)
         note = {content:"",tags:[],systemtags:[], key:""};
 
-    if (codeMirror.note && editorIsNoteDirty()) {
-        editorNoteChanged(function() {
-            editorShowNote(note, duration);
+    log("CodeMirror.setNote: " + note.key);
+
+    var that = this;
+    if (this.isNoteDirty()) {
+        this.saveNote(function() {
+            that.setNote(note, duration);
         });
         return;
-    }    
+    }
 
-    codeMirror.note = note;
-
-    editorClearDirty();
-    editorSetFont();
-    editorInitialize();
+    this.note = note;
+    this.setFont();
+    this.initialize();
 
     // get note contents
     if (note.key == "") { // new note
-        
+
         // delete button now cancel button
         $('div#note input#destroy').val("Cancel");
         $('div#note input#destroy').attr("title","Dont save note, return to notes (ctrl-alt-c)");
@@ -1187,7 +1236,7 @@ function editorShowNote(note, duration) {
 
         $('div#note input#popout').hide();
 
-    } else { // existing note        
+    } else { // existing note
         // delete button now delete button
         $('div#note input#destroy').val("Trash");
         $('div#note input#destroy').attr("title","Send note to trash (ctrl-alt-d)");
@@ -1197,20 +1246,29 @@ function editorShowNote(note, duration) {
             $('div#note input#undo').show();
             $('div#note input#popout').show();
         }
-        
+
         localStorage.lastopennote_key = note.key;
         localStorage.lastopennote_open = "true";
-        background.needLastOpenRefresh = true;
+        this.needCMRefresh("lastopen");
     }
-    
-    // trigger undo click-> fills everything
-    $('div#note input#undo').click();
-        
+
+    // set content
+    this.codeMirror.setCode(note.content);
+    // set tags
+    $('div#note input#tags').val(this.note.tags.join(" "));
+    // set pinned
+    if (this.note.systemtags.indexOf("pinned")>=0)
+        $('div#note input#pinned').attr("checked","checked");
+    else
+        $('div#note input#pinned').removeAttr("checked");
+
+    this.clearDirty();
+
     slideEditor(function () {
-        codeMirror.focus();
-        restoreCaretScroll(note.key);
+        that.focus();
+        that.restoreCaretScroll();
         if (note.systemtags.indexOf("unread")>0) {
-            
+
             note.systemtags.splice(note.systemtags.indexOf("unread"),1);
             chrome.extension.sendRequest({action:"update", key:note.key, systemtags:note.systemtags}, function() {
                 $("#" + note.key).removeClass("unread");
@@ -1218,8 +1276,8 @@ function editorShowNote(note, duration) {
         }
 
     }, duration);
-    
-    if (isTab) {        
+
+    if (isTab) {
         $("div.noterow").removeClass("selectednote");
         if (note.key && note.key != "") {
             $("div.noterow#"+ note.key).addClass("selectednote");
@@ -1229,71 +1287,123 @@ function editorShowNote(note, duration) {
 }
 
 //  ---------------------------------------
-function editorNoteChanged(callback) {
-    if(!editorIsNoteDirty())
+SNEditor.prototype.saveNote = function(callback) {
+    if(!this.isNoteDirty())
         return;
 
-    var key = codeMirror.note.key;
-    
+    log("CodeMirror.saveNote");
+
+    var key = this.note.key;
+
     var noteData = {};
-    if (codeMirror.dirty)
-        noteData.content = codeMirror.getCode();
-    if ($('div#note input#pinned').attr("dirty")=="true") {
-        background.needCMRefresh = true;
-        noteData.systemtags = codeMirror.note.systemtags;
+    if (this.dirty.content)
+        noteData.content = this.codeMirror.getCode();
+    if (this.dirty.pinned) {
+        snEditor.needCMRefresh("pinned");
+        noteData.systemtags = this.note.systemtags;
         if (!$('div#note input#pinned').attr("checked")) {
             noteData.systemtags.splice(noteData.systemtags.indexOf("pinned"),1);
         } else {
             noteData.systemtags.push("pinned");
         }
     }
-    if ($('div#note input#tags').attr("dirty")=="true")
-        noteData.tags = $('div#note input#tags').val().trim().split(" ");
+    if (this.dirty.tags)
+        noteData.tags = this.getTags();
 //    if ($('div#note input#encrypted').attr("dirty")=="true")
 //        noteData.encrypted = $('div#note input#encrypted')?1:0;
 
-    log("editorNoteChanged:noteData:");
-    log(noteData);
-    
     if (noteData.content == '' && key !='')     // existing note emptied -> trash
-        editorTrashNote(key);
+        this.trashNote();
     else if (key != '' ) {                  // existing note, new data -> update
         noteData.key = key;
         noteData.action = "update";
     } else if (noteData.content && noteData.content != '')          // new note, new data -> create
-        noteData.action = "create";        
-       
-    if (noteData.action) {        
+        noteData.action = "create";
+
+    var that = this;
+
+    if (noteData.action) {
         chrome.extension.sendRequest(noteData, function(note) {
-            codeMirror.note = note;
-            editorClearDirty();
-            log("editorNoteChanged: request complete");
+            that.note = note;
+            that.clearDirty();
+            log("CodeMirror.saveNote: request complete");
             if (callback && typeof callback == "function")
                 callback();
-        });        
+        });
     }
-    
+
 }
 //  ---------------------------------------
-function editorIsNoteDirty() {
-    return codeMirror.dirty || $('div#note input#pinned').attr("dirty")=="true" || $('div#note input#tags').attr("dirty")=="true";// || $('div#note input#encrypted').attr("dirty")=="true";
+SNEditor.prototype.isNoteDirty = function() {
+    return this.dirty.content || this.dirty.pinned || this.dirty.tags;// || $('div#note input#encrypted').attr("dirty")=="true";
 }
 //  ---------------------------------------
-function editorClearDirty() {
-    log("editorClearDirty");
-    codeMirror.dirty = false;
-    $('div#note input#pinned').removeAttr("dirty");
-    $('div#note input#tags').removeAttr('dirty');
+SNEditor.prototype.clearDirty = function() {
+    log("SNEditor.clearDirty");
+    this.setDirty("content",false);
+    this.setDirty("pinned",false);
+    this.setDirty("tags",false);
     //$('div#note input#encrypted').removeAttr('dirty');
 }
 //  ---------------------------------------
-function editorTrashNote(key) {
-    log("editorTrashNote");
-    $('div#note input').attr('disabled', 'disabled');    
-    chrome.extension.sendRequest({action : "update", key : key, deleted : 1},
+SNEditor.prototype.setDirty = function(what, how, event) {
+    if (!what)
+        throw "what is dirty?";
+
+    if (how == undefined)
+        throw "how dirty is it?";
+
+    if (event == undefined)
+        event = {type : "unknown"};
+
+    var oldDirty = this.dirty[what];
+
+    if (oldDirty == how)
+        return false;
+
+    this.dirty[what] = how;
+
+    if (how)
+        log(what + " dirty now (" + event.type + ")");
+    else
+        log(what + " not dirty now (" + event.type + ")");
+
+    if (this.isNoteDirty())
+        $('div#note input#undo').removeAttr("disabled");
+    else
+        $('div#note input#undo').attr("disabled","disabled");
+
+    return true;
+}
+
+SNEditor.prototype.needCMRefresh = function(type) {
+    switch(type) {
+        case "pinned":
+            background.needCMRefresh = true;
+            break;
+        case "lastopen":
+            background.needLastOpenRefresh = true;
+            break;
+        default:
+            throw "SNEditor.needCMRefresh: unknown type " + type;
+    }
+
+    if (isTab)
+        background.checkRefreshs();
+}
+
+//  ---------------------------------------
+SNEditor.prototype.trashNote = function() {
+    if (!this.note || this.note.key == "")
+        return;
+    var that = this;
+    log("SNEditor.trashNote");
+    $('div#note input').attr('disabled', 'disabled');
+    chrome.extension.sendRequest({action : "update", key : this.note.key, deleted : 1},
             function() {
-                $('div#note input').removeAttr('disabled');                                
-                editorHideIfNotInIndex();
+                $('div#note input').removeAttr('disabled');
+
+                that.hideIfNotInIndex();
             });
 }
 
@@ -1301,7 +1411,7 @@ function editorTrashNote(key) {
 // from inview.js
 function getViewportSize() {
     var mode, domObject, size = {
-        height: window.innerHeight, 
+        height: window.innerHeight,
         width: window.innerWidth
     };
 
@@ -1335,10 +1445,10 @@ function getViewportOffset() {
 // from inview.js
 function checkInView() {
     var elements = $('div.noterow').get(), elementsLength, i = 0, viewportSize, viewportOffset;
-    var allLoaded = true;    
+    var allLoaded = true;
     elements = elements.filter(function (e) {
         return !$(e).data('loaded');
-    });    
+    });
     elementsLength = elements.length;
 
     if (elementsLength) {
@@ -1350,12 +1460,12 @@ function checkInView() {
         if (viewportSize.height == 0 && viewportSize.width == 0) {
             viewportSize.height = 502;viewportSize.width = 400;
         }
-        
+
         for (; i<elementsLength; i++) {
 
             var $element      = $(elements[i]),
             elementSize   = {
-                height: $element.height(), 
+                height: $element.height(),
                 width: $element.width()
             },
             elementOffset = $element.offset(),
@@ -1367,17 +1477,17 @@ function checkInView() {
             inview = elementOffset.top <= viewportOffset.top + viewportSize.height*(1 + preLoadFactor) &&
                 elementOffset.left + elementSize.width >= viewportOffset.left &&
                 elementOffset.left <= viewportOffset.left + viewportSize.width;
-                         
+
 //            console.log(i + ": loaded " + loaded + ", inview=" + inview);
 //            console.log(elementOffset);
 //            console.log(elementOffset);
-            
+
             allLoaded = allLoaded && loaded;
             if (!loaded && inview) {
-                indexFillNote($element);                
+                indexFillNote($element);
             }
         }
     }
-        
+
     $("div#notes").data('allLoaded',allLoaded);
 }

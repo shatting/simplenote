@@ -1,7 +1,7 @@
 $(document).ready(function() {
-  
+
   $("#email").val(localStorage.option_email);
-  $("#password").val(localStorage.option_password);    
+  $("#password").val(localStorage.option_password);
   if (localStorage.option_abstractlines == undefined)
     $("#abstractlines").val("3");
   else
@@ -18,6 +18,9 @@ $(document).ready(function() {
 
   if (localStorage.option_alwaystab != undefined && localStorage.option_alwaystab == "true")
     $("#alwaystab").attr("checked","true");
+
+  if (localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true")
+    $("#pinnedtab").attr("checked","true");
 
   if (localStorage.option_showdate== undefined || localStorage.option_showdate == "true")
     $("#showdate").attr("checked","true");
@@ -53,11 +56,11 @@ $(document).ready(function() {
       localStorage.option_color_editor = "#ffffff";
   if (!localStorage.option_color_editor_font)
       localStorage.option_color_editor_font = "#010101";
-  
+
   $('#color_index').attr("value",localStorage.option_color_index);
   $('#color_editor').attr("value",localStorage.option_color_editor);
   $('#color_editor_font').attr("value",localStorage.option_color_editor_font);
-  
+
   $('input.color').mColorPicker({
       swatches:[
           "#4F4F59",
@@ -72,12 +75,13 @@ $(document).ready(function() {
           "#000000"]
   });
 
-  $("input, select").change(function(event) {      
+  $("input, select").change(function(event) {
       save_options();
   });
 
 //  $("#aes_key").keyup(save_options);
   $("#save").click(save_clicked);
+  $("#clear").click(clear_clicked);
   $("#reset").click(reset_clicked);
   $("#donate").click(function () { _gaq.push(['_trackEvent', 'Options', 'donate_clicked']); });
 
@@ -90,7 +94,7 @@ $(document).ready(function() {
  * Saves options to localStorage.
  * @param ms Milliseconds to fade in the status message.
  */
-function save_options() {  
+function save_options() {
 
   // abstract lines
   localStorage.option_abstractlines = $("#abstractlines").val();
@@ -107,7 +111,7 @@ function save_options() {
       for (var key in localStorage)
           if (key.match(/_caret$/))
               delete localStorage[key];
-  }      
+  }
   localStorage.option_remembercaret = $('#remembercaret').attr("checked");
 
   // context menu
@@ -115,21 +119,26 @@ function save_options() {
       chrome.extension.sendRequest({action:"cm_populate",on:$('#contextmenu').attr("checked")});
   }
   localStorage.option_contextmenu = $('#contextmenu').attr("checked");
-  
+
   localStorage.option_alwaystab = $('#alwaystab').attr("checked");
+  localStorage.option_pinnedtab = $('#pinnedtab').attr("checked");
+  var bg = chrome.extension.getBackgroundPage();
+  if (bg && bg.popouttab) {      
+    chrome.tabs.update(bg.popouttab.id, {pinned:$('#pinnedtab').attr("checked")});
+  }
 
   localStorage.option_showdate  = $('#showdate').attr("checked");
   localStorage.option_sortby = $("#sort").val();
-  localStorage.option_sortbydirection = $("#sortdirection").attr("checked")?-1:1;  
+  localStorage.option_sortbydirection = $("#sortdirection").attr("checked")?-1:1;
   localStorage.option_editorfont = $("#editorfont").val();
   localStorage.option_editorfontsize = $("#editorfontsize").val();
   // font stuff
-  var fontinfo = { size: localStorage.option_editorfontsize + "px", letter_spacing: "0em", word_spacing: "0em", line_height: "1.5"};  
+  var fontinfo = { size: localStorage.option_editorfontsize + "px", letter_spacing: "0em", word_spacing: "0em", line_height: "1.5"};
   switch (localStorage.option_editorfont) {
       case "Droid Sans Mono":
-        fontinfo.family = "Droid Sans Mono";        
+        fontinfo.family = "Droid Sans Mono";
         fontinfo.letter_spacing = "0.05em";
-        fontinfo.word_spacing = "0.01em";        
+        fontinfo.word_spacing = "0.01em";
         break;
       case "Simplenote":
         fontinfo.family = '"Helvetica Neue", Arial, Helvetica, Arimo, FreeSans, "Nimbus Sans", "Phetsarath OT", Malayalam, "Gargi_1.7", sans-serif';
@@ -140,7 +149,7 @@ function save_options() {
           delete localStorage.editorfontinfo;
   }
   if (fontinfo.family) { // this is only set if we had a case above
-      localStorage.editorfontinfo = JSON.stringify(fontinfo);      
+      localStorage.editorfontinfo = JSON.stringify(fontinfo);
   }
 
   // font shadow
@@ -163,7 +172,7 @@ function save_options() {
 }
 
 function save_clicked() {
-    
+
     var email = $("#email").val();
     var password = $("#password").val();
 
@@ -175,11 +184,11 @@ function save_clicked() {
         $("#save").removeAttr("disabled");
         return;
     }
-    
+
     _gaq.push(['_trackEvent', 'Options', 'save_clicked']);
 
     if (email != localStorage.option_email && (localStorage._syncKeys)) {
-      if (!confirm("You are about to switch your Simplenote login!\n\nThere are notes stored locally that have not been synchronized to the server.\n\nIf you switch accounts now, those changes will be lost.\n\nContinue?")) {            
+      if (!confirm("You are about to switch your Simplenote login!\n\nThere are notes stored locally that have not been synchronized to the server.\n\nIf you switch accounts now, those changes will be lost.\n\nContinue?")) {
             $("#loginmessage").html("Changes not saved");
             $("#loginmessage").css("color","black");
             $("#email").val(localStorage.option_email);
@@ -194,7 +203,7 @@ function save_clicked() {
     delete localStorage.tokenTime;
     localStorage.option_email = email;
     localStorage.option_password = password;
-    
+
     $("#loginmessage").html("Logging in..");
     $("#loginmessage").css("color","black");
     chrome.extension.sendRequest({action:"login"}, function(successObj) {
@@ -204,8 +213,7 @@ function save_clicked() {
 
             $("#loginmessage").html("<center>Logged in, getting notes index from server..</center>");
             $("#loginmessage").css("color","#ff66ff");
-            delete localStorage.lastopennote_key;
-            chrome.extension.sendRequest({action:"lastopen_keychanged"});
+            delete localStorage.lastopennote_key;            
             localStorage.lastopennote_open = "false";
             chrome.extension.sendRequest({action:"userchanged"}, function(successObj) {
                 if (successObj && successObj.success) {
@@ -218,7 +226,7 @@ function save_clicked() {
                     $("#loginmessage").css("color","red");
                 }
             });
-        } else {            
+        } else {
 
             if (successObj.reason=="timeout") {
                 _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_timeout']);
@@ -237,7 +245,19 @@ function save_clicked() {
 
 }
 
-function reset_clicked() {
+function clear_clicked() {
     _gaq.push(['_trackEvent', 'Options', 'reset_clicked']);
     chrome.extension.sendRequest({action:"userchanged"});
+}
+
+function reset_clicked() {
+    _gaq.push(['_trackEvent', 'Options', 'reset_everything_clicked']);
+    
+    var bg = chrome.extension.getBackgroundPage();
+    if (bg && bg.popouttab) {
+        chrome.tabs.remove(bg.popouttab.id, function() { localStorage.clear(); window.location.reload();});
+    } else {
+        localStorage.clear();
+        window.location.reload();
+    }
 }

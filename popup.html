@@ -1,21 +1,22 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta http-equiv='Content-type' content='text/html; charset=utf-8' />    
+    <title>Syncpad for Simplenote</title>
+    <meta http-equiv='Content-type' content='text/html; charset=utf-8' />
     <link rel="stylesheet" href="stylesheets/popup.css" type="text/css" media="all" />
     <link rel="stylesheet" href="stylesheets/jquery.contextmenu.css" type="text/css" media="all" />
     <script type="text/javascript" src="javascripts/lib/jquery.js"></script>
-    <script type="text/javascript" src="javascripts/lib/jquery.typewatch.js"></script>    
+    <script type="text/javascript" src="javascripts/lib/jquery.typewatch.js"></script>
     <script type="text/javascript" src="javascripts/lib/jquery.timeago.js"></script>
     <script type="text/javascript" src="javascripts/lib/jquery.contextmenu.js"></script>
-    <script type="text/javascript" src="javascripts/lib/codemirror1/codemirror.js"></script>        
+    <script type="text/javascript" src="javascripts/lib/codemirror1/codemirror.js"></script>
     <script type="text/javascript" src="javascripts/common.js"></script>
     <script type="text/javascript" src="javascripts/popup.js"></script>
     <script>
         var _gaq = _gaq || [];
         _gaq.push(['_setAccount', 'UA-22573090-2']);
         _gaq.push(['_trackPageview']);
-        
+
         (function() {
             var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
             ga.src = 'https://ssl.google-analytics.com/ga.js';
@@ -26,15 +27,15 @@
   <body onselectstart="return false;">
     <div id="index">
         <div id="toolbar">
-          <input type="text" id="q" onsubmit="return false" placeholder="Search notes" spellcheck="false" title="Type here to search for notes (shortcut: s)"/>
-          <select id="notetags" title="Show notes by tag (shortcut: t)" ><option value="#all#"></option></select>
-          <div id="add" title="Create a note (shortcut: a)"></div>
+          <input type="text" id="q" onsubmit="return false" placeholder="Search notes" spellcheck="false" title="Type here to search for notes (shortcut: ctrl-s)"/>
+          <select id="notetags" title="Show notes by tag (shortcut: ctrl-t)" ><option value="#all#"></option></select>
+          <div id="add" title="Create a note (shortcut: ctrl-a)"></div>
         </div>
       <div id="notes"></div>
       <div id="statusbar"><div id="offline"></div><div id="sync" title="Click to sync"></div></div>
     </div>
     <div id="note">
-        
+
         <input type="button" id="backtoindex" value="Back" title="Back to notes (alt-b)" tabindex="7"/>
         <div id="wordwrapwrapper" title="Toggle wordwrap (alt-w)">
             <input type="checkbox" id="wordwrap" tabindex="6"/><label for="wordwrap">Wordwrap</label>
@@ -49,28 +50,7 @@
 <!--        <div id="encryptwrapper" title="Encrypt this note locally (crtl-alt-e)">
             <input type="checkbox" id="encrypted" tabindex="3"/><label for="encrypted">Enc</label>
         </div>-->
-    </div>
-    <script type="text/javascript">        
-        codeMirror = new CodeMirror(document.getElementById("note"),{
-                parserfile: "parsesimple.js",
-                path: "javascripts/lib/codemirror1/",
-                iframeClass: "cm-iframe",                                
-                content: "",
-                stylesheet: "stylesheets/editor.css",
-                tabMode: "shift",
-                indentUnit: 4,
-                enterMode: "keep",
-                electricChars : false,
-                onChange: editorNoteChanged
-            });
-        $(".cm-iframe").attr("id","cmiframe");
-        $(".CodeMirror-wrapping").attr("id","cmwrapper");
-
-        $("#cmwrapper").css("position","");
-        $("#cmwrapper").css("height","");
-        $("#cmiframe").attr("tabindex","7");
-
-    </script>
+    </div>   
     <!--<div id="loader"></div>
     <div id="status"></div>-->
   </body>

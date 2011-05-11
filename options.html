@@ -1,7 +1,7 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html>
     <head>
-        <title>Syncpad for Simplenote Options</title>
+        <title>Options for Syncpad for Simplenote Options</title>
         <meta http-equiv='Content-type' content='text/html; charset=utf-8' />
         <link rel="stylesheet" href="stylesheets/options.css" type="text/css" media="all" />
         <script src="javascripts/lib/jquery.js"></script>
@@ -12,7 +12,7 @@
             var _gaq = _gaq || [];
             _gaq.push(['_setAccount', 'UA-22573090-2']);
             _gaq.push(['_trackPageview']);
-    
+
             (function() {
                 var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
                 ga.src = 'https://ssl.google-analytics.com/ga.js';
@@ -36,16 +36,17 @@
                 </div>
             </div>
             <div class="option group">
-                
-                <div class="option">
-                    <input type="checkbox" id="opentonote"/><label for="opentonote" title="Open to last note"> Open to last note</label><br>
-                    <input type="checkbox" id="remembercaret"/><label for="remembercaret" title="Remember cursor and scroll position in editor for each note"> Remember cursor for each note</label><br>
-                    <input type="checkbox" id="showdate"/><label for="showdate" title="Show note dates (dependent on sorting: modification or creation) in note list"> Show dates in index</label><br>
-                    <input type="checkbox" id="contextmenu"/><label for="contextmenu" title="Toggle browser context menu integration"> Browser context menu</label><br>
-                    <input type="checkbox" id="alwaystab"/><label for="alwaystab" title="Always open tab when icon is clicked. Disables the popup."> Always open in Tab (Tab is beta!)</label>
-                </div>
 
-                <div class="option">Show
+                <div class="option">
+<!--                    <center>General</center>-->
+                    <input type="checkbox" id="contextmenu"/><label for="contextmenu" title="Toggle browser context menu integration"> Browser context menu</label><br>
+                    <input type="checkbox" id="alwaystab"/><label for="alwaystab" title="Always open tab when icon is clicked. Disables the popup."> Always open in Tab (Tab is beta!)</label><br>
+                    <input type="checkbox" id="pinnedtab"/><label for="pinnedtab" title="Pin tab in Chrome: will open on every Chrome start until closed or unpinned."> Pin tab</label>
+                </div>
+                <div class="option">
+<!--                    <center>Index</center>-->
+                    <input type="checkbox" id="showdate"/><label for="showdate" title="Show note dates (dependent on sorting: modification or creation) in note list"> Show dates in index</label><br>                    
+                    Show
                     <select id="abstractlines" style="text-align: right">
                         <option value="0">no abstract</option>
                         <option value="1">1</option>
@@ -55,24 +56,27 @@
                         <option value="5">5</option>
                         <option value="-1">unlimited</option>
                     </select>
-                    lines in abstract.
-                </div>
-                <div class="option">
+                    lines in abstract<br>
                     Sort
                     <select id="sort">
                         <option value="modifydate">by modify date, newest to oldest</option>
                         <option value="createdate">by create date, newest to oldest</option>
                         <option value="alpha">alphabetical, a-z</option>
                     </select>
-                    <input type="checkbox" id="sortdirection"/><label for="sortdirection"> Reverse</label>
+                    <input type="checkbox" id="sortdirection"/><label for="sortdirection"> Descending</label>
                 </div>
+
                 <div class="option">
+<!--                    <center>Editor</center>-->
+                    <input type="checkbox" id="opentonote"/><label for="opentonote" title="Open to last note"> Open to last note</label><br>
+                    <input type="checkbox" id="remembercaret"/><label for="remembercaret" title="Remember cursor and scroll position in editor for each note"> Remember cursor for each note</label><br>
+
                     Editor font
                     <select id="editorfont">
                         <option value='Simplenote'>Simplenote</option>
                         <option selected value='Droid Sans Mono'>Droid Sans Mono (Monospace, default)</option>
                         <option value='"Lucida Console", "Lucida Sans Typewriter", Consolas, "Andale Mono", "Courier New", monospace;'>Browser default Monospace</option>
-                        <option value='Inconsolata'>Inconsolata (Monospace)</option>                        
+                        <option value='Inconsolata'>Inconsolata (Monospace)</option>
                         <option value='Lekton'>Lekton (Monospace)</option>
                         <option value='Walter Turncoat'>Walter Turncoat</option>
                         <option value='Yanone Kaffeesatz'>Yanone Kaffeesatz</option>
@@ -93,7 +97,7 @@
                         <option value="24">24</option>
                     </select> px.
                     <input type="checkbox" id="editorfontshadow"/><label for="editorfontshadow"> Font shadow</label>
-                </div>
+                </div>      
                 <div class="option" style="font-size:16px">
                     <input type="text" class="color" id="color_index" data-text="hidden" style="height:20px;width:40px;"><label for="color_index" > Background</label>
                     <input type="text" class="color" id="color_editor" data-text="hidden" style="height:20px;width:40px;"><label for="color_index" > Editor Back</label>
@@ -108,7 +112,7 @@
                     <a target="_blank" href="https://chrome.google.com/webstore/detail/djiafihgcdhojlgmgfolclfgmllnhhbj">Syncpad for Simplenote</a> v<label id="version"></label>&nbsp;//&nbsp;Developed and maintained by Stephan Hattinger and based on the original <a href="https://github.com/janne/unofficial_simplenote" target="_blank">Simplenote extension</a> by Jan Andersson. <br><br>
                     If you have comments/bug reports/requests, please send me an <a href="mailto:stephan.hattinger@gmail.com">email</a> or leave a comment in the <a target="_blank" href="https://chrome.google.com/webstore/detail/djiafihgcdhojlgmgfolclfgmllnhhbj">webstore</a>!
                     <br><br>
-                    If youre having trouble, you can try to <button id="reset">clear</button> the local notes cache (triggers a full resync).
+                    If youre having trouble, you can try to <button id="clear">clear</button> the local notes cache (triggers a full resync), or <button id="reset">reset</button> everything.
                 </div>
             </div>
             <center>

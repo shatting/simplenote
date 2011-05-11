@@ -40,11 +40,11 @@ var SimplenoteLS = {
         }
         if (this.haveNote(note.key)) {
             console.log(note);
-            throw "cannot add note, note already in LS"            
+            throw "cannot add note, note already in LS"
         }
         this.log("addNote, note: ");
         this.log(note);
-        
+
         var keys = this.getKeys();
         keys.push(note.key);
 
@@ -61,7 +61,7 @@ var SimplenoteLS = {
             console.log(inputNote);
             throw "cannot update with undefined note or note without key"
         }
-        
+
         var storedNote = this.getNote(inputNote.key);
 
         if (!storedNote) {
@@ -69,26 +69,26 @@ var SimplenoteLS = {
             throw "cannot update note, note not in LS"
         }
 
-        // simplenote api bug: publishing does not increase syncnum        
+        // simplenote api bug: publishing does not increase syncnum
         var changed = {hadChanges: false, added:[],changed:[], deleted:[]};
         var inputFields = [];
 
         // look at inputNote, compare fields to storedNote
         for (var inputField in inputNote) {
-            inputFields.push(inputField);            
-            
+            inputFields.push(inputField);
+
             if (storedNote[inputField] === undefined ) {
-                changed.added.push(inputField);                
+                changed.added.push(inputField);
             } else if ((storedNote[inputField] instanceof Array) && !arrayEqual(storedNote[inputField],inputNote[inputField])) {
-                changed.changed.push(inputField);                
+                changed.changed.push(inputField);
             } else if (!(storedNote[inputField] instanceof Array) && storedNote[inputField] != inputNote[inputField]) {
-                changed.changed.push(inputField);                
+                changed.changed.push(inputField);
             }
         }
         // see whether all fields are still there
         for (var storedField in storedNote) {
             if (inputFields.indexOf(storedField)<0 && storedField != "content" && storedField != "encrypted") {
-                changed.deleted.push(storedField);                
+                changed.deleted.push(storedField);
             }
         }
         changed.hadChanges = changed.added.length > 0 || changed.changed.length > 0 || changed.deleted.length > 0;
@@ -125,7 +125,7 @@ var SimplenoteLS = {
             this.log("updateNote: changed: " + changed.changed.join(", "));
         if (changed.deleted.length > 0)
             this.log("updateNote: deleted: " + changed.deleted.join(", "));
-        
+
         if (haveStored)
             uiEvent("noteupdated", {newnote:inputNote, oldnote: storedNote, changes:changed, source:source});
 
@@ -151,7 +151,7 @@ var SimplenoteLS = {
         var add;
         var note;
         var wordexps;
-        
+
         if (options && options.contentquery && options.contentquery != "") {
             wordexps = options.contentquery.split(" ").map(function(word) {return new RegExp(RegExp.escape(word),'gi');});
         }
@@ -164,7 +164,7 @@ var SimplenoteLS = {
                 notes.push(note);
                 continue;
             }
-            
+
             add &= options.deleted == undefined || note.deleted == options.deleted || options.tag != undefined && options.tag == "#trash#";
             if (!add) continue;
 
@@ -182,7 +182,7 @@ var SimplenoteLS = {
                     default:
                         add &= note.tags != undefined && note.tags.indexOf(options.tag)>=0;
                 }
-            }                   
+            }
             if (!add) continue;
 
             if (wordexps)
@@ -217,6 +217,13 @@ var SimplenoteLS = {
             });
         else if (options.sort == "alpha")
             notes.sort(function(note1,note2) {
+                if (!note1.content && !note2.content)
+                    return 0;
+                else if (!note1.content)
+                    return options.sortdirection;
+                else if (!note2.content)
+                    return -options.sortdirection;
+                
                 var c1 = note1.content.toLowerCase();
                 var c2 = note2.content.toLowerCase();
 
@@ -231,7 +238,7 @@ var SimplenoteLS = {
         //   since chromes array sort isnt stable, we have to stabilize it
         for (i=0; i<notes.length; i++)
             notes[i].index = i;
-        notes.sort(function(n1,n2) {            
+        notes.sort(function(n1,n2) {
             var d = (n2.systemtags.indexOf("pinned")>=0?1:0) - (n1.systemtags.indexOf("pinned")>=0?1:0);
             if (d==0) // stabilize
                 return n1.index - n2.index;
@@ -247,7 +254,7 @@ var SimplenoteLS = {
 
     delNote : function(key) {
         var keys = this.getKeys();
-        
+
         if (keys.indexOf(key)>=0) {
             keys.splice(keys.indexOf(key),1);
             $.storage.set(this.keysKey,keys);
@@ -305,18 +312,18 @@ var SimplenoteLS = {
                 predeftags[2].count++;
             }
         });
-        
+
         tags.sort(function(t1,t2) {var diff = - t1.count + t2.count;return diff!=0?diff:t2.tag<t1.tag;});
-        
+
         return predeftags.concat(tags);
     },
-    
+
     getCreatedNoteTempKey : function() {
         var maxnum = 0;
-        var matches;   
+        var matches;
         var syncKeys = this.getSyncKeys();
         for (var i = 0; i<syncKeys.length; i++ ) {
-            matches = syncKeys[i].match(/creatednote(\d+)/);                        
+            matches = syncKeys[i].match(/creatednote(\d+)/);
             if (matches && matches[1] >= maxnum)
                 maxnum = matches[1]*1+1;
         }
@@ -374,7 +381,7 @@ var SimplenoteLS = {
         $.storage.set(this.keysKey,keys);
 
     },
-    
+
     _info : function() {
         var keys = this.getKeys();
         this.log("last index received " + dateAgo(this.indexTime()));
