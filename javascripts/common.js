@@ -90,32 +90,71 @@ function mergeobj(obj1,obj2){
     return obj3;
 }
 
-// insert at caret
-jQuery.fn.extend({
-    insertAtCaret: function(myValue){
-      return this.each(function(i) {
-        if (document.selection) {
-          this.focus();
-          sel = document.selection.createRange();
-          sel.text = myValue;
-          this.focus();
-        }
-        else if (this.selectionStart || this.selectionStart == '0') {
-          var startPos = this.selectionStart;
-          var endPos = this.selectionEnd;
-          var scrollTop = this.scrollTop;
-          this.value = this.value.substring(0, startPos)+myValue+this.value.substring(endPos,this.value.length);
-          this.focus();
-          this.selectionStart = startPos + myValue.length;
-          this.selectionEnd = startPos + myValue.length;
-          this.scrollTop = scrollTop;
-        } else {
-          this.value += myValue;
-          this.focus();
-        }
-      })
-    }
-});
+/**
+ * jQuery.fn.sortElements
+ * --------------
+ * @param Function comparator:
+ *   Exactly the same behaviour as [1,2,3].sort(comparator)
+ *
+ * @param Function getSortable
+ *   A function that should return the element that is
+ *   to be sorted. The comparator will run on the
+ *   current collection, but you may want the actual
+ *   resulting sort to occur on a parent or another
+ *   associated element.
+ *
+ *   E.g. $('td').sortElements(comparator, function(){
+ *      return this.parentNode;
+ *   })
+ *
+ *   The <td>'s parent (<tr>) will be sorted instead
+ *   of the <td> itself.
+ */
+jQuery.fn.sortElements = (function(){
+
+    var sort = [].sort;
+
+    return function(comparator, getSortable) {
+
+        getSortable = getSortable || function(){return this;};
+
+        var placements = this.map(function(){
+
+            var sortElement = getSortable.call(this),
+                parentNode = sortElement.parentNode,
+
+                // Since the element itself will change position, we have
+                // to have some way of storing its original position in
+                // the DOM. The easiest way is to have a 'flag' node:
+                nextSibling = parentNode.insertBefore(
+                    document.createTextNode(''),
+                    sortElement.nextSibling
+                );
+
+            return function() {
+
+                if (parentNode === this) {
+                    throw new Error(
+                        "You can't sort elements if any one is a descendant of another."
+                    );
+                }
+
+                // Insert before flag:
+                parentNode.insertBefore(this, nextSibling);
+                // Remove flag:
+                parentNode.removeChild(nextSibling);
+
+            };
+
+        });
+
+        return sort.call(this, comparator).each(function(i){
+            placements[i].call(getSortable.call(this));
+        });
+
+    };
+
+})();
 
 function indentSelection(indent) {
     var sel, range;

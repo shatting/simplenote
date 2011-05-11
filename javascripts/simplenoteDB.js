@@ -258,7 +258,7 @@ var SimplenoteDB = {
                     SimplenoteDB.offline(false);
                     SimplenoteDB.log('getNote::loginInvalid');
                     _gaq.push(['_trackEvent', 'DB', 'getNote', 'loginInvalid']);
-                    alert('SimplenoteDB::getNote::loginInvalid');
+                    //alert('SimplenoteDB::getNote::loginInvalid');
                     if (callback)
                         callback();
                 }, 

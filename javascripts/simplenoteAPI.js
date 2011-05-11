@@ -85,7 +85,7 @@ var SimplenoteAPI2 = {
      */
     login: function(credentials, callbacks) {
         if (!callbacks) callbacks = {};        
-        
+
         var haveToken;
         // precond: this.credentials either full set (email+pass+token) or undefined        
         if (!this.credentials) { //A

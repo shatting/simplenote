@@ -121,20 +121,22 @@ function uiEventListener(eventData, sender, sendResponse) {
             indexAddNote("replace", eventData.newnote);
             indexFillNote(eventData.newnote);
         }
-        var pinnedChanged = eventData.changes.changed.indexOf("systemtags")>=0 && (eventData.oldnote.systemtags.indexOf("pinned")>=0) != (eventData.newnote.systemtags.indexOf("pinned")>=0);
-        
-        if (isTab && pinnedChanged && codeMirror && codeMirror.note && codeMirror.note.key == eventData.newnote.key)
-            $("div#note input#pinned").attr("checked",(eventData.newnote.systemtags.indexOf("pinned")>=0));
-        
-        if (isTab && pinnedChanged)
-            chrome.extension.sendRequest({action: "cm_populate"});
+        if (isTab) {
+            var pinnedChanged = eventData.changes.changed.indexOf("systemtags")>=0 && (eventData.oldnote.systemtags.indexOf("pinned")>=0) != (eventData.newnote.systemtags.indexOf("pinned")>=0);
 
-        if (isTab && eventData.source != "local" && codeMirror && codeMirror.note && codeMirror.note.key == eventData.newnote.key) {
-            
-            var contentChanged = eventData.changes.changed.indexOf("content")>=0;
-            var tagsChanged = eventData.changes.changed.indexOf("tags")>=0;
-            if ( pinnedChanged || contentChanged || tagsChanged )
-                editorShowNote(eventData.newnote);
+            if (pinnedChanged && codeMirror && codeMirror.note && codeMirror.note.key == eventData.newnote.key)
+                $("div#note input#pinned").attr("checked",(eventData.newnote.systemtags.indexOf("pinned")>=0));
+
+            if (pinnedChanged)
+                chrome.extension.sendRequest({action: "cm_populate"});
+
+            if (eventData.source != "local" && codeMirror && codeMirror.note && codeMirror.note.key == eventData.newnote.key) {
+
+                var contentChanged = eventData.changes.changed.indexOf("content")>=0;
+                var tagsChanged = eventData.changes.changed.indexOf("tags")>=0;
+                if ( pinnedChanged || contentChanged || tagsChanged )
+                    editorShowNote(eventData.newnote);
+            }
         }
     } else if (eventData.name == "offlinechanged") {
         log("EventListener:offline:" + eventData.status);
@@ -144,13 +146,13 @@ function uiEventListener(eventData, sender, sendResponse) {
             $("#offline").html("");
     } else if (eventData.name == "synclistchanged") {
         log("EventListener:" + eventData.name);
-        if (eventData.added)
-            $('div.noterow#' + eventData.added).css("background","#ccc");
-        if (eventData.removed)
-            $('div.noterow#' + eventData.removed).css("background","");
+        if (eventData.added)            
+            $('div.noterow#' + eventData.added + "heading").addClass("syncnote");
+        if (eventData.removed)            
+            $('div.noterow#' + eventData.removed + "heading").removeClass("syncnote");
     } else if (eventData.name == "notedeleted") {
         log("EventListener:" + eventData.name);
-        $('div.noterow#' + eventData.key).hide();
+        $('div.noterow#' + eventData.key).remove();
     } else {
         log("EventListener:" + eventData.name);
     }
@@ -264,7 +266,7 @@ $(document).ready(function() {
     var optionsLink = "<a href='options.html'>options page</a>";
     
     if ( !localStorage.option_email || !localStorage.option_password) {
-        var message = "Please " + signUpLink + " for a Simplenote account and enter your credentials on the " + optionsLink + ".";
+        var message = "Please " + signUpLink + " for a Simplenote account and/or enter your credentials on the " + optionsLink + ".";
         displayStatusMessage(message);
         _gaq.push(['_trackEvent', 'popup', 'ready', 'displayWelcomeMessage']);
     } else {
@@ -372,6 +374,7 @@ $(document).ready(function() {
 function displayStatusMessage(message) {    
     $('#toolbar').hide();
     $('#statusbar').hide();
+    $('#note').hide();
     $('#notes').html(message);
     $('body').css("background","#fff");
     links = $('a');
@@ -432,14 +435,14 @@ function fillIndex() {
     req     = mergeobj(req, {sort:localStorage.option_sortby, sortdirection:localStorage.option_sortbydirection});
 
     log("fillIndex:");
-    log(req);
-      
-    $('div#index div#notes').empty();    
+    log(req);       
     
     chrome.extension.sendRequest(req, function(notes) {
         log("fillIndex:request complete");
         var note;
 
+        $('div#index div#notes').empty();
+        
         if (notes.length > 0) {
             for(var i = 0; i < notes.length; i ++ ) {
                 note = notes[i];
@@ -521,47 +524,62 @@ function indexAddNote(mode, note){
     } else if (mode=="replace")
         $('div.noterow#' + note.key).html(html);
 
+    // get ui elements into variables
+    var $noterow = $('div.noterow#' + note.key);
+    var $noteheading = $('div.noterow#' + note.key + "heading");
+    var $notetime = $("#" + note.key + "time");
+    var $notepin = $("div#" + note.key + "pin");
+    var $notepublished = $("div#" + note.key + "published");
+
     // bind timeago for time abbr
     if (localStorage.option_showdate == "true")
-        $("#" + note.key + "time").timeago();
-    
+        $notetime.timeago();
+
+    // deleted note
     if (note.deleted != 0) {
-        $("div#" + note.key).attr("title", "Click to undelete");
+        $noterow.attr("title", "Click to undelete");
         return;
     }
-    $("div#" + note.key + "pin").attr("title","Click to pin/unpin");
+    
+    $notepin.attr("title","Click to pin/unpin");
 
     // bind pinned klick
-    $("#" + note.key +"pin").unbind();
-    $("#" + note.key +"pin").click(note,function(event) {
+    $notepin.unbind();
+    $notepin.click(note,function(event) {
             var note = event.data;
             if ($(this).attr("class")=="pinned") {
                 note.systemtags.splice(note.systemtags.indexOf("pinned"),1);
             } else {
-                note.systemtags.push("pinned");
+                note.systemtags.push("pinned").sort();
             }                        
 
             event.stopPropagation();            
             chrome.extension.sendRequest({action:"update",key:note.key,systemtags:note.systemtags}, function (note) {
-                $("#" + note.key +"pin").attr("class",note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned");
+                $notepin.attr("class",note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned");
                 background.needCMRefresh = true;
             });
         });
     // bind published click
     if (note.publishkey) {
-        $("#" + note.key +"published").unbind();
-        $("#" + note.key +"published").click(note.publishkey,function(event) {            
+        $notepublished.unbind();
+        $notepublished.click(note.publishkey,function(event) {
             event.stopPropagation();
             openURLinTab("http://simp.ly/publish/"+event.data);
         }); 
     }
 
+    // unread
     if (note.systemtags.indexOf("unread")>0)
-         $("#" + note.key).addClass("unread");
+         $noterow.addClass("unread");
 
+    // tab selected
     if (isTab && codeMirror.note && codeMirror.note.key == note.key) {
-        $("div.noterow#"+ note.key).addClass("selectednote");
+        $noterow.addClass("selectednote");
     }
+
+    // sync note
+    if (note._syncNote)
+        $noteheading.addClass("syncnote");
 }
 
 /*
@@ -597,8 +615,8 @@ function indexFillNoteReqComplete(note) {
         
         var $noterow = $('#' + note.key);
         var $noteheading = $('#' + note.key + "heading");
-        var $abstract = $('#' + note.key + "abstract");
-            
+        var $noteabstract = $('#' + note.key + "abstract");
+        
         var lines = note.content.split("\n").filter(function(line) {
             return ( line.trim().length > 0 )
             });
@@ -621,7 +639,7 @@ function indexFillNoteReqComplete(note) {
         else // -1 ~ all
             abstractlines = lines;
         // set actual abstract
-        $abstract.html(htmlEncode(abstractlines,100).join("<br/>"));
+        $noteabstract.html(htmlEncode(abstractlines,100).join("<br/>"));
 
         $noterow.unbind();
         // add dblclick binding
@@ -643,12 +661,6 @@ function indexFillNoteReqComplete(note) {
             });
         }
 
-        // sync note 
-        if (note._syncNote)
-            $noteheading.addClass("syncnote");
-
-        //$noterow.hover(maximize,minimize);
-                
         // check new inview, might have changed due to reflow
         $noterow.data('loaded',true);
         
