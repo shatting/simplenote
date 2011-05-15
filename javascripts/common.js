@@ -213,7 +213,7 @@ function get_manifest(callback) {
 }
 
 // jquery ":focus" selector
-jQuery.expr[':'].focus = function( elem ) { return elem === document.activeElement && ( elem.type || elem.href );  };
+jQuery.expr[':'].focus = function( elem ) {return elem === document.activeElement && ( elem.type || elem.href );};
 
 function arrayEqual(arr1,arr2) {
     if (arr1.length != arr2.length)
@@ -225,3 +225,149 @@ function arrayEqual(arr1,arr2) {
 
     return true;
 }
+
+//function slideInPosition(note, modifyChanged, pinnedNowOn, pinnedNowOff) {
+//    var $noterow = $('div.noterow#' + note.key);
+//
+//
+//    if (note.systemtags.indexOf("pinned")>=0) {
+//        var $before = findBefore($noterow,$("div.noterow:has(div.pinned)").not("#" + note.key));
+//    } else
+//        var $before = findBefore($noterow,$("div.noterow:not(:has(div.pinned))").not("#" + note.key));
+//
+//    if ($before == "keep" || (typeof $before != "string" && ($noterow.index() == $before.index() || $noterow.index() == $before.index() - 1)))
+//        return;
+//    else if (typeof $before != "string" && $noterow.index() < $before.index()) {
+//            slideSwap($noterow,$noterow.parent().children().slice($noterow.index()+1,$before.index()));
+//    } else { // noterow up
+//        if ($before == "last") // only possible case: append to pinned notes
+//            slideSwap($noterow.parent().children().slice($("div.noterow:has(div.pinned)").last().index()+1,$noterow.index()), $noterow);
+//        else
+//            slideSwap($noterow.parent().children().slice($before.index(),$noterow.index()), $noterow);
+//    }
+//}
+//
+//function slideSwap($set1, $set2) {
+//
+//
+//    var $set3 = $set2.last().nextAll();
+////    $set1.css("color", "red");
+////    $set2.css("color", "blue");
+////    $set3.css("color", "green");
+//
+//    var mb_prev = cssprop($set1.first().prev(), "margin-bottom");
+//    if (isNaN(mb_prev)) mb_prev = 0;
+//    var mt_next = cssprop($set2.last().next(), "margin-top");
+//    if (isNaN(mt_next)) mt_next = 0;
+//
+//    var mt_1 = cssprop($set1.first(), "margin-top");
+//    var mb_1 = cssprop($set1.last(), "margin-bottom");
+//    var mt_2 = cssprop($set2.first(), "margin-top");
+//    var mb_2 = cssprop($set2.last(), "margin-bottom");
+//
+//    var h1 = $set1.last().offset().top + $set1.last().outerHeight() - $set1.first().offset().top;
+//    var h2 = $set2.last().offset().top + $set2.last().outerHeight() - $set2.first().offset().top;
+//
+//    var move1 = h2 + Math.max(mb_2, mt_1) + Math.max(mb_prev, mt_2) - Math.max(mb_prev, mt_1);
+//    var move2 = -h1 - Math.max(mb_1, mt_2) - Math.max(mb_prev, mt_1) + Math.max(mb_prev, mt_2);
+//    var move3 = move1 + $set1.first().offset().top + h1 - $set2.first().offset().top - h2 +
+//        Math.max(mb_1,mt_next) - Math.max(mb_2,mt_next);
+//
+//    //$set1.append("  m:" + move1);
+//    //$set2.append("  m:" + move2);
+//    // let's move stuff
+//    $set1.css('position', 'relative');
+//    $set2.css('position', 'relative');
+//    $set3.css('position', 'relative');
+//    $set1.animate({'top': move1}, {duration: 500});
+//    $set3.animate({'top': move3}, {duration: 500});
+//    $set2.animate({'top': move2}, {duration: 500, complete: function() {
+//            // rearrange the DOM and restore positioning when we're done moving
+//            $set1.insertAfter($set2.last())
+//            $set1.css({'position': 'static', 'top': 0});
+//            $set2.css({'position': 'static', 'top': 0});
+//            $set3.css({'position': 'static', 'top': 0});
+//        }
+//    });
+//
+//
+//}
+//
+function cssprop(e, id) {
+    return parseInt($(e).css(id), 10);
+}
+//
+//function findBefore($noterow,$set) {
+//
+//    if ($set.length <= 1)
+//        return "keep";
+//
+//    var thiskey = $noterow.attr("sortkey");
+//    var allkeys = $set.map(function(i,e) {
+//        return $(e).attr("sortkey");
+//    }).get();
+//
+//    if (thiskey==allkeys[0])
+//        return "keep"
+//    if (thiskey>=allkeys[0])
+//        return $set.first();
+//    if (thiskey<=allkeys[allkeys.length-1])
+//        return "last";
+//
+//    for (var i = 0; i < allkeys.length-2; i++)
+//        if (allkeys[i]>=thiskey && thiskey >= allkeys[i+1])
+//            return $($set.get(i+1));
+//
+//    return "last";
+//}
+
+function resort() {   
+        
+    var $filteredData = $("div.noterow").clone();
+    
+    var $sortedData = $filteredData.sorted({
+        reversed:localStorage.option_sortbydirection == 1,
+        by: function(v) {
+          return parseFloat($(v).attr('sortkey'));
+        }
+      });
+    
+    // finally, call quicksand
+    $("#notes").quicksand($sortedData, {
+      duration: 500,
+      attribute: "id",
+      adjustHeight: false,
+      dy: -18,
+      enhancement: function(e) { $(e).css("height","auto"); $(e).find("abbr.notetime").timeago(); }
+    });
+}
+
+// Custom sorting plugin
+(function($) {
+  $.fn.sorted = function(customOptions) {
+    var options = {
+      reversed: false,
+      by: function(a) { return a.text(); }
+    };
+    $.extend(options, customOptions);
+    $data = $(this);
+    arr = $data.get();
+    arr.sort(function(a, b) {
+      $a=$(a);$b=$(b);
+      ap =$a.attr("pinned") == "true"; bp =$b.attr("pinned") == "true";
+      if (ap && bp || !ap && !bp) {
+          var valA = options.by($a);
+          var valB = options.by($b);
+          if (options.reversed) {
+            return (valA < valB) ? 1 : (valA > valB) ? -1 : 0;
+          } else {
+            return (valA < valB) ? -1 : (valA > valB) ? 1 : 0;
+          }
+      } else if (ap)
+          return options.reversed?-1:1;
+      else
+          return options.reversed?1:-1;
+    });
+    return $(arr);
+  };
+})(jQuery);

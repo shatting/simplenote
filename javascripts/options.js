@@ -206,58 +206,69 @@ function save_clicked() {
 
     $("#loginmessage").html("Logging in..");
     $("#loginmessage").css("color","black");
-    chrome.extension.sendRequest({action:"login"}, function(successObj) {
-        if (successObj.success) {
+    closeTabAnd(function() {
+        chrome.extension.sendRequest({action:"login"}, function(successObj) {
+            if (successObj.success) {
 
-            _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_success']);
+                _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_success']);
 
-            $("#loginmessage").html("<center>Logged in, getting notes index from server..</center>");
-            $("#loginmessage").css("color","#ff66ff");
-            delete localStorage.lastopennote_key;            
-            localStorage.lastopennote_open = "false";
-            chrome.extension.sendRequest({action:"userchanged"}, function(successObj) {
-                if (successObj && successObj.success) {
-                    _gaq.push(['_trackEvent', 'Options', 'save_clicked','sync_success',successObj.numKeys]);
-                    $("#loginmessage").html("<center>Account info saved, initial sync done.<br>Happy Syncpad-ing!</center>");
-                    $("#loginmessage").css("color","green");
-                } else {
-                    _gaq.push(['_trackEvent', 'Options', 'save_clicked','sync_error']);
-                    $("#loginmessage").html("<center>Logged in, but initial sync had problems.<br>Might still work!</center>");
-                    $("#loginmessage").css("color","red");
-                }
-            });
-        } else {
-
-            if (successObj.reason=="timeout") {
-                _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_timeout']);
-                $("#loginmessage").html("Could not log in: network timeout, please try again later.");
-            } else if (successObj.reason=="logininvalid") {
-                _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_invalid']);
-                $("#loginmessage").html("Could not log in: email or password incorrect.");
+                $("#loginmessage").html("<center>Logged in, getting notes index from server..</center>");
+                $("#loginmessage").css("color","#ff66ff");
+                delete localStorage.lastopennote_key;
+                localStorage.lastopennote_open = "false";
+                chrome.extension.sendRequest({action:"userchanged"}, function(successObj) {
+                    if (successObj && successObj.success) {
+                        _gaq.push(['_trackEvent', 'Options', 'save_clicked','sync_success',successObj.numKeys]);
+                        $("#loginmessage").html("<center>Account info saved, initial sync done.<br>Happy Syncpad-ing!</center>");
+                        $("#loginmessage").css("color","green");
+                    } else {
+                        _gaq.push(['_trackEvent', 'Options', 'save_clicked','sync_error']);
+                        $("#loginmessage").html("<center>Logged in, but initial sync had problems.<br>Might still work!</center>");
+                        $("#loginmessage").css("color","red");
+                    }
+                });
             } else {
-                _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_error']);
-                $("#loginmessage").html("Could not log in: unknown error.");
-            }
-            $("#loginmessage").css("color","red");
-        }
-        $("#save").removeAttr("disabled");
-    });
 
+                if (successObj.reason=="timeout") {
+                    _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_timeout']);
+                    $("#loginmessage").html("Could not log in: network timeout, please try again later.");
+                } else if (successObj.reason=="logininvalid") {
+                    _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_invalid']);
+                    $("#loginmessage").html("Could not log in: email or password incorrect.");
+                } else {
+                    _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_error']);
+                    $("#loginmessage").html("Could not log in: unknown error.");
+                }
+                $("#loginmessage").css("color","red");
+            }
+            $("#save").removeAttr("disabled");
+        });
+    });
 }
 
 function clear_clicked() {
     _gaq.push(['_trackEvent', 'Options', 'reset_clicked']);
-    chrome.extension.sendRequest({action:"userchanged"});
+    closeTabAnd(function() {
+        delete localStorage.lastopennote_key;
+        localStorage.lastopennote_open = "false";
+        chrome.extension.sendRequest({action:"userchanged"});
+    });
 }
 
 function reset_clicked() {
     _gaq.push(['_trackEvent', 'Options', 'reset_everything_clicked']);
     
-    var bg = chrome.extension.getBackgroundPage();
-    if (bg && bg.popouttab) {
-        chrome.tabs.remove(bg.popouttab.id, function() { localStorage.clear(); window.location.reload();});
-    } else {
+    closeTabAnd(function() {
         localStorage.clear();
         window.location.reload();
+    });
+}
+
+function closeTabAnd(after) {
+    var bg = chrome.extension.getBackgroundPage();
+    if (bg && bg.popouttab) {
+        chrome.tabs.remove(bg.popouttab.id, after);
+    } else {
+        after();
     }
 }

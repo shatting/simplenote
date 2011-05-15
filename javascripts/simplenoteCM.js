@@ -226,6 +226,9 @@ var SimplenoteCM = {
     populate: function(on) {
 
         chrome.contextMenus.removeAll();
+        this.append_root = null;
+        this.create_root = null;
+        this.append_pinned_root = null;
         
         if (!localStorage.option_email)
             return;
@@ -238,7 +241,7 @@ var SimplenoteCM = {
         this.create_root = new CMitem({title:"Create a note", contexts:["selection","page","image","link"]});
         new CMitem({title:"..from selection", contexts:["selection"],onclick: function(info, tab){
                         _gaq.push(['_trackEvent', 'ContextMenu', 'create_selection']);
-                        SimplenoteCM.createNoteFromBG({content:info.selectionText + "\n" + "[Source: " + tab.url + "]"});
+                        SimplenoteCM.createNoteFromBG({content:info.selectionText + "\n" + "[Source: " + tab.url + "]\n"});
                     }}, this.create_root);
         new CMitem({title:"..from page url", contexts:["page"], onclick: function(info, tab){
                         _gaq.push(['_trackEvent', 'ContextMenu', 'create_url']);
@@ -309,22 +312,36 @@ var SimplenoteCM = {
     },
 
     updateLastOpen: function() {
+        if (!localStorage.lastopennote_key) {
+            this.append_root.remove();
+            this.append_root = null;
+            return;
+        }
+        
         var title = getNoteHeading(localStorage.lastopennote_key,25);
         if (!title)
             return;
+
         
         if (!this.append_root)
             this.populate();
-        
-        if (this.append_root)
-            this.append_root.update({title:"Append to " + title + ""});
+
+        var needPop = false;
+        try {
+            if (this.append_root)
+                this.append_root.update({title:"Append to " + title + ""});
+        } catch (e) {
+            needPop = true;
+        }
+        if (needPop)
+            this.populate();
     },
 
     appendToNoteFromBG: function(string, key, setLastOpen) {
         SimplenoteCM.signalProcessing();
 
         SimplenoteDB.getNote(key,function(oldnote) {
-            oldnote.content += "\n" + string;
+            oldnote.content += "\n" + string + "\n";
             oldnote.source = "cm";
             SimplenoteDB.updateNote(oldnote, function(note) {
                 if (note) {

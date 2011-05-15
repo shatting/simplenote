@@ -1,38 +1,105 @@
 body {
   font-family: Verdana, Helvetica, Arial;
   font-size: 14px;
-  margin: 0;
-  height: 550px;
-  width: 400px;
+  margin: 0;    
+  height: 0px;
+  width: 0px;
   overflow: hidden;
   background: #4F4F59;
-  background-image: url(/images/texture.png);
+  background-image: url(/images/texture.png);  
 }
 
-/* index */
+/*#container {
+    position:absolute;
+    top:2px;
+    bottom:2px;
+    left:2px;
+    right:2px;
+}*/
+
+/* main divs */
 
 div#index {
-    position: absolute;
-    width: 400px;
-    height:100%;
-    left:0px;
-
+    position: absolute;    
+    top: 2px;
+    bottom: 2px;
+    left:2px;
+    right:2px;
+    
+    min-width: 380px;    
 }
 
-div#status {
-
-}
-
-div#toolbar {
+/*.vsplitbar {
+    width:15px;
     margin-right: 2px;
-    margin-left: 2px;
-    margin-top: 2px;
+    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
+    border-radius: 3px;
+}*/
+/*div#slider {
+    position:absolute;
+    left:402px;
+    width:15px;
+    top:2px;
+    bottom:2px;
+    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
+    border-radius: 3px;
+}*/
+
+div#note {
+    position: absolute;
+    left:402px;
+    right: 2px;
+    bottom: 2px;
+    top: 2px;
+    min-width: 560px;
+    
     background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
     outline-color: black;
     -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
     border: 2px solid #F5F6FD;
     border-radius: 3px;
-    width:392px;
+}
+
+
+/* index div children */
+div#toolbar {    
+    position:absolute;
+    left: 0px;
+    right: 0px;
+    top: 0px;
+
+    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
+    outline-color: black;
+    -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
+    border: 2px solid #F5F6FD;
+    border-radius: 3px;    
+}
+
+
+div#notes {
+    position: absolute;
+    top: 36px;
+    left: 0px;
+    right: 0px;
+    bottom: 24px;
+    
+    overflow-y: auto;
+    overflow-x: none;
+}
+
+div#statusbar {
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    height:18px;
+
+    color: #aaa;    
+    background: white;
+    outline-color: black;
+    -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
+    border: 2px solid #F5F6FD;
+    border-radius: 3px;
 }
 
 div#index div#toolbar select#notetags {
@@ -96,21 +163,15 @@ div#index div#toolbar input#q:focus {
     cursor: pointer;
 }
 
-div#notes {
-    width: 398px;
-    margin-bottom: 27px;
+div#nonotes {
     position: absolute;
     top: 38px;
-    bottom: 0;
-    overflow-y: auto;
-    overflow-x: none;
-}
-
-div#nonotes {
-  color: #aaa;
-  width:100%;
-  text-align: center;
-  padding-top : 30px ;
+    left: 2px;
+    right: 2px;
+    bottom: 27px;
+    color: #aaa;
+    text-align: center;
+    padding-top : 30px ;
 }
 
 div.noterow {
@@ -119,11 +180,11 @@ div.noterow {
     -webkit-box-shadow: 0 0px 2px rgba(0,80,128,0.5);
     ''border: 2px solid #F7F8FF;
     border-radius: 2px;
-    margin: 2px;
+    margin-right: 2px;
     margin-bottom: 2px;
     margin-top: 0px;
     padding: 4px;
-    padding-bottom: 8px;
+    padding-bottom: 8px;    
 }
 
 div.noterow:hover {
@@ -244,36 +305,9 @@ div.shared {
     cursor: pointer;
 }
 
-#statusbar {
-    color: #aaa;
-    position: absolute;
-    bottom:2px;
-    width: 98%;
-    height:18px;
-    margin-right: 2px;
-    margin-left: 2px;
-    margin-top: 2px;
-    background: white;
-    outline-color: black;
-    -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
-    border: 2px solid #F5F6FD;
-    border-radius: 3px;
-}
+
 
 /* note div */
-
-div#note {
-    position: absolute;
-    left:402px;
-    right: 2px;
-    bottom: 2px;
-    top: 2px;
-    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
-    outline-color: black;
-    -webkit-box-shadow: 0 0px 3px rgba(0,80,128,0.5);
-    border: 2px solid #F5F6FD;
-    border-radius: 3px;
-}
 
 .CodeMirror-wrapping {
     padding: 1px;
