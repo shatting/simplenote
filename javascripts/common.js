@@ -328,7 +328,7 @@ function resort() {
     var $sortedData = $filteredData.sorted({
         reversed:localStorage.option_sortbydirection == 1,
         by: function(v) {
-          return parseFloat($(v).attr('sortkey'));
+          return $(v).attr('sortkey');
         }
       });
     
@@ -364,9 +364,9 @@ function resort() {
             return (valA < valB) ? -1 : (valA > valB) ? 1 : 0;
           }
       } else if (ap)
-          return options.reversed?-1:1;
+          return -1;
       else
-          return options.reversed?1:-1;
+          return 1;
     });
     return $(arr);
   };
