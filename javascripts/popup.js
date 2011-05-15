@@ -195,6 +195,14 @@ function noteRowCurrentlyVisible(key) {
 $(document).keydown(shorcuts);
 function shorcuts(event) {
 
+    if (event.altKey && !event.ctrlKey && !event.shiftKey)
+        switch(event.keyCode) {
+            case 88: //alt-x
+                window.close();
+            break
+        }
+
+
     if (currentView=="index" || isTab) {
     // - index:
         var notesheight = $("div#notes").get(0).scrollHeight;
@@ -991,7 +999,7 @@ SNEditor.prototype.initialize = function() {
         $editbox.unbind();
 
     $editbox.bind('change keyup paste cut', function(event) {
-        that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);
+        that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);        
     });
 
     // fix for home not scrolling all to the left
@@ -1134,7 +1142,7 @@ SNEditor.prototype.initialize = function() {
         $('div#note input#popout').hide();
         $('div#note input#undo').hide();
         $('div#note input#backtoindex').attr("value","Close Tab");
-        $('div#note input#backtoindex').attr("title","Close the Tab (alt-b)");
+        $('div#note input#backtoindex').attr("title","Close the Tab (alt-b or alt-x)");
         $('div#note input#backtoindex').unbind();
         $('div#note input#backtoindex').click(function(event) {
             window.close();
