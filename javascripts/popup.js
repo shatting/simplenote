@@ -322,7 +322,8 @@ function readyListener() {
                 if (!isTab) {
                     if (!directlyShowNote) {
                         $("body").css("width","400px");
-                        $("body").animate({height: "550px", duration:50});
+                        $("body").css("height", "550px");
+                        //$("body").animate({height: "550px", duration:50});
                     } else {
                         $("body").css("width","800px");
                         $("body").css("height", "550px");
