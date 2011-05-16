@@ -1,7 +1,7 @@
 {
   "name": "Syncpad for Simplenote",
   "version": "1.6.5.1",
-  "description": "Save stuff you want to remember with this cloud-aware, offline-capable Notepad Extension, then access your saved notes from every computer and phone you use.",
+  "description": "No-hassle note taking. Cloud-aware, offline-capable. Access your notes from every computer and phone you use.",
   "icons": {
     "96": "imanges/icon_96.png",
     "128": "images/icon_128.png",

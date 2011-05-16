@@ -3,7 +3,7 @@
 // ------------------------------------------------------------------------------------------------
 
 // global debug switch
-var commonDebug = false;
+var commonDebug = true;
 
 function logGeneral(s,prefix,target) {
     if (!commonDebug)
@@ -321,8 +321,8 @@ function cssprop(e, id) {
 //    return "last";
 //}
 
-function resort() {   
-        
+function resort(callback) {
+    logGeneral("resort()","common.js");
     var $filteredData = $("div.noterow").clone();
     
     var $sortedData = $filteredData.sorted({
@@ -338,8 +338,8 @@ function resort() {
       attribute: "id",
       adjustHeight: false,
       dy: -18,
-      enhancement: function(e) { $(e).css("height","auto"); $(e).find("abbr.notetime").timeago(); }
-    });
+      enhancement: function(e) { $(e).css("height","auto"); $(e).find("abbr.notetime").timeago();}
+    }, callback);
 }
 
 // Custom sorting plugin

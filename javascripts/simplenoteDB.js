@@ -101,13 +101,13 @@ var SimplenoteDB = {
     //  time: "1302261452.277224"
     _gotIndexChunk : function(indexData, havemore, fullSync) {
 
-        if (!indexData) {
+        if (!indexData || typeof(indexData) == "string") {
             if (this.syncCallbackFinished)
                 this.syncCallbackFinished({success:false, fullSync:fullSync});
             this.log("_gotIndexChunk: error getting index from server.");
             this.offline(true);
             this._setSyncInProgress(false);
-            uiEvent("sync", {status: "error", changes : this._indexKeysChanged});
+            uiEvent("sync", {status: "error", changes : this._indexKeysChanged, errorstr: indexData});
         } else {
             var thisHadChanges = false, note;
 
@@ -214,20 +214,20 @@ var SimplenoteDB = {
                 SimplenoteAPI2.resetCredentials();
                 delete localStorage.token;
                 delete localStorage.tokentime;
-                SimplenoteDB._gotIndexChunk(undefined, false);
+                SimplenoteDB._gotIndexChunk("login invalid", false);
             },
             repeat:         function() {
                 SimplenoteDB.log("getIndex:repeat");
                 //alert("SimplenoteDB::getIndex:repeat");
                 _gaq.push(['_trackEvent', 'DB', 'getIndex','repeat']);
-                SimplenoteDB._gotIndexChunk(undefined, false);
+                SimplenoteDB._gotIndexChunk("repeat", false);
             },
             timeout:        function() {
                 SimplenoteDB.log("getIndex:timeout");
                 SimplenoteDB.offline(true);
                 _gaq.push(['_trackEvent', 'DB', 'getIndex','timeout']);
                 //alert("SimplenoteDB::getIndex:timeout");
-                SimplenoteDB._gotIndexChunk(undefined, false);
+                SimplenoteDB._gotIndexChunk("timeout", false);
             }
         };
 
@@ -325,8 +325,9 @@ var SimplenoteDB = {
                 delete data.source;
             }
 
-            SimplenoteLS.updateNote(note,source);
             SimplenoteLS.addToSyncList(note.key);
+            SimplenoteLS.updateNote(note,source);
+            
         }
 
         var callbacks = {
@@ -334,8 +335,8 @@ var SimplenoteDB = {
                 SimplenoteDB.offline(false);
                 // TODO: should not have to decrypt, since merging cant happen with cyphertext
                 //SimplenoteLS.updateNote(SimplenoteDB._decryptNote(note),"updateresponse");
-                SimplenoteLS.updateNote(note,"updateresponse");
                 SimplenoteLS.removeFromSyncList(note.key);
+                SimplenoteLS.updateNote(note,"updateresponse");
                 if (callback)
                     callback(note);
             },

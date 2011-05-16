@@ -98,7 +98,7 @@ function uiEventListener(eventData, sender, sendResponse) {
                 $("#sync").html("sync done");
             }
         } else if (eventData.status == "error") {
-            $("#sync").html("sync error");
+            $("#sync").html("sync error: " + eventData.errorstr);
         }
 
     } else if (eventData.name == "noteadded") {
@@ -108,7 +108,7 @@ function uiEventListener(eventData, sender, sendResponse) {
 //             SNEditor.setNote(eventData.note);
     } else if (eventData.name == "noteupdated") {
         log("EventListener:noteupdated, source=" + eventData.source + ", changed=[" + eventData.changes.changed.join(",") + "]");
-        
+        log("EventListener:noteupdated, syncNote=" + eventData.newnote._syncNote);
         var pinnedNowOn = eventData.changes.changed.indexOf("systemtags")>=0 && eventData.oldnote.systemtags.indexOf("pinned")<0 && eventData.newnote.systemtags.indexOf("pinned")>=0;
         var pinnedNowOff = eventData.changes.changed.indexOf("systemtags")>=0 && eventData.oldnote.systemtags.indexOf("pinned")>=0 && eventData.newnote.systemtags.indexOf("pinned")<0;
         var modifyChanged = eventData.changes.changed.indexOf("modifydate")>=0;
@@ -139,14 +139,15 @@ function uiEventListener(eventData, sender, sendResponse) {
             fillTags(true);
         } else if (modifyChanged || pinnedNowOn || pinnedNowOff) {
             indexAddNote("replace", eventData.newnote);
-            indexFillNote(eventData.newnote);
-            //slideInPosition(eventData.newnote, modifyChanged, pinnedNowOn, pinnedNowOff);
-            resort();
+            indexFillNote(eventData.newnote);            
+            resort(function() {                        
+                        $("abbr.notetime").timeago();
+                });            
         } else {
             indexAddNote("replace", eventData.newnote);
             indexFillNote(eventData.newnote);
         }
-
+        
         if (pinnedNowOn || pinnedNowOff) {
                 $('div.noterow#' + eventData.newnote.key + "pin").attr("class",eventData.newnote.systemtags.indexOf("pinned")>=0?"pinned":"unpinned");
                 snEditor.needCMRefresh("pinned");
@@ -179,6 +180,7 @@ function uiEventListener(eventData, sender, sendResponse) {
             $('div#' + eventData.removed + "heading").removeClass("syncnote");
             log("EventListener:synclistchanged, removed=" + eventData.removed);
         }
+        //log("length=" + $('div#' + eventData.removed + "heading").length)
     } else if (eventData.name == "notedeleted") {
         log("EventListener:notedeleted:" + eventData.key);
         $('div.noterow#' + eventData.key).remove();
@@ -289,7 +291,7 @@ function readyListener() {
 
     if (!background) {
         console.log("deferring listener a bit");        
-        setTimeout("readyListener()",500);
+        setTimeout("readyListener()",1000);
     }
 
     chrome.tabs.getCurrent(function(tab) {
@@ -625,8 +627,8 @@ function indexAddNote(mode, note){
 
     // get ui elements into variables
     var $noterow = $('div.noterow#' + note.key);
-    var $noteheading = $('div.noterow#' + note.key + "heading");
-    var $notetime = $("#" + note.key + "time");
+    var $noteheading = $('div.noteheading#' + note.key + "heading");
+    var $notetime = $("abbr.notetime#" + note.key + "time");
     var $notepin = $("div#" + note.key + "pin");
     var $notepublished = $("div#" + note.key + "published");
 
@@ -691,6 +693,8 @@ function indexAddNote(mode, note){
     // sync note
     if (note._syncNote)
         $noteheading.addClass("syncnote");
+    else
+        $noteheading.removeClass("syncnote");
 }
 
 /*

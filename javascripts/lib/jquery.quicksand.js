@@ -17,7 +17,7 @@ Github site: http://github.com/razorjack/quicksand
 */
 
 (function ($) {
-    $.fn.quicksand = function (collection, customOptions) {     
+    $.fn.quicksand = function (collection, customOptions, callbackFunction) {
         var options = {
             duration: 750,
             easing: 'swing',
@@ -35,8 +35,7 @@ Github site: http://github.com/razorjack/quicksand
             // Got IE and want scaling effect? Kiss my ass.
             options.useScaling = false;
         }
-        
-        var callbackFunction;
+                
         if (typeof(arguments[1]) == 'function') {
             var callbackFunction = arguments[1];
         } else if (typeof(arguments[2] == 'function')) {

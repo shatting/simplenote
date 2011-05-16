@@ -19,6 +19,14 @@ var SimplenoteLS = {
             logGeneral(s,"SimplenoteLS");
     },
 
+    addCustomFields: function(note) {
+        if (this.getSyncKeys().indexOf(note.key) >= 0)
+                note._syncNote = true;
+        else
+            delete note._syncNote;
+        return note;
+    },
+
     indexTime : function(newIndexTime) {
         if (newIndexTime) {
             log("indexTime:setting new indexTime:" + convertDate(newIndexTime) );
@@ -49,9 +57,9 @@ var SimplenoteLS = {
         keys.push(note.key);
 
         $.storage.set(this.keysKey,keys);
-        $.storage.set(note.key,note);
-
-        uiEvent("noteadded", {note:note});
+        $.storage.set(note.key,note);       
+            
+        uiEvent("noteadded", {note:this.addCustomFields(note)});
     },
 
     // source: local, getnote, updateresponse, index, cm
@@ -127,13 +135,13 @@ var SimplenoteLS = {
             this.log("updateNote: deleted: " + changed.deleted.join(", "));
 
         if (haveStored)
-            uiEvent("noteupdated", {newnote:inputNote, oldnote: storedNote, changes:changed, source:source});
+            uiEvent("noteupdated", {newnote:this.addCustomFields(inputNote), oldnote: storedNote, changes:changed, source:source});
 
         return changed;
     },
 
     getNote : function(key) {
-        return $.storage.get(key);
+        return this.addCustomFields($.storage.get(key));
     },
     /*
      *     options:
@@ -193,10 +201,8 @@ var SimplenoteLS = {
 
             add &= options.systemtag == undefined || note.systemtags.indexOf(options.systemtag)>=0;
 
-            if (add) {
-                if (syncKeys.indexOf(note.key) >= 0)
-                    note._syncNote = true;
-                notes.push(note);
+            if (add) {                
+                notes.push(this.addCustomFields(note));
             }
         }
 
