@@ -1,5 +1,4 @@
 var background;
-var popup = this;
 
 var isDebug = true && commonDebug;
 var isDebugToBg =  true && isDebug;
@@ -8,10 +7,11 @@ var isDebugToBg =  true && isDebug;
 var preLoadFactor = 1/4;
 var currentView = "index";
 var slideEasing = "swing"; // swing or linear
-var slideDuration = 300;
+var slideDuration = 200;
 var isTab = false;
 
 var snEditor;
+var snIndex;
 
 //  ---------------------------------------
 var fontUrls = {
@@ -82,31 +82,38 @@ function unloadListener() {
 // {name:"noteupdated", newnote:{note}, oldnote: {note}, changes:{hadChanges: false|true, added:[fields],changed:[fields], deleted:[fields]}}
 // {name:"offlinechanged", status:true|false}
 // {name:"synclistchanged", added|removed:key}
+var syncInProgress = false;
 function uiEventListener(eventData, sender, sendResponse) {
+    var eventName = eventData.name;
+//    if (syncInProgress && (eventName == "noteadded" || eventName == "noteupdated" || eventName == "notedeleted"))
+//            return;
 
-    if (eventData.name == "sync") {
+    if (eventName == "sync") {
 
         log("EventListener:sync:" + eventData.status + ", hadChanges=" + eventData.changes.hadchanges );
 
         if (eventData.status == "started") {
+            syncInProgress = true;
             $("#sync").html("syncing..");
         } else if (eventData.status == "done") {
+            syncInProgress = false;
             if (eventData.changes.hadchanges) {
                 fillTags(true);
-                $("#sync").html("sync done, had changes");
+                $("#sync").html("sync done, had remote changes.");
             } else {
                 $("#sync").html("sync done");
             }
         } else if (eventData.status == "error") {
+            syncInProgress = false;
             $("#sync").html("sync error: " + eventData.errorstr);
         }
 
-    } else if (eventData.name == "noteadded") {
-        log("EventListener:" + eventData.name);        
+    } else if (eventName == "noteadded") {
+        log("EventListener:" + eventName);
         fillTags(true);
 //        if (!eventData.note.key.match(/created/))
 //             SNEditor.setNote(eventData.note);
-    } else if (eventData.name == "noteupdated") {
+    } else if (eventName == "noteupdated") {
         log("EventListener:noteupdated, source=" + eventData.source + ", changed=[" + eventData.changes.changed.join(",") + "]");
         log("EventListener:noteupdated, syncNote=" + eventData.newnote._syncNote);
         var pinnedNowOn = eventData.changes.changed.indexOf("systemtags")>=0 && eventData.oldnote.systemtags.indexOf("pinned")<0 && eventData.newnote.systemtags.indexOf("pinned")>=0;
@@ -147,7 +154,8 @@ function uiEventListener(eventData, sender, sendResponse) {
                             else
                                  $('div#' + note.key + "heading").removeClass("syncnote");
                         });
-                        $("abbr.notetime").timeago();
+                        $("#"+note.key+"time").unbind();
+                        $("#"+note.key+"time").timeago();
                 });            
         } else {
             indexAddNote("replace", eventData.newnote);
@@ -155,8 +163,8 @@ function uiEventListener(eventData, sender, sendResponse) {
         }
         
         if (pinnedNowOn || pinnedNowOff) {
-                $('div.noterow#' + eventData.newnote.key + "pin").attr("class",eventData.newnote.systemtags.indexOf("pinned")>=0?"pinned":"unpinned");
-                snEditor.needCMRefresh("pinned");
+            $('div.noterow#' + eventData.newnote.key + "pin").attr("class",eventData.newnote.systemtags.indexOf("pinned")>=0?"pinned":"unpinned");
+            snEditor.needCMRefresh("pinned");
         }
         
         if (isTab) {
@@ -171,13 +179,13 @@ function uiEventListener(eventData, sender, sendResponse) {
                     snEditor.setNote(eventData.newnote);
             }
         }
-    } else if (eventData.name == "offlinechanged") {
+    } else if (eventName == "offlinechanged") {
         log("EventListener:offline:" + eventData.status);
         if (eventData.status)
             $("#offline").html("offline mode");
         else
             $("#offline").html("");
-    } else if (eventData.name == "synclistchanged") {
+    } else if (eventName == "synclistchanged") {
         if (eventData.added) {
             $('div#' + eventData.added + "heading").addClass("syncnote");
             log("EventListener:synclistchanged, added=" + eventData.added);
@@ -187,12 +195,13 @@ function uiEventListener(eventData, sender, sendResponse) {
             log("EventListener:synclistchanged, removed=" + eventData.removed);
         }
         //log("length=" + $('div#' + eventData.removed + "heading").length)
-    } else if (eventData.name == "notedeleted") {
+    } else if (eventName == "notedeleted") {
         log("EventListener:notedeleted:" + eventData.key);
         $('div.noterow#' + eventData.key).remove();
     } else {
-        log("EventListener:" + eventData.name);
+        log("EventListener:" + eventName);
     }
+    snEditor.hideIfNotInIndex();
 }
 
 function noteRowCurrentlyVisible(key) {
@@ -339,7 +348,6 @@ function readyListener() {
                     if (!directlyShowNote) {
                         $("body").css("width","400px");
                         $("body").css("height", "550px");
-                        //$("body").animate({height: "550px", duration:50});
                     } else {
                         $("body").css("width","800px");
                         $("body").css("height", "550px");
@@ -447,8 +455,8 @@ function readyListener() {
 //                                        $('div#slider').css("left", (left-22)+"px");
 //                                    }
 //                            });
-                            console.log(cssprop("div#note","left"))
-                            console.log($("div#index").css("right"))
+//                            console.log(cssprop("div#note","left"))
+//                            console.log($("div#index").css("right"))
                             $("div#index").css("width",cssprop("div#note","left")-4)
                         } else {
                             $("div#slider").hide();
