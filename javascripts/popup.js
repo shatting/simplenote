@@ -140,7 +140,13 @@ function uiEventListener(eventData, sender, sendResponse) {
         } else if (modifyChanged || pinnedNowOn || pinnedNowOff) {
             indexAddNote("replace", eventData.newnote);
             indexFillNote(eventData.newnote);            
-            resort(function() {                        
+            resort(function() {
+                        chrome.extension.sendRequest({action:"note", key:eventData.newnote.key}, function(note){
+                            if (note._syncNote)
+                                 $('div#' + note.key + "heading").addClass("syncnote");
+                            else
+                                 $('div#' + note.key + "heading").removeClass("syncnote");
+                        });
                         $("abbr.notetime").timeago();
                 });            
         } else {
