@@ -3,7 +3,7 @@
 // ------------------------------------------------------------------------------------------------
 
 // global debug switch
-var commonDebug = true;
+var commonDebug = false;
 
 function logGeneral(s,prefix,target) {
     if (!commonDebug)
@@ -326,7 +326,7 @@ function resort(callback) {
     var $filteredData = $("div.noterow").clone();
     
     var $sortedData = $filteredData.sorted({
-        reversed:localStorage.option_sortbydirection == 1,
+        reversed:localStorage.option_sortby=="alpha"?localStorage.option_sortbydirection != 1:localStorage.option_sortbydirection == 1,
         by: function(v) {
           return $(v).attr('sortkey');
         }

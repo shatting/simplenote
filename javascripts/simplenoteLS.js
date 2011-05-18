@@ -230,8 +230,8 @@ var SimplenoteLS = {
                 else if (!note2.content)
                     return -options.sortdirection;
                 
-                var c1 = note1.content.toLowerCase();
-                var c2 = note2.content.toLowerCase();
+                var c1 = note1.content.trim().toLowerCase();
+                var c2 = note2.content.trim().toLowerCase();
 
                 if (c1 < c2)
                     return -options.sortdirection;

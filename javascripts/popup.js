@@ -651,7 +651,7 @@ function indexAddNote(mode, note){
     } else if (localStorage.option_sortby == "modifydate") {
         $noterow.attr("sortkey",note.modifydate);
     } else
-        $noterow.attr("sortkey",note.content?note.content.substring(0,50):"");
+        $noterow.attr("sortkey",note.content?note.content.trim().substring(0,30).toLowerCase():"");
     
     $noterow.attr("pinned",note.systemtags.indexOf("pinned")>=0?"true":"false");
     $noterow.attr("shared",note.systemtags.indexOf("shared")>=0?"true":"false");
