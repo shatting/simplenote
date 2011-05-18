@@ -146,17 +146,29 @@ function uiEventListener(eventData, sender, sendResponse) {
             fillTags(true);
         } else if (modifyChanged || pinnedNowOn || pinnedNowOff) {
             indexAddNote("replace", eventData.newnote);
-            indexFillNote(eventData.newnote);            
-            resort(function() {
-                        chrome.extension.sendRequest({action:"note", key:eventData.newnote.key}, function(note){
-                            if (note._syncNote)
-                                 $('div#' + note.key + "heading").addClass("syncnote");
-                            else
-                                 $('div#' + note.key + "heading").removeClass("syncnote");
-                        });
-                        $("#"+note.key+"time").unbind();
-                        $("#"+note.key+"time").timeago();
-                });            
+            indexFillNote(eventData.newnote);
+            if ($("#" + eventData.newnote.key).index()>0) {
+                fillTags(true);
+//                if (!isInView($('#' + note.key))) {
+//                    log("scrolling to note")
+//                    $('#notes').scrollTo($('#' + note.key),{duration:250})
+//                }
+            }
+//                resort(function() {
+//                            chrome.extension.sendRequest({action:"note", key:eventData.newnote.key}, function(note){
+//                                if (note._syncNote)
+//                                     $('div#' + note.key + "heading").addClass("syncnote");
+//                                else
+//                                     $('div#' + note.key + "heading").removeClass("syncnote");
+//                                $("#"+note.key+"time").unbind();
+//                                $("#"+note.key+"time").timeago();
+//                                if (!isInView($('#' + note.key))) {
+//                                    log("scrolling to note")
+//                                    $('#notes').scrollTo($('#' + note.key),{duration:250})
+//                                }
+//                            });
+//
+//                    });
         } else {
             indexAddNote("replace", eventData.newnote);
             indexFillNote(eventData.newnote);
@@ -936,8 +948,8 @@ function SNEditor() {
                     tabMode: "shift",
                     indentUnit: 4,
                     enterMode: "keep",
-                    electricChars : false,
-                    onChange: function() {if(isTab) that.saveNote();}
+                    electricChars : false
+                   // onChange: function() {if(isTab) that.saveNote();}
                 });
 
     // set ids for important nodes
@@ -948,7 +960,7 @@ function SNEditor() {
     $("#cmwrapper").css("height","");
     $("#cmiframe").attr("tabindex","7");
 
-    this.dirty={content: false, tags: false, pinned: false};
+    this.dirty={content: false, tags: false, pinned: false};    
 }
 //  ---------------------------------------
 SNEditor.prototype.setFont = function() {
@@ -1013,12 +1025,13 @@ SNEditor.prototype.initialize = function() {
 
 
     // add note content change (dirty) event listeners
-    if (!isTab)
-        $editbox.unbind();
-
+    
+    $editbox.unbind();
     $editbox.bind('change keyup paste cut', function(event) {
         that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);        
     });
+
+    this.typeWatchInit($editbox);
 
     // fix for home not scrolling all to the left
     $editbox.keydown(shorcuts);
@@ -1537,6 +1550,54 @@ SNEditor.prototype.trashNote = function() {
             });
 }
 
+SNEditor.prototype.typeWatchInit = function($editorelm) {
+
+    if (!isTab)
+        return;
+
+    var that = this;
+
+    function checkElement(timer) {
+            var elTxt = that.codeMirror.getCode();
+
+            // Fire if text > options.captureLength AND text != saved txt OR if override AND text > options.captureLength
+            if (elTxt != timer.text)  {
+                    timer.text = elTxt;
+                    that.saveNote();
+            }
+    };
+		
+    function watchElement($elm) {
+            // Allocate timer element
+            var timer = {
+                    timer : null,
+                    text : that.codeMirror.getCode(),
+                    wait : 800
+            };
+
+            // Key watcher / clear and reset the timer
+            var startWatch = function(evt) {
+                    var timerWait = timer.wait;
+
+                    var timerCallbackFx = function()
+                    {
+                            checkElement(timer)
+                    }
+
+                    // Clear timer
+                    clearTimeout(timer.timer);
+                    timer.timer = setTimeout(timerCallbackFx, timerWait);
+
+            };
+
+            $elm.keydown(startWatch);
+            
+    };
+
+    watchElement($editorelm);
+
+}
+
 //  ---------------------------------------
 // from inview.js
 function getViewportSize() {
@@ -1618,4 +1679,27 @@ function checkInView() {
             }
         }
     }
+}
+
+function isInView($noterow) {
+    $notes = $("#notes");
+    viewportSize   = {height: $notes.height(), width:$notes.width()};
+    viewportOffset = {top: $notes.scrollTop(), left:$notes.scrollLeft()};
+    
+    elementSize   = {
+        height: $noterow.height(),
+        width: $noterow.width()
+    },
+    elementOffset = $noterow.offset();
+
+    //log("checkInView:elementSize=[" + elementSize.height + "," + elementSize.width + "], elementOffset=[" + elementOffset.left + "," + elementOffset.top + "]");
+
+    return elementOffset.top <= viewportOffset.top + viewportSize.height*(1 + preLoadFactor) &&
+        elementOffset.left + elementSize.width >= viewportOffset.left &&
+        elementOffset.left <= viewportOffset.left + viewportSize.width;
+
+//            console.log(i + ": loaded " + loaded + ", inview=" + inview);
+//            console.log(elementOffset);
+//            console.log(elementOffset);
+
 }

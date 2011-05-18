@@ -331,13 +331,15 @@ function resort(callback) {
           return $(v).attr('sortkey');
         }
       });
-    
+
+
+    $("#notes").css("height",$("#notes").height());
     // finally, call quicksand
     $("#notes").quicksand($sortedData, {
       duration: 500,
       attribute: "id",
       adjustHeight: false,
-      dy: -18,
+      //dy: -18,
       enhancement: function(e) { $(e).css("height","auto"); $(e).find("abbr.notetime").timeago();}
     }, callback);
 }
