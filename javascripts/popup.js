@@ -9,7 +9,7 @@ var currentView = "index";
 var slideEasing = "swing"; // swing or linear
 var slideDuration = 200;
 var isTab = false;
-
+var editorSaveTime = 3000;
 var snEditor;
 var snIndex;
 
@@ -181,15 +181,14 @@ function uiEventListener(eventData, sender, sendResponse) {
         
         if (isTab) {
             if ((pinnedNowOn || pinnedNowOff) && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key)
-                $("div#note input#pinned").attr("checked",(eventData.newnote.systemtags.indexOf("pinned")>=0));
+                $("div#note input#pinned").attr("checked",(eventData.newnote.systemtags.indexOf("pinned")>=0));            
+        }
+        if (eventData.source != "local" && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key) {
 
-            if (eventData.source != "local" && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key) {
-
-                var contentChanged = eventData.changes.changed.indexOf("content")>=0;
+                var contentChanged = eventData.changes.added.indexOf("content")>=0;
                 var tagsChanged = eventData.changes.changed.indexOf("tags")>=0;
                 if ( pinnedNowOn || pinnedNowOff || contentChanged || tagsChanged )
                     snEditor.setNote(eventData.newnote);
-            }
         }
     } else if (eventName == "offlinechanged") {
         log("EventListener:offline:" + eventData.status);
@@ -906,8 +905,8 @@ function slideEditor(callback, duration) {
         duration = slideDuration;
     $("#note").show();
     if (!isTab) {
-        $('div#index').animate({left:"-=400"}, {duration: duration, complete: callback, easing: slideEasing});
-        $('div#note').animate({left:"-=400"}, {duration: duration, complete: function() {$("#index").hide();if (callback) callback();},easing: slideEasing});
+        $('div#index').animate({left:"-400px"}, {duration: duration, complete: callback, easing: slideEasing});
+        $('div#note').animate({left:"2px"}, {duration: duration, complete: function() {$("#index").hide();if (callback) callback();},easing: slideEasing});
         $('body').animate({width:"800px"}, {duration: duration, easing: slideEasing});
     } else
         if (callback) callback();
@@ -923,8 +922,8 @@ function slideIndex(callback, duration) {
     snEditor.clearDirty();
     $("#index").show();
     if (!isTab) {
-        $('div#index').animate({left:"+=400"}, {duration: duration, complete: callback, easing: slideEasing});
-        $('div#note').animate({left:"+=400"}, {duration:duration, complete: function() {$("#note").hide();}, easing: slideEasing});
+        $('div#index').animate({left:"2px"}, {duration: duration, complete: callback, easing: slideEasing});
+        $('div#note').animate({left:"400px"}, {duration:duration, complete: function() {$("#note").hide();}, easing: slideEasing});
         $('body').animate({width : "400px"}, {duration:duration, easing: slideEasing});
     }
     currentView = "index";
@@ -1185,7 +1184,7 @@ SNEditor.prototype.initialize = function() {
                 log("typewatch: tags changed");
                 that.saveNote();
             },
-            wait : 800,
+            wait : editorSaveTime,
             highlight : false,
             captureLength : -1 // needed for empty string ('') capture
         };
@@ -1572,7 +1571,7 @@ SNEditor.prototype.typeWatchInit = function($editorelm) {
             var timer = {
                     timer : null,
                     text : that.codeMirror.getCode(),
-                    wait : 800
+                    wait : editorSaveTime
             };
 
             // Key watcher / clear and reset the timer

@@ -261,19 +261,19 @@ var SimplenoteCM = {
             title = getNoteHeading(localStorage.lastopennote_key,25);
             this.append_root = new CMitem({title:"Append to " + title + "", contexts:["selection","page","image","link"]});
 
-            new CMitem({title:"..selection", contexts:["selection"], onclick: function(info, tab){
+            new CMitem({title:"..using selection", contexts:["selection"], onclick: function(info, tab){
                     _gaq.push(['_trackEvent', 'ContextMenu', 'append_selection']);
                     SimplenoteCM.appendToNoteFromBG(info.selectionText + "\n" + "[Source: " + tab.url + "]", localStorage.lastopennote_key);
                 }}, this.append_root);
-            new CMitem({title:"..page url", contexts:["page"], onclick: function(info, tab){
+            new CMitem({title:"..using page url", contexts:["page"], onclick: function(info, tab){
                     _gaq.push(['_trackEvent', 'ContextMenu', 'append_url']);
                     SimplenoteCM.appendToNoteFromBG(info.pageUrl, localStorage.lastopennote_key);
                 }}, this.append_root);
-            new CMitem({title:"..link url", contexts:["link"],  onclick: function(info, tab){
+            new CMitem({title:"..using link url", contexts:["link"],  onclick: function(info, tab){
                     _gaq.push(['_trackEvent', 'ContextMenu', 'append_link_url']);
                     SimplenoteCM.appendToNoteFromBG(info.linkUr, localStorage.lastopennote_key);
                 }}, this.append_root);
-            new CMitem({title:"..image url", contexts:["image"], onclick: function(info, tab){
+            new CMitem({title:"..using image url", contexts:["image"], onclick: function(info, tab){
                     _gaq.push(['_trackEvent', 'ContextMenu', 'append_image_url']);
                     SimplenoteCM.appendToNoteFromBG(info.srcUrl, localStorage.lastopennote_key);
                 }}, this.append_root);
@@ -288,19 +288,19 @@ var SimplenoteCM = {
                     title = getNoteHeading(note.key,25);
                     var pinnedCM = new CMitem({title:title, contexts:["all"]}, SimplenoteCM.append_pinned_root);
 
-                    new CMitem({title:"..selection", contexts:["selection"], onclick: function(info, tab){
+                    new CMitem({title:"..using selection", contexts:["selection"], onclick: function(info, tab){
                             _gaq.push(['_trackEvent', 'ContextMenu', 'append_selection']);
                             SimplenoteCM.appendToNoteFromBG(info.selectionText + "\n" + "[Source: " + tab.url + "]", note.key, true);
                         }}, pinnedCM);
-                    new CMitem({title:"..page url", contexts:["page"], onclick: function(info, tab){
+                    new CMitem({title:"..using page url", contexts:["page"], onclick: function(info, tab){
                             _gaq.push(['_trackEvent', 'ContextMenu', 'append_url']);
                             SimplenoteCM.appendToNoteFromBG(info.pageUrl, note.key, true);
                         }}, pinnedCM);
-                    new CMitem({title:"..link url", contexts:["link"],  onclick: function(info, tab){
+                    new CMitem({title:"..using link url", contexts:["link"],  onclick: function(info, tab){
                             _gaq.push(['_trackEvent', 'ContextMenu', 'append_link_url']);
                             SimplenoteCM.appendToNoteFromBG(info.linkUr, note.key, true);
                         }}, pinnedCM);
-                    new CMitem({title:"..image url", contexts:["image"], onclick: function(info, tab){
+                    new CMitem({title:"..using image url", contexts:["image"], onclick: function(info, tab){
                             _gaq.push(['_trackEvent', 'ContextMenu', 'append_image_url']);
                             SimplenoteCM.appendToNoteFromBG(info.srcUrl, note.key, true);
                         }}, pinnedCM);
