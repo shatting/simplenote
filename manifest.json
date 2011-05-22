@@ -2,6 +2,7 @@
   "name": "Syncpad for Simplenote",
   "version": "1.6.7",
   "description": "No-hassle note taking. Cloud-aware, offline-capable. Access your notes from every computer and phone you use.",
+  "default_locale": "en",
   "icons": {
     "96": "imanges/icon_96.png",
     "128": "images/icon_128.png",

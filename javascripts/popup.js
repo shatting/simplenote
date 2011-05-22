@@ -94,18 +94,18 @@ function uiEventListener(eventData, sender, sendResponse) {
 
         if (eventData.status == "started") {
             syncInProgress = true;
-            $("#sync").html("syncing..");
+            $("#sync").html(chrome.i18n.getMessage("sync_in_progress"));
         } else if (eventData.status == "done") {
             syncInProgress = false;
             if (eventData.changes.hadchanges) {
                 fillTags(true);
-                $("#sync").html("sync done, had remote changes.");
+                $("#sync").html(chrome.i18n.getMessage("sync_done_had_changes"));
             } else {
-                $("#sync").html("sync done");
+                $("#sync").html(chrome.i18n.getMessage("sync_done"));
             }
         } else if (eventData.status == "error") {
             syncInProgress = false;
-            $("#sync").html("sync error: " + eventData.errorstr);
+            $("#sync").html(chrome.i18n.getMessage("sync_error")+ ": " + eventData.errorstr);
         }
 
     } else if (eventName == "noteadded") {
@@ -321,7 +321,7 @@ function readyListener() {
         console.log("deferring listener a bit");        
         setTimeout("readyListener()",1000);
     }
-
+    
     chrome.tabs.getCurrent(function(tab) {
             if (tab) {
                 log("---------------- tab opened ---------------------");
@@ -346,17 +346,17 @@ function readyListener() {
 
             }
 
-            var signUpLink =  "<a href='https://simple-note.appspot.com/create/'>signup</a>";
-            var optionsLink = "<a href='options.html'>options page</a>";
+            var signUpLink =  "<a href='https://simple-note.appspot.com/create/'>" + chrome.i18n.getMessage("signup") + "</a>";
+            var optionsLink = "<a href='options.html'>" + chrome.i18n.getMessage("options_page") + "</a>";
 
             if ( !localStorage.option_email || !localStorage.option_password) {
                 $("body").css("width", "400px");
-                $("body").css("height", "550px");
-                var message = "Please " + signUpLink + " for a Simplenote account and/or enter your credentials on the " + optionsLink + ".";
-                displayStatusMessage(message);
+                $("body").css("height", "550px");                
+                displayStatusMessage(chrome.i18n.getMessage("welcometext", [signUpLink, optionsLink]));
                 _gaq.push(['_trackEvent', 'popup', 'ready', 'displayWelcomeMessage']);
             } else {
                 var directlyShowNote = localStorage.lastopennote_key != undefined && localStorage.lastopennote_key != "" && localStorage.lastopennote_open == "true" && localStorage.option_opentonote == "true";
+
                 if (!isTab) {
                     if (!directlyShowNote) {
                         $("body").css("width","400px");
@@ -366,6 +366,8 @@ function readyListener() {
                         $("body").css("height", "550px");
                     }
                 }
+                popupi18n();
+
                 chrome.extension.sendRequest({action : "login"}, function(result) {
                     if (result.success) {
                         _gaq.push(['_trackEvent', 'popup', 'ready', 'login_success']);
@@ -429,17 +431,17 @@ function readyListener() {
                             prefixFromNow: null,
                             suffixAgo: "",
                             suffixFromNow: "from now",
-                            seconds: "<1 min",
-                            minute: "1 min",
-                            minutes: "%d min",
-                            hour: "1 h",
-                            hours: "%d h",
-                            day: "1 d",
-                            days: "%d d",
-                            month: "1 month",
-                            months: "%d months",
-                            year: "1 year",
-                            years: "%d years",
+                            seconds:    chrome.i18n.getMessage("seconds"),
+                            minute:     chrome.i18n.getMessage("minute"),
+                            minutes:    chrome.i18n.getMessage("minutes"),
+                            hour:       chrome.i18n.getMessage("hour"),
+                            hours:      chrome.i18n.getMessage("hours"),
+                            day:        chrome.i18n.getMessage("day"),
+                            days:       chrome.i18n.getMessage("days"),
+                            month:      chrome.i18n.getMessage("month"),
+                            months:     chrome.i18n.getMessage("months"),
+                            year:       chrome.i18n.getMessage("year"),
+                            years:      chrome.i18n.getMessage("years"),
                             numbers: []
                         }
 
@@ -490,7 +492,28 @@ function readyListener() {
         });
 }
 
+function popupi18n() {
+    $("#q").attr("placeholder",chrome.i18n.getMessage("search_placeholder"));
+    $("#q").attr("title",chrome.i18n.getMessage("search_tooltip","alt-q"));
+    $("#notetags").attr("title",chrome.i18n.getMessage("tagselect_tooltip","alt-n"));
+    $("#add").attr("title",chrome.i18n.getMessage("add_tooltip","alt-a"));    
+    $("#sync").attr("title",chrome.i18n.getMessage("sync_tooltip"));
+    $("#tags").attr("placeholder",chrome.i18n.getMessage("tag_placeholder"));
+    $("#tags").attr("title",chrome.i18n.getMessage("tag_tooltip",["alt-t", "alt-e"]));
+    $("#pinwrapper").attr("title",chrome.i18n.getMessage("pin_tooltip","alt-p"));
+    $("#pinwrapper>label").html(chrome.i18n.getMessage("pin"));
+    $("#popout").attr("title",chrome.i18n.getMessage("popout_tooltip","alt-o"));
+    $("#popout").attr("value",chrome.i18n.getMessage("popout"));
+    $("#backtoindex").attr("title",chrome.i18n.getMessage("backtoindex_tooltip",["alt-b","alt-x"]));
+    $("#backtoindex").attr("value",chrome.i18n.getMessage("backtoindex"));
+    $("#wordwrapwrapper").attr("title",chrome.i18n.getMessage("wordwrap_tooltip","alt-w"));
+    $("#wordwrapwrapper>label").html(chrome.i18n.getMessage("wordwrap"));    
+    $("#undo").attr("title",chrome.i18n.getMessage("revert_tooltip","alt-r"));
+    $("#undo").attr("value",chrome.i18n.getMessage("revert"));
+    $("#print").attr("title",chrome.i18n.getMessage("print_tooltip"));
+    $("#print").attr("value",chrome.i18n.getMessage("print"));        
 
+}
 /*
  * Displays a status message.
  * @param message The HTML content of the status message to display. All links
@@ -525,11 +548,11 @@ function fillTags(callFillIndex) {
         $.each(taginfos,function(i,taginfo) {
             style = taginfo.count > 0?"":'style="color:#aaa"';
             if (taginfo.tag == "#all#")
-                $("#notetags").append('<option value="" ' + style +  '>(all) [' + taginfo.count + ']</option>');
+                $("#notetags").append('<option value="" ' + style +  '>' + chrome.i18n.getMessage("tags_all") + ' [' + taginfo.count + ']</option>');
             else if (taginfo.tag == "#notag#")
-                $("#notetags").append('<option value="#notag#" ' + style +  '>(untagged) [' + taginfo.count + ']</option>');
+                $("#notetags").append('<option value="#notag#" ' + style +  '>' + chrome.i18n.getMessage("tags_untagged") + ' [' + taginfo.count + ']</option>');
             else if (taginfo.tag == "#trash#")
-                $("#notetags").append('<option value="#trash#" ' + style +  '>(deleted) [' + taginfo.count + ']</option>');
+                $("#notetags").append('<option value="#trash#" ' + style +  '>' + chrome.i18n.getMessage("tags_deleted") + ' [' + taginfo.count + ']</option>');
             else
                 $("#notetags").append('<option value="' + taginfo.tag + '" ' + style +  '>' + taginfo.tag + " [" + taginfo.count + "] </option>");
 
@@ -579,7 +602,7 @@ function fillIndex() {
             }
             checkInView();
         } else
-            $('div#index div#notes').html("<div id='nonotes'>no notes found.</div>");
+            $('div#index div#notes').html("<div id='nonotes'>" + chrome.i18n.getMessage("no_notes_to_show") + "</div>");
 
         $('div#notes').scrollTop(0);
         $('div#notes').scroll(checkInView);
@@ -606,10 +629,10 @@ function indexAddNote(mode, note){
     if (localStorage.option_showdate == "true") {
         if (localStorage.option_sortby == "createdate") {
             date = convertDate(note.createdate);
-            prefix = "created: ";
+            prefix = chrome.i18n.getMessage("created");
         } else {
             date = convertDate(note.modifydate);
-            prefix = "modified: ";
+            prefix = chrome.i18n.getMessage("modified");;
         }
 
         html+=      "<abbr class='notetime' id='" + note.key + "time' title='" + ISODateString(date) + "'>" + prefix + localeDateString(date) + "</abbr>";
@@ -617,7 +640,7 @@ function indexAddNote(mode, note){
     // pin/shared/published
     //if (note.deleted == 0) {
         html+=      "<div class='" + (note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + "' id='" + note.key + "pin'>&nbsp;</div>";
-        html+=      "<div title='Click to view published version of this note' class='" + (note.publishkey != undefined?"published":"unpublished") + "' id='" + note.key + "published'>&nbsp;</div>";
+        html+=      "<div title='" + chrome.i18n.getMessage("published_tooltip") + "' class='" + (note.publishkey != undefined?"published":"unpublished") + "' id='" + note.key + "published'>&nbsp;</div>";
 
         if (note.systemtags.indexOf("shared") >= 0) {
 
@@ -628,9 +651,9 @@ function indexAddNote(mode, note){
                 }
             });
             if (shareds.length > 0)
-                html+= "<div class='shared' id='" + note.key + "shared' title='You shared this note with " + shareds.join(", ") + "'>&nbsp;</div>";
+                html+= "<div class='shared' id='" + note.key + "shared' title='" + chrome.i18n.getMessage("sharer_tooltip") + " " + shareds.join(", ") + "'>&nbsp;</div>";
             else
-                html+= "<div class='shared' id='" + note.key + "shared' title='Someone shared this note with you'>&nbsp;</div>";
+                html+= "<div class='shared' id='" + note.key + "shared' title='" + chrome.i18n.getMessage("sharee_tooltip") + "'>&nbsp;</div>";
         }
     //} else {
 
@@ -677,11 +700,11 @@ function indexAddNote(mode, note){
 
     // deleted note
     if (note.deleted == 1) {
-        $noterow.attr("title", "Click to undelete");
+        $noterow.attr("title", chrome.i18n.getMessage("click_to_undelete"));
         return;
     }
 
-    $notepin.attr("title","Click to pin/unpin");
+    $notepin.attr("title",chrome.i18n.getMessage("click_to_pinunpin"));
 
     // bind pinned klick
     $("#"+note.key+"pin").die();
@@ -796,7 +819,7 @@ function indexFillNoteReqComplete(note) {
                 snEditor.setNote(event.data);
             });
         } else {
-            $noterow.attr("title", "Click to undelete");
+            $noterow.attr("title", chrome.i18n.getMessage("click_to_undelete"));
             $("div.noterow#"+note.key).die();
             $("div.noterow#"+note.key).live("click",note.key,function(event) {
                 chrome.extension.sendRequest({action : "update", key : event.data, deleted : 0});
@@ -1175,8 +1198,8 @@ SNEditor.prototype.initialize = function() {
     else {
         $('div#note input#popout').hide();
         $('div#note input#undo').hide();
-        $('div#note input#backtoindex').attr("value","Close Tab");
-        $('div#note input#backtoindex').attr("title","Close the Tab (alt-b or alt-x)");
+        $('div#note input#backtoindex').attr("value",chrome.i18n.getMessage("close_tab"));
+        $('div#note input#backtoindex').attr("title",chrome.i18n.getMessage("close_tab_tooltip",["alt-b","alt-x"]));
         $('div#note input#backtoindex').unbind();
         $('div#note input#backtoindex').click(function(event) {
             window.close();
@@ -1374,19 +1397,17 @@ SNEditor.prototype.setNote = function(note, options) {
     // get note contents
     if (note.key == "") { // new note
 
-        // delete button now cancel button
-        $('div#note input#destroy').val("Cancel");
-        $('div#note input#destroy').attr("title","Dont save note, return to notes (ctrl-alt-c)");
-
-        // hide undo
+        // delete button now cancel button        
+        $("#destroy").attr("title",chrome.i18n.getMessage("cancel_tooltip","ctrl-alt-c"));
+        $("#destroy").attr("value",chrome.i18n.getMessage("cancel"));
+        
         $('div#note input#undo').hide();
-
         $('div#note input#popout').hide();
 
     } else { // existing note
         // delete button now delete button
-        $('div#note input#destroy').val("Trash");
-        $('div#note input#destroy').attr("title","Send note to trash (ctrl-alt-d)");
+        $("#destroy").attr("title",chrome.i18n.getMessage("trash_tooltip","ctrl-alt-d"));
+        $("#destroy").attr("value",chrome.i18n.getMessage("trash"));
 
         // show undo
         if (!isTab) {
