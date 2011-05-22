@@ -336,11 +336,7 @@ div#note input[type=button] {
     margin: 4px;
 }
 
-div#note input#destroy, div#note input#undo {
-  float: right;
-}
-
-div#note input#backtoindex {
+div#note input {
   float: right;
 }
 
@@ -372,9 +368,13 @@ div#note input#tags:focus {
 }
 #popout {
     position: absolute;
-    right: 290px;
+    right: 310px;
 }
 
+#print {
+    position: absolute;
+    right: 280px;
+}
 
 #pinwrapper, #wordwrapwrapper, #encryptwrapper {
     padding: 5px;

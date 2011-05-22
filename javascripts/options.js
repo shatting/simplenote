@@ -2,34 +2,20 @@ $(document).ready(function() {
 
   $("#email").val(localStorage.option_email);
   $("#password").val(localStorage.option_password);
-  if (localStorage.option_abstractlines == undefined)
-    $("#abstractlines").val("3");
-  else
-    $("#abstractlines").val(localStorage.option_abstractlines);
-
-  if (localStorage.option_opentonote == undefined || localStorage.option_opentonote == "true")
-    $("#opentonote").attr("checked","true");
-
-  if (localStorage.option_remembercaret == undefined || localStorage.option_remembercaret == "true")
-    $("#remembercaret").attr("checked","true");
-
-  if (localStorage.option_contextmenu == undefined || localStorage.option_contextmenu == "true")
-    $("#contextmenu").attr("checked","true");
-
-  if (localStorage.option_alwaystab != undefined && localStorage.option_alwaystab == "true")
-    $("#alwaystab").attr("checked","true");
-
-  if (localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true")
-    $("#pinnedtab").attr("checked","true");
-
-  if (localStorage.option_showdate== undefined || localStorage.option_showdate == "true")
-    $("#showdate").attr("checked","true");
-
+  
+  $("#abstractlines").val(localStorage.option_abstractlines == undefined?"3":localStorage.option_abstractlines);
+  
+  setCBval("#opentonote", localStorage.option_opentonote == undefined || localStorage.option_opentonote == "true");    
+  setCBval("#remembercaret", localStorage.option_remembercaret == undefined || localStorage.option_remembercaret == "true");
+  setCBval("#contextmenu", localStorage.option_contextmenu == undefined || localStorage.option_contextmenu == "true");
+  setCBval("#alwaystab", localStorage.option_alwaystab != undefined && localStorage.option_alwaystab == "true");
+  setCBval("#pinnedtab", localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true");
+  setCBval("#showdate", localStorage.option_showdate == undefined || localStorage.option_showdate == "true");
+    
   if (localStorage.option_sortby != undefined)
       $("#sort").val(localStorage.option_sortby);
 
-  if (localStorage.option_sortbydirection != undefined)
-      $("#sortdirection").attr("checked",localStorage.option_sortbydirection==-1?"true":"");
+  setCBval("#sortdirection", localStorage.option_sortbydirection != undefined && localStorage.option_sortbydirection==-1);
 
   if (localStorage.option_editorfont != undefined) {
       $("#editorfont").val(localStorage.option_editorfont);
@@ -38,8 +24,7 @@ $(document).ready(function() {
       $("#editorfontsize").val(localStorage.option_editorfontsize);
   }
 
-  if (localStorage.option_editorfontshadow != undefined && localStorage.option_editorfontshadow == "true")
-    $("#editorfontshadow").attr("checked","true");
+  setCBval("#editorfontshadow", localStorage.option_editorfontshadow != undefined && localStorage.option_editorfontshadow == "true");
 
 //  if (localStorage.option_aes_enable!= undefined && localStorage.option_aes_enable == "true")
 //      $("#aes_enable").attr("checked","true");
@@ -92,7 +77,6 @@ $(document).ready(function() {
 
 /*
  * Saves options to localStorage.
- * @param ms Milliseconds to fade in the status message.
  */
 function save_options() {
 
@@ -101,35 +85,38 @@ function save_options() {
 
   // open to note
   // clear key
-  if ((localStorage.option_opentonote=="true") != $('#opentonote').attr("checked"))
+  if ((localStorage.option_opentonote == "true") != getCBval('#opentonote'))
     localStorage.lastopennote_open = "false";
-  localStorage.option_opentonote  = $('#opentonote').attr("checked");
+  localStorage.option_opentonote = getCBval('#opentonote');
 
   // editor caret
   // clear carets
-  if ((localStorage.option_remembercaret=="true") != $('#remembercaret').attr("checked")) {
+  if ((localStorage.option_remembercaret=="true") != getCBval('#remembercaret')) {
       for (var key in localStorage)
           if (key.match(/_caret$/))
               delete localStorage[key];
   }
-  localStorage.option_remembercaret = $('#remembercaret').attr("checked");
+  localStorage.option_remembercaret = getCBval('#remembercaret');
 
   // context menu
-  if ((localStorage.option_contextmenu=="true") != $('#contextmenu').attr("checked")) {
-      chrome.extension.sendRequest({action:"cm_populate",on:$('#contextmenu').attr("checked")});
+  if ((localStorage.option_contextmenu=="true") != getCBval('#contextmenu')) {
+      chrome.extension.sendRequest({action:"cm_populate",on:getCBval('#contextmenu')});
   }
-  localStorage.option_contextmenu = $('#contextmenu').attr("checked");
+  localStorage.option_contextmenu = getCBval('#contextmenu');
 
-  localStorage.option_alwaystab = $('#alwaystab').attr("checked");
-  localStorage.option_pinnedtab = $('#pinnedtab').attr("checked");
-  var bg = chrome.extension.getBackgroundPage();
-  if (bg && bg.popouttab) {      
-    chrome.tabs.update(bg.popouttab.id, {pinned:$('#pinnedtab').attr("checked")});
+  localStorage.option_alwaystab = getCBval('#alwaystab');
+
+  if ((localStorage.option_pinnedtab == "true") != getCBval('#pinnedtab')) {
+      var bg = chrome.extension.getBackgroundPage();
+      if (bg && bg.popouttab) {
+        chrome.tabs.update(bg.popouttab.id, {pinned:getCBval('#pinnedtab')});
+      }
   }
+  localStorage.option_pinnedtab = getCBval('#pinnedtab');
 
-  localStorage.option_showdate  = $('#showdate').attr("checked");
+  localStorage.option_showdate  = getCBval('#showdate');
   localStorage.option_sortby = $("#sort").val();
-  localStorage.option_sortbydirection = $("#sortdirection").attr("checked")?-1:1;
+  localStorage.option_sortbydirection = getCBval("#sortdirection")?-1:1;
   localStorage.option_editorfont = $("#editorfont").val();
   localStorage.option_editorfontsize = $("#editorfontsize").val();
   // font stuff
@@ -153,7 +140,7 @@ function save_options() {
   }
 
   // font shadow
-  localStorage.option_editorfontshadow  = $('#editorfontshadow').attr("checked");
+  localStorage.option_editorfontshadow  = getCBval('#editorfontshadow');
 
   localStorage.option_color_index = $('#color_index').val();
   localStorage.option_color_editor = $('#color_editor').val();

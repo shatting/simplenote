@@ -3,7 +3,7 @@
 // ------------------------------------------------------------------------------------------------
 
 // global debug switch
-var commonDebug = true;
+var commonDebug = false;
 
 function logGeneral(s,prefix,target) {
     if (!commonDebug)
@@ -373,3 +373,22 @@ function resort(callback) {
     return $(arr);
   };
 })(jQuery);
+
+function getCBval(sel) {
+    return $(sel).attr("checked") == "checked";
+}
+
+function setCBval(sel, bool) {
+    if (bool == "true")
+        bool = true;
+    else if (bool == "false")
+        bool = false;
+        
+    if (typeof bool != "boolean")
+        throw "setCBval wants booleans or 'true', 'false'"
+
+    if (bool)
+        $(sel).attr("checked","checked");
+    else
+        $(sel).removeAttr("checked");
+}

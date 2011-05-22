@@ -45,7 +45,7 @@ function unloadListener() {
         if (snEditor.dirty.pinned) {
             snEditor.needCMRefresh("pinned");
             note.systemtags = snEditor.note.systemtags;
-            if (!$('div#note input#pinned').attr("checked")) {
+            if (!getCBval('div#note input#pinned')) {
                 note.systemtags.splice(note.systemtags.indexOf("pinned"),1);
             } else {
                 note.systemtags.push("pinned");
@@ -147,7 +147,7 @@ function uiEventListener(eventData, sender, sendResponse) {
         } else if (modifyChanged || pinnedNowOn || pinnedNowOff) {
             indexAddNote("replace", eventData.newnote);
             indexFillNote(eventData.newnote);
-            if ($("#" + eventData.newnote.key).index()>0) {
+            if ($("#" + eventData.newnote.key).index()>0 || pinnedNowOff) {
                 fillTags(true);
 //                if (!isInView($('#' + note.key))) {
 //                    log("scrolling to note")
@@ -181,7 +181,7 @@ function uiEventListener(eventData, sender, sendResponse) {
         
         if (isTab) {
             if ((pinnedNowOn || pinnedNowOff) && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key)
-                $("div#note input#pinned").attr("checked",(eventData.newnote.systemtags.indexOf("pinned")>=0));            
+                setCBval("div#note input#pinned", eventData.newnote.systemtags.indexOf("pinned")>=0);
         }
         if (eventData.source != "local" && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key) {
 
@@ -279,12 +279,14 @@ function shorcuts(event) {
                         $('div#note input#destroy').click();break;
                 case 82: //alt-r
                     $('div#note input#undo').click();break;
+                case 79: //alt-o
+                    if (!isTab) $('div#note input#popout').click();break;
                 case 80: //alt-p
-                    $('div#note input#pinned').attr("checked",!$('div#note input#pinned').attr("checked"));
+                    setCBval('div#note input#pinned', !getCBval('div#note input#pinned'));
                     $('div#note input#pinned').change();
                     break;
                 case 87: //alt-w
-                    $("div#note input#wordwrap").attr("checked",!$("div#note input#wordwrap").attr("checked"));
+                    setCBval("div#note input#wordwrap", !getCBval("div#note input#wordwrap"));
                     $("div#note input#wordwrap").change();
                     break;
                 case 84: //alt-t
@@ -655,7 +657,6 @@ function indexAddNote(mode, note){
     var $noteheading = $('div.noteheading#' + note.key + "heading");
     var $notetime = $("abbr.notetime#" + note.key + "time");
     var $notepin = $("div#" + note.key + "pin");
-    var $notepublished = $("div#" + note.key + "published");
 
     if (localStorage.option_sortby == "createdate") {
         $noterow.attr("sortkey",note.createdate);
@@ -1075,7 +1076,7 @@ SNEditor.prototype.initialize = function() {
     $('div#note input#pinned').unbind();
     $('div#note input#pinned').bind('change', function(event) {
 
-        var changed = that.setDirty("pinned", (that.note.systemtags.indexOf("pinned")>=0) != $("div#note input#pinned").attr("checked") , event);
+        var changed = that.setDirty("pinned", (that.note.systemtags.indexOf("pinned")>=0) != getCBval("div#note input#pinned") , event);
 
         if (changed && isTab)
             that.saveNote();
@@ -1095,15 +1096,11 @@ SNEditor.prototype.initialize = function() {
     // bind word wrap
     $("div#note input#wordwrap").unbind();
     $("div#note input#wordwrap").bind('change', function(event) {
-        localStorage.wordwrap = $("#wordwrap").attr("checked");
-        that.codeMirror.setTextWrapping($("div#note input#wordwrap").attr("checked"));
+        localStorage.wordwrap = getCBval("#wordwrap");
+        that.codeMirror.setTextWrapping(getCBval("div#note input#wordwrap"));
         that.focus();
     });
-    if (localStorage.wordwrap != undefined && localStorage.wordwrap == "true") {
-        $("div#note input#wordwrap").attr("checked","checked");
-    } else {
-        $("div#note input#wordwrap").removeAttr("checked");
-    }
+    setCBval("div#note input#wordwrap", localStorage.wordwrap != undefined && localStorage.wordwrap == "true");
     $("div#note input#wordwrap").change();
 
 
@@ -1123,10 +1120,7 @@ SNEditor.prototype.initialize = function() {
             $('div#note input#tags').val(note.tags.join(" "));
         // reset pinned
         if (that.dirty.pinned) {
-            if (note.systemtags.indexOf("pinned")>=0)
-                $('div#note input#pinned').attr("checked","checked");
-            else
-                $('div#note input#pinned').removeAttr("checked");
+            setCBval('div#note input#pinned', note.systemtags.indexOf("pinned")>=0);
         }
 
         $('div#note input#undo').attr("disabled","disabled");
@@ -1142,6 +1136,16 @@ SNEditor.prototype.initialize = function() {
         that.trashNote();
         slideIndex();
     });
+
+    // bind PRINT
+    if (isTab) {
+        $('div#note input#print').unbind();
+        $('div#note input#print').click(function(event) {
+            that.print();
+        });
+    } else
+        $('div#note input#print').hide();
+
 
     // bind link clicks
     $(".sn-link",$editbox).die();
@@ -1400,10 +1404,7 @@ SNEditor.prototype.setNote = function(note, options) {
     // set tags
     $('div#note input#tags').val(this.note.tags.join(" "));
     // set pinned
-    if (this.note.systemtags.indexOf("pinned")>=0)
-        $('div#note input#pinned').attr("checked","checked");
-    else
-        $('div#note input#pinned').removeAttr("checked");
+    setCBval('div#note input#pinned',this.note.systemtags.indexOf("pinned")>=0);
 
     this.clearDirty();
 
@@ -1443,7 +1444,7 @@ SNEditor.prototype.saveNote = function(callback) {
     if (this.dirty.pinned) {
         snEditor.needCMRefresh("pinned");
         noteData.systemtags = this.note.systemtags;
-        if (!$('div#note input#pinned').attr("checked")) {
+        if (!getCBval('div#note input#pinned')) {
             noteData.systemtags.splice(noteData.systemtags.indexOf("pinned"),1);
         } else {
             noteData.systemtags.push("pinned");
@@ -1595,6 +1596,10 @@ SNEditor.prototype.typeWatchInit = function($editorelm) {
 
     watchElement($editorelm);
 
+}
+
+SNEditor.prototype.print = function() {
+    this.codeMirror.win.print();
 }
 
 //  ---------------------------------------
