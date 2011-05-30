@@ -33,7 +33,7 @@
         <div id="toolbar">
           <input type="text" id="q" onsubmit="return false" placeholder="Search notes" spellcheck="false" title="Type here to search for notes (shortcut: alt-q)"/>
           <select id="notetags" title="Show notes by tag (shortcut: alt-n)" ><option value="#all#"></option></select>
-          <div id="add" title="Create a note (shortcut: alt-a)"></div>
+          <div class="toolbarbutton" id="add" title="Create a note (shortcut: alt-a)"></div>
         </div>
       <div id="notes"></div>
       <div id="statusbar"><div id="offline"></div><div id="sync" title="Click to sync"></div></div>
@@ -41,17 +41,15 @@
     <div id="note">
                 
         <input type="text" id="tags" placeholder="Tag this note" spellcheck="false" title="Click here to enter tags for this note (alt-t to focus, alt-e to get back to editor)" tabindex="1"/>
-        <div id="pinwrapper" title="Pin this note to always show on top (alt-p)" >
-            <input type="checkbox" id="pinned" tabindex="2"/><label for="pinned">Pin</label>
-        </div>
-        <input type="button" id="popout" value="Popout" title="Opens Syncpad in a browser tab (alt-o). Close the tab to get the popup again." tabindex="3"/>
+        <div class="toolbarbutton" id="pintoggle" title="Pin this note to always show on top (alt-p)" tabindex="2"></div>
+        <div class="toolbarbutton" id="trash" title="Send note to trash (ctrl-alt-d)" tabindex="3"></div>
+        <div class="toolbarbutton" id="popout" title="Open Syncpad in a browser tab (alt-o)" tabindex="4"></div>
 
         <input type="button" id="backtoindex" value="Back" title="Back to notes (alt-b). [alt-x to close popup]" tabindex="8"/>
         <div id="wordwrapwrapper" title="Toggle wordwrap (alt-w)">
             <input type="checkbox" id="wordwrap" tabindex="7"/><label for="wordwrap">Wrap</label>
         </div>
-
-        <input type="button" id="destroy" value="Trash" title="Send note to trash (ctrl-alt-d)" tabindex="6"/>
+<!--        <input type="button" id="destroy" value="Trash" title="Send note to trash (ctrl-alt-d)" tabindex="6"/>-->
         <input type="button" id="undo" value="Revert" title="Revert note to state before opening (alt-r)" tabindex="5"/>
         <input type="button" id="print" value="Print" title="" tabindex="4"/>
         

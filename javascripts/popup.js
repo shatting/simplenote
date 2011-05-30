@@ -45,7 +45,7 @@ function unloadListener() {
         if (snEditor.dirty.pinned) {
             snEditor.needCMRefresh("pinned");
             note.systemtags = snEditor.note.systemtags;
-            if (!getCBval('div#note input#pinned')) {
+            if (!snEditor.isPintoggle()) {
                 note.systemtags.splice(note.systemtags.indexOf("pinned"),1);
             } else {
                 note.systemtags.push("pinned");
@@ -181,7 +181,7 @@ function uiEventListener(eventData, sender, sendResponse) {
         
         if (isTab) {
             if ((pinnedNowOn || pinnedNowOff) && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key)
-                setCBval("div#note input#pinned", eventData.newnote.systemtags.indexOf("pinned")>=0);
+                snEditor.setPintoggle(eventData.newnote.systemtags.indexOf("pinned")>=0);
         }
         if (eventData.source != "local" && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key) {
 
@@ -271,19 +271,12 @@ function shorcuts(event) {
                     snEditor.insertUrl();break;
                 case 66: //alt-b
                     $('div#note input#backtoindex').click();break;
-                case 67: //alt-c
-                    if (event.ctrlKey && $('div#note input#destroy').val()=="Cancel")
-                        $('div#note input#destroy').click();break;
-                case 68: //alt-d
-                    if (event.ctrlKey && $('div#note input#destroy').val()=="Trash")
-                        $('div#note input#destroy').click();break;
                 case 82: //alt-r
                     $('div#note input#undo').click();break;
                 case 79: //alt-o
-                    if (!isTab) $('div#note input#popout').click();break;
+                    if (!isTab) $('div#note #popout').click();break;
                 case 80: //alt-p
-                    setCBval('div#note input#pinned', !getCBval('div#note input#pinned'));
-                    $('div#note input#pinned').change();
+                    $('div#note #pintoggle').click();
                     break;
                 case 87: //alt-w
                     setCBval("div#note input#wordwrap", !getCBval("div#note input#wordwrap"));
@@ -299,13 +292,9 @@ function shorcuts(event) {
                     break;
             }
         if (event.altKey && !event.shiftKey && event.ctrlKey)
-            switch(event.keyCode) {                                    
-                case 67: //crtl-alt-c
-                    if ($('div#note input#destroy').val()=="Cancel")
-                        $('div#note input#destroy').click();break;
-                case 68: //crtl-alt-d
-                    if ($('div#note input#destroy').val()=="Trash")
-                        $('div#note input#destroy').click();break;                
+            switch(event.keyCode) {                                                    
+                case 68: //crtl-alt-d                    
+                    $('#trash').click();break;
             }
     }
 }
@@ -316,6 +305,7 @@ $(document).ready(readyListener);
 function readyListener() {
 
     background = chrome.extension.getBackgroundPage();
+    chrome.browserAction.setBadgeText({text:""}); // reset badge
 
     if (!background) {
         console.log("deferring listener a bit");        
@@ -500,10 +490,9 @@ function popupi18n() {
     $("#sync").attr("title",chrome.i18n.getMessage("sync_tooltip"));
     $("#tags").attr("placeholder",chrome.i18n.getMessage("tag_placeholder"));
     $("#tags").attr("title",chrome.i18n.getMessage("tag_tooltip",["alt-t", "alt-e"]));
-    $("#pinwrapper").attr("title",chrome.i18n.getMessage("pin_tooltip","alt-p"));
-    $("#pinwrapper>label").html(chrome.i18n.getMessage("pin"));
+    $("#pintoggle").attr("title",chrome.i18n.getMessage("pin_tooltip","alt-p"));   
     $("#popout").attr("title",chrome.i18n.getMessage("popout_tooltip","alt-o"));
-    $("#popout").attr("value",chrome.i18n.getMessage("popout"));
+    $("#trash").attr("title",chrome.i18n.getMessage("trash_tooltip","ctrl-alt-d"));
     $("#backtoindex").attr("title",chrome.i18n.getMessage("backtoindex_tooltip",["alt-b","alt-x"]));
     $("#backtoindex").attr("value",chrome.i18n.getMessage("backtoindex"));
     $("#wordwrapwrapper").attr("title",chrome.i18n.getMessage("wordwrap_tooltip","alt-w"));
@@ -511,8 +500,7 @@ function popupi18n() {
     $("#undo").attr("title",chrome.i18n.getMessage("revert_tooltip","alt-r"));
     $("#undo").attr("value",chrome.i18n.getMessage("revert"));
     $("#print").attr("title",chrome.i18n.getMessage("print_tooltip"));
-    $("#print").attr("value",chrome.i18n.getMessage("print"));        
-
+    $("#print").attr("value",chrome.i18n.getMessage("print"));
 }
 /*
  * Displays a status message.
@@ -1096,11 +1084,13 @@ SNEditor.prototype.initialize = function() {
     });
 
     // add note pinned (dirty) event listener
-    $('div#note input#pinned').unbind();
-    $('div#note input#pinned').bind('change', function(event) {
-
-        var changed = that.setDirty("pinned", (that.note.systemtags.indexOf("pinned")>=0) != getCBval("div#note input#pinned") , event);
-
+    $('div#note #pintoggle').unbind();
+    $('div#note #pintoggle').bind('click', function(event) {
+        
+        snEditor.setPintoggle(!snEditor.isPintoggle());
+        
+        var changed = that.setDirty("pinned", (that.note.systemtags.indexOf("pinned")>=0) != snEditor.isPintoggle() , event);
+       
         if (changed && isTab)
             that.saveNote();
 
@@ -1143,7 +1133,7 @@ SNEditor.prototype.initialize = function() {
             $('div#note input#tags').val(note.tags.join(" "));
         // reset pinned
         if (that.dirty.pinned) {
-            setCBval('div#note input#pinned', note.systemtags.indexOf("pinned")>=0);
+            snEditor.setPintoggle(note.systemtags.indexOf("pinned")>=0);
         }
 
         $('div#note input#undo').attr("disabled","disabled");
@@ -1154,8 +1144,8 @@ SNEditor.prototype.initialize = function() {
     $('div#note input#undo').attr("disabled","disabled");
 
     // bind DELETE/CANCEL
-    $('div#note input#destroy').unbind();
-    $('div#note input#destroy').click(function(event) {
+    $('#trash').unbind();
+    $('#trash').click(function(event) {
         that.trashNote();
         slideIndex();
     });
@@ -1190,13 +1180,13 @@ SNEditor.prototype.initialize = function() {
     });
 
     if (!isTab)
-        $('div#note input#popout').click(function(event) {
+        $('div#note #popout').click(function(event) {
             chrome.tabs.create({url:chrome.extension.getURL("/popup.html"), pinned:localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true"}, function(tab) {
                 background.popouttab = tab;
             });
         });
     else {
-        $('div#note input#popout').hide();
+        $('div#note #popout').hide();
         $('div#note input#undo').hide();
         $('div#note input#backtoindex').attr("value",chrome.i18n.getMessage("close_tab"));
         $('div#note input#backtoindex').attr("title",chrome.i18n.getMessage("close_tab_tooltip",["alt-b","alt-x"]));
@@ -1397,22 +1387,17 @@ SNEditor.prototype.setNote = function(note, options) {
     // get note contents
     if (note.key == "") { // new note
 
-        // delete button now cancel button        
-        $("#destroy").attr("title",chrome.i18n.getMessage("cancel_tooltip","ctrl-alt-c"));
-        $("#destroy").attr("value",chrome.i18n.getMessage("cancel"));
-        
-        $('div#note input#undo').hide();
-        $('div#note input#popout').hide();
+        $("#trash").hide();
+        $('div#note #undo').hide();
+        $('div#note #popout').hide();
 
     } else { // existing note
-        // delete button now delete button
-        $("#destroy").attr("title",chrome.i18n.getMessage("trash_tooltip","ctrl-alt-d"));
-        $("#destroy").attr("value",chrome.i18n.getMessage("trash"));
+        
+        $("#trash").show();
 
-        // show undo
         if (!isTab) {
             $('div#note input#undo').show();
-            $('div#note input#popout').show();
+            $('div#note #popout').show();
         }
 
         localStorage.lastopennote_key = note.key;
@@ -1425,7 +1410,7 @@ SNEditor.prototype.setNote = function(note, options) {
     // set tags
     $('div#note input#tags').val(this.note.tags.join(" "));
     // set pinned
-    setCBval('div#note input#pinned',this.note.systemtags.indexOf("pinned")>=0);
+    this.setPintoggle(this.note.systemtags.indexOf("pinned")>=0);
 
     this.clearDirty();
 
@@ -1465,7 +1450,7 @@ SNEditor.prototype.saveNote = function(callback) {
     if (this.dirty.pinned) {
         snEditor.needCMRefresh("pinned");
         noteData.systemtags = this.note.systemtags;
-        if (!getCBval('div#note input#pinned')) {
+        if (!this.isPintoggle()) {
             noteData.systemtags.splice(noteData.systemtags.indexOf("pinned"),1);
         } else {
             noteData.systemtags.push("pinned");
@@ -1617,6 +1602,20 @@ SNEditor.prototype.typeWatchInit = function($editorelm) {
 
     watchElement($editorelm);
 
+}
+
+SNEditor.prototype.setPintoggle = function(to) {
+    if (to) {
+        $('div#note #pintoggle').addClass("pinned");
+        $('div#note #pintoggle').removeClass("unpinned");
+    } else {
+        $('div#note #pintoggle').addClass("unpinned");
+        $('div#note #pintoggle').removeClass("pinned");
+    }
+}
+
+SNEditor.prototype.isPintoggle = function() {
+    return $('div#note #pintoggle').hasClass("pinned");
 }
 
 SNEditor.prototype.print = function() {
