@@ -270,17 +270,16 @@ function shorcuts(event) {
                 case 86: //alt-v
                     snEditor.insertUrl();break;
                 case 66: //alt-b
-                    $('div#note input#backtoindex').click();break;
+                    $('div#note #backtoindex').click();break;
                 case 82: //alt-r
-                    $('div#note input#undo').click();break;
+                    $('div#note #undo').click();break;
                 case 79: //alt-o
                     if (!isTab) $('div#note #popout').click();break;
                 case 80: //alt-p
                     $('div#note #pintoggle').click();
                     break;
-                case 87: //alt-w
-                    setCBval("div#note input#wordwrap", !getCBval("div#note input#wordwrap"));
-                    $("div#note input#wordwrap").change();
+                case 87: //alt-w                    
+                    $("div#note #wraptoggle").click();
                     break;
                 case 84: //alt-t
                     $("div#note input#tags").focus();
@@ -495,14 +494,14 @@ function popupi18n() {
     $("#pintoggle").attr("title",chrome.i18n.getMessage("pin_tooltip","alt-p"));   
     $("#popout").attr("title",chrome.i18n.getMessage("popout_tooltip","alt-o"));
     $("#trash").attr("title",chrome.i18n.getMessage("trash_tooltip","ctrl-alt-d"));
-    $("#backtoindex").attr("title",chrome.i18n.getMessage("backtoindex_tooltip",["alt-b","alt-x"]));
-    $("#backtoindex").attr("value",chrome.i18n.getMessage("backtoindex"));
-    $("#wordwrapwrapper").attr("title",chrome.i18n.getMessage("wordwrap_tooltip","alt-w"));
-    $("#wordwrapwrapper>label").html(chrome.i18n.getMessage("wordwrap"));    
-    $("#undo").attr("title",chrome.i18n.getMessage("revert_tooltip","alt-r"));
-    $("#undo").attr("value",chrome.i18n.getMessage("revert"));
-    $("#print").attr("title",chrome.i18n.getMessage("print_tooltip"));
-    $("#print").attr("value",chrome.i18n.getMessage("print"));
+    $("#wraptoggle").attr("title",chrome.i18n.getMessage("wordwrap_tooltip","alt-w"));
+    $("#undo").attr("title",chrome.i18n.getMessage("revert_tooltip","alt-r"));    
+    $("#print").attr("title",chrome.i18n.getMessage("print_tooltip"));    
+
+    if (isTab)
+        $('#backtoindex').attr("title",chrome.i18n.getMessage("close_tab_tooltip",["alt-b","alt-x"]));
+    else
+        $("#backtoindex").attr("title",chrome.i18n.getMessage("backtoindex_tooltip",["alt-b","alt-x"]));    
 }
 /*
  * Displays a status message.
@@ -1041,8 +1040,8 @@ SNEditor.prototype.initialize = function() {
     });
 
     // bind back button
-    $('div#note input#backtoindex').unbind();
-    $('div#note input#backtoindex').click(function(event) {
+    $('div#note #backtoindex').unbind();
+    $('div#note #backtoindex').click(function(event) {
         if (that.isNoteDirty())
             that.saveNote();
 
@@ -1050,22 +1049,24 @@ SNEditor.prototype.initialize = function() {
     });
 
     // bind word wrap
-    $("div#note input#wordwrap").unbind();
-    $("div#note input#wordwrap").bind('change', function(event) {
+    $("div#note #wraptoggle").unbind();
+    $("div#note #wraptoggle").bind('click', function(event) {
 
         _gaq.push(['_trackEvent', 'popup', 'wordwraptoggled']);
 
-        localStorage.wordwrap = getCBval("#wordwrap");
-        that.codeMirror.setTextWrapping(getCBval("div#note input#wordwrap"));
+        snEditor.setWraptoggle(!snEditor.isWraptoggle());
+
+        localStorage.wordwrap = snEditor.isWraptoggle();
+        that.codeMirror.setTextWrapping(snEditor.isWraptoggle());
         that.focus();
     });
-    setCBval("div#note input#wordwrap", localStorage.wordwrap != undefined && localStorage.wordwrap == "true");
-    $("div#note input#wordwrap").change();
+    snEditor.setWraptoggle(localStorage.wordwrap != undefined && localStorage.wordwrap == "true");
+    this.codeMirror.setTextWrapping(snEditor.isWraptoggle());
 
 
     // bind UNDO button
-    $('div#note input#undo').unbind();
-    $('div#note input#undo').click(function(event) {
+    $('div#note #undo').unbind();
+    $('div#note #undo').click(function(event) {
         // reset content
         log("CodeMirror.initialize:undo clicked");
 
@@ -1085,12 +1086,12 @@ SNEditor.prototype.initialize = function() {
             snEditor.setPintoggle(note.systemtags.indexOf("pinned")>=0);
         }
 
-        $('div#note input#undo').attr("disabled","disabled");
+        $('div#note #undo').hide();
 
         snEditor.clearDirty(); // should not dont need this here b/c of callbacks
         that.focus();
     });
-    $('div#note input#undo').attr("disabled","disabled");
+    $('div#note #undo').hide();
 
     // bind DELETE/CANCEL
     $('#trash').unbind();
@@ -1102,13 +1103,13 @@ SNEditor.prototype.initialize = function() {
 
     // bind PRINT
     if (isTab) {
-        $('div#note input#print').unbind();
-        $('div#note input#print').click(function(event) {
+        $('div#note #print').unbind();
+        $('div#note #print').click(function(event) {
             _gaq.push(['_trackEvent', 'popup', 'printclicked']);
             that.print();
         });
     } else
-        $('div#note input#print').hide();
+        $('div#note #print').hide();
 
 
     // bind link clicks
@@ -1142,11 +1143,9 @@ SNEditor.prototype.initialize = function() {
         });
     else {
         $('div#note #popout').hide();
-        $('div#note input#undo').hide();
-        $('div#note input#backtoindex').attr("value",chrome.i18n.getMessage("close_tab"));
-        $('div#note input#backtoindex').attr("title",chrome.i18n.getMessage("close_tab_tooltip",["alt-b","alt-x"]));
-        $('div#note input#backtoindex').unbind();
-        $('div#note input#backtoindex').click(function(event) {
+        $('div#note #undo').hide();        
+        $('div#note #backtoindex').unbind();
+        $('div#note #backtoindex').click(function(event) {
             window.close();
         });
 
@@ -1350,8 +1349,7 @@ SNEditor.prototype.setNote = function(note, options) {
         
         $("#trash").show();
 
-        if (!isTab) {
-            $('div#note input#undo').show();
+        if (!isTab) {            
             $('div#note #popout').show();
         }
 
@@ -1473,9 +1471,9 @@ SNEditor.prototype.setDirty = function(what, how, event) {
         log(what + " not dirty now (" + event.type + ")");
 
     if (this.isNoteDirty())
-        $('div#note input#undo').removeAttr("disabled");
+        $('div#note #undo').show();
     else
-        $('div#note input#undo').attr("disabled","disabled");
+        $('div#note #undo').hide();
 
     return true;
 }
@@ -1571,6 +1569,20 @@ SNEditor.prototype.setPintoggle = function(to) {
 
 SNEditor.prototype.isPintoggle = function() {
     return $('div#note #pintoggle').hasClass("pinned");
+}
+
+SNEditor.prototype.setWraptoggle = function(to) {
+    if (to) {
+        $('div#note #wraptoggle').addClass("wrap_on");
+        $('div#note #wraptoggle').removeClass("wrap_off");
+    } else {
+        $('div#note #wraptoggle').addClass("wrap_off");
+        $('div#note #wraptoggle').removeClass("wrap_on");
+    }
+}
+
+SNEditor.prototype.isWraptoggle = function() {
+    return $('div#note #wraptoggle').hasClass("wrap_on");
 }
 
 SNEditor.prototype.print = function() {
