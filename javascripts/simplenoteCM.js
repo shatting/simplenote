@@ -217,8 +217,6 @@ function getNoteHeading(key,maxlength) {
 
 var SimplenoteCM = {
 
-    contextmenu_ids : {},
-
     create_root: null,
     append_root: null,
     append_pinned_root: null,
@@ -238,20 +236,20 @@ var SimplenoteCM = {
 
         var title;
         // create
-        this.create_root = new CMitem({title:"Create a note", contexts:["selection","page","image","link"]});
-        new CMitem({title:"..from selection", contexts:["selection"],onclick: function(info, tab){
+        this.create_root = new CMitem({title:chrome.i18n.getMessage("cm_create_note"), contexts:["selection","page","image","link"]});
+        new CMitem({title:chrome.i18n.getMessage("cm_using_selection"), contexts:["selection"],onclick: function(info, tab){
                         _gaq.push(['_trackEvent', 'ContextMenu', 'create_selection']);
                         SimplenoteCM.createNoteFromBG({content:info.selectionText + "\n" + "[Source: " + tab.url + "]\n"});
                     }}, this.create_root);
-        new CMitem({title:"..from page url", contexts:["page"], onclick: function(info, tab){
+        new CMitem({title:chrome.i18n.getMessage("cm_using_page_url"), contexts:["page"], onclick: function(info, tab){
                         _gaq.push(['_trackEvent', 'ContextMenu', 'create_url']);
                         SimplenoteCM.createNoteFromBG({content:info.pageUrl});
                     }}, this.create_root);
-        new CMitem({title:"..from link url", contexts:["link"], onclick: function(info, tab){
+        new CMitem({title:chrome.i18n.getMessage("cm_using_link_url"), contexts:["link"], onclick: function(info, tab){
                     _gaq.push(['_trackEvent', 'ContextMenu', 'create_link_url']);
                     SimplenoteCM.createNoteFromBG({content:info.linkUrl});
                 }}, this.create_root);
-        new CMitem({title:"..from image url", contexts:["image"], onclick: function(info, tab){
+        new CMitem({title:chrome.i18n.getMessage("cm_using_image_url"), contexts:["image"], onclick: function(info, tab){
                     _gaq.push(['_trackEvent', 'ContextMenu', 'create_image_url']);
                     SimplenoteCM.createNoteFromBG({content:info.srcUrl});
                 }}, this.create_root);
@@ -259,21 +257,21 @@ var SimplenoteCM = {
         // append last open
         if (localStorage.lastopennote_key && SimplenoteLS.getNote(localStorage.lastopennote_key)) {
             title = getNoteHeading(localStorage.lastopennote_key,25);
-            this.append_root = new CMitem({title:"Append to " + title + "", contexts:["selection","page","image","link"]});
+            this.append_root = new CMitem({title:chrome.i18n.getMessage("cm_append_to",title), contexts:["selection","page","image","link"]});
 
-            new CMitem({title:"..using selection", contexts:["selection"], onclick: function(info, tab){
+            new CMitem({title:chrome.i18n.getMessage("cm_using_selection"), contexts:["selection"], onclick: function(info, tab){
                     _gaq.push(['_trackEvent', 'ContextMenu', 'append_selection']);
                     SimplenoteCM.appendToNoteFromBG(info.selectionText + "\n" + "[Source: " + tab.url + "]", localStorage.lastopennote_key);
                 }}, this.append_root);
-            new CMitem({title:"..using page url", contexts:["page"], onclick: function(info, tab){
+            new CMitem({title:chrome.i18n.getMessage("cm_using_page_url"), contexts:["page"], onclick: function(info, tab){
                     _gaq.push(['_trackEvent', 'ContextMenu', 'append_url']);
                     SimplenoteCM.appendToNoteFromBG(info.pageUrl, localStorage.lastopennote_key);
                 }}, this.append_root);
-            new CMitem({title:"..using link url", contexts:["link"],  onclick: function(info, tab){
+            new CMitem({title:chrome.i18n.getMessage("cm_using_link_url"), contexts:["link"],  onclick: function(info, tab){
                     _gaq.push(['_trackEvent', 'ContextMenu', 'append_link_url']);
                     SimplenoteCM.appendToNoteFromBG(info.linkUr, localStorage.lastopennote_key);
                 }}, this.append_root);
-            new CMitem({title:"..using image url", contexts:["image"], onclick: function(info, tab){
+            new CMitem({title:chrome.i18n.getMessage("cm_using_image_url"), contexts:["image"], onclick: function(info, tab){
                     _gaq.push(['_trackEvent', 'ContextMenu', 'append_image_url']);
                     SimplenoteCM.appendToNoteFromBG(info.srcUrl, localStorage.lastopennote_key);
                 }}, this.append_root);
@@ -282,25 +280,25 @@ var SimplenoteCM = {
 
         var pinned = SimplenoteLS.getNotes({deleted:0,sort:"alpha",systemtag:"pinned"});
         if (pinned.length>0) {
-            this.append_pinned_root = new CMitem({title:"Append to pinned", contexts:["selection","page","image","link"]});
+            this.append_pinned_root = new CMitem({title:chrome.i18n.getMessage("cm_append_to_pinned"), contexts:["selection","page","image","link"]});
             for (var i in pinned) {
                 SimplenoteDB.getNote(pinned[i].key, function(note) {
                     title = getNoteHeading(note.key,25);
                     var pinnedCM = new CMitem({title:title, contexts:["all"]}, SimplenoteCM.append_pinned_root);
 
-                    new CMitem({title:"..using selection", contexts:["selection"], onclick: function(info, tab){
+                    new CMitem({title:chrome.i18n.getMessage("cm_using_selection"), contexts:["selection"], onclick: function(info, tab){
                             _gaq.push(['_trackEvent', 'ContextMenu', 'append_selection']);
                             SimplenoteCM.appendToNoteFromBG(info.selectionText + "\n" + "[Source: " + tab.url + "]", note.key, true);
                         }}, pinnedCM);
-                    new CMitem({title:"..using page url", contexts:["page"], onclick: function(info, tab){
+                    new CMitem({title:chrome.i18n.getMessage("cm_using_page_url"), contexts:["page"], onclick: function(info, tab){
                             _gaq.push(['_trackEvent', 'ContextMenu', 'append_url']);
                             SimplenoteCM.appendToNoteFromBG(info.pageUrl, note.key, true);
                         }}, pinnedCM);
-                    new CMitem({title:"..using link url", contexts:["link"],  onclick: function(info, tab){
+                    new CMitem({title:chrome.i18n.getMessage("cm_using_link_url"), contexts:["link"],  onclick: function(info, tab){
                             _gaq.push(['_trackEvent', 'ContextMenu', 'append_link_url']);
                             SimplenoteCM.appendToNoteFromBG(info.linkUr, note.key, true);
                         }}, pinnedCM);
-                    new CMitem({title:"..using image url", contexts:["image"], onclick: function(info, tab){
+                    new CMitem({title:chrome.i18n.getMessage("cm_using_image_url"), contexts:["image"], onclick: function(info, tab){
                             _gaq.push(['_trackEvent', 'ContextMenu', 'append_image_url']);
                             SimplenoteCM.appendToNoteFromBG(info.srcUrl, note.key, true);
                         }}, pinnedCM);
@@ -329,7 +327,7 @@ var SimplenoteCM = {
         var needPop = false;
         try {
             if (this.append_root)
-                this.append_root.update({title:"Append to " + title + ""});
+                this.append_root.update({title:chrome.i18n.getMessage("cm_append_to",title)});
         } catch (e) {
             needPop = true;
         }

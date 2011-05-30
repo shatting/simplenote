@@ -24,7 +24,7 @@
     "modified":             { "message": "geändert: "},
     "published_tooltip":    { "message": "Klicken um veröffentlichte Version der Notiz zu sehen"},
     "sharee_tooltip":       { "message": "Jemand hat diese Notiz mit ihnen geteilt"},
-    "sharer_tooltip":       { "message": "Sie haben diese Notiz geteilt mit: "},
+    "sharer_tooltip":       { "message": "Sie haben diese Notiz geteilt mit:"},
     "click_to_undelete":    { "message": "Wiederherstellen"},
     "click_to_pinunpin":    { "message": "Pinnen/Pin aufheben"},    
     "close_tab_tooltip":    { "message": "Tab schliessen ($1 oder $2)"},
@@ -42,5 +42,13 @@
     "month"   :             { "message": "ein Monat" },
     "months"   :            { "message": "%d Monate" },
     "year"   :              { "message": "1 Jahr" },
-    "years"   :             { "message": "%d Jahre" }
+    "years"   :             { "message": "%d Jahre" },
+    "cm_create_note":       { "message": "Neue Notiz"},
+    "cm_append_to":         { "message": "Anhängen an $1"},
+    "cm_append_to_pinned":  { "message": "Anhängen an gepinnte"},
+    "cm_using_selection":   { "message": "..Auswahl"},
+    "cm_using_page_url":    { "message": "..Seiten URL"},
+    "cm_using_link_url":    { "message": "..Link URL"},
+    "cm_using_image_url":   { "message": "..Bild URL"}
+    
 }

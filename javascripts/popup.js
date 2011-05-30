@@ -1095,7 +1095,7 @@ SNEditor.prototype.initialize = function() {
 
     // bind DELETE/CANCEL
     $('#trash').unbind();
-    $('#trash').click(function(event) {
+    $('#trash').click(function() {
         _gaq.push(['_trackEvent', 'popup', 'trashclicked']);
         that.trashNote();
         slideIndex();
@@ -1104,7 +1104,7 @@ SNEditor.prototype.initialize = function() {
     // bind PRINT
     if (isTab) {
         $('div#note #print').unbind();
-        $('div#note #print').click(function(event) {
+        $('div#note #print').click(function() {
             _gaq.push(['_trackEvent', 'popup', 'printclicked']);
             that.print();
         });
