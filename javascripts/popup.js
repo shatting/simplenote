@@ -384,11 +384,13 @@ function readyListener() {
 
                         // bind ADD button
                         $('div#index div#toolbar div#add').click(function() {
+                            _gaq.push(['_trackEvent', 'popup', 'addclicked']);
                             snEditor.setNote();
                         });
 
                         // bind SYNC div
                         $("#sync").click( function() {
+                            _gaq.push(['_trackEvent', 'popup', 'syncclicked']);
                             chrome.extension.sendRequest({action: "sync", fullsync:true});
                         })
 
@@ -841,66 +843,6 @@ function htmlSafe(s) {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-//function htmlUnsafe(s) {
-//    return s.replace(/&gt;/gi, ">").replace(/&lt;/gi, "<").replace(/&amp;/gi,"&");
-//}
-//
-//function htmlDecode(s) {
-//    return htmlUnsafe(s.replace(/<br>/gi,"\n").replace(/&nbsp;/gi," "));
-//}
-
-//function maximize(event) {
-//    var key = this.id;
-//    var $this = $(this);
-//    var lines = $this.data("fulltext").split("\n");
-//
-//    // insert full text into abstract div
-//    //$('#' + key + 'abstract').html(htmlEncode(lines.slice(1,lines.length-1)));
-//
-//    //$('div.noterow').not($(this)).trigger('mouseleave');
-//    //$('div.noterow').not($(this)).stop( true, false );
-//
-//    // animate
-//    var $clone = $this.clone().css({
-//        height: 'auto',
-//        position: 'absolute',
-//        zIndex: '-9999',
-//        left: '-9999px',
-//        width: $this.width()
-//    })
-//    .appendTo($this);
-//    $this.animate({
-//        height: $clone.height()
-//    }, 100);
-//    $clone.detach();
-//
-//    $this.unbind('dblclick');
-//    $this.dblclick(minimize);
-////$('#' + key).animate( {height:'+=' + (lines*10), duration:500 }, function(){
-////$('#' + key).removeAttr('style');
-////});
-//// $('#' + key).slideDown();
-//
-////$('html,body').animate({scrollTop: $(this).offset().top}, 100);
-//}
-
-//function minimize(event) {
-//    var key = this.id;
-//    var $this = $(this);
-//    var lines = $(this).data("fulltext").split("\n",10).filter(function(line) {
-//        return ( line.length > 1 )
-//        });
-//
-//    //$('#' + key + "abstract").html(makeAbstract(lines.slice(1, 3)));
-//
-//    $this.animate({
-//        height: $this.data('origheight')
-//    }, 50);
-//
-//    $this.unbind('dblclick');
-//    $this.dblclick(maximize);
-//}
-
 //  ---------------------------------------
 function ISODateString(d) {
     return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+ pad(d.getUTCDate())+'T'+ pad(d.getUTCHours())+':'+ pad(d.getUTCMinutes())+':'+ pad(d.getUTCSeconds())+'Z'
@@ -949,7 +891,6 @@ function slideIndex(callback, duration) {
 
 function SNEditor() {
     log("SNEditor:create");
-    var that = this;
     this.codeMirror = new CodeMirror(document.getElementById("note"),{
                     parserfile: "parsesimple.js",
                     path: "javascripts/lib/codemirror1/",
@@ -1087,6 +1028,8 @@ SNEditor.prototype.initialize = function() {
     $('div#note #pintoggle').unbind();
     $('div#note #pintoggle').bind('click', function(event) {
         
+        _gaq.push(['_trackEvent', 'popup', 'pintoggled']);
+
         snEditor.setPintoggle(!snEditor.isPintoggle());
         
         var changed = that.setDirty("pinned", (that.note.systemtags.indexOf("pinned")>=0) != snEditor.isPintoggle() , event);
@@ -1109,6 +1052,9 @@ SNEditor.prototype.initialize = function() {
     // bind word wrap
     $("div#note input#wordwrap").unbind();
     $("div#note input#wordwrap").bind('change', function(event) {
+
+        _gaq.push(['_trackEvent', 'popup', 'wordwraptoggled']);
+
         localStorage.wordwrap = getCBval("#wordwrap");
         that.codeMirror.setTextWrapping(getCBval("div#note input#wordwrap"));
         that.focus();
@@ -1122,6 +1068,9 @@ SNEditor.prototype.initialize = function() {
     $('div#note input#undo').click(function(event) {
         // reset content
         log("CodeMirror.initialize:undo clicked");
+
+        _gaq.push(['_trackEvent', 'popup', 'undoclicked']);
+
         var note = that.note;
         if (that.dirty.content) {
             that.saveCaretScroll();
@@ -1146,6 +1095,7 @@ SNEditor.prototype.initialize = function() {
     // bind DELETE/CANCEL
     $('#trash').unbind();
     $('#trash').click(function(event) {
+        _gaq.push(['_trackEvent', 'popup', 'trashclicked']);
         that.trashNote();
         slideIndex();
     });
@@ -1154,6 +1104,7 @@ SNEditor.prototype.initialize = function() {
     if (isTab) {
         $('div#note input#print').unbind();
         $('div#note input#print').click(function(event) {
+            _gaq.push(['_trackEvent', 'popup', 'printclicked']);
             that.print();
         });
     } else
@@ -1163,8 +1114,11 @@ SNEditor.prototype.initialize = function() {
     // bind link clicks
     $(".sn-link",$editbox).die();
     $(".sn-link",$editbox).live("click",function(event) {
-       if (event.ctrlKey)
+       if (event.ctrlKey) {
+           _gaq.push(['_trackEvent', 'popup', 'linkclicked_unhot']);
            return;
+       }
+       _gaq.push(['_trackEvent', 'popup', 'linkclicked']);
        var url = this.textContent.trim();
        openURLinTab(url);
     });
@@ -1181,6 +1135,7 @@ SNEditor.prototype.initialize = function() {
 
     if (!isTab)
         $('div#note #popout').click(function(event) {
+            _gaq.push(['_trackEvent', 'popup', 'popoutclicked']);
             chrome.tabs.create({url:chrome.extension.getURL("/popup.html"), pinned:localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true"}, function(tab) {
                 background.popouttab = tab;
             });
