@@ -1266,18 +1266,6 @@ SNEditor.prototype.makeContextMenu = function() {
     var $editbox = $(this.codeMirror.editor.container);
     var that = this;
     var menu1 = [
-//      {'Cut (crtl-x)': function(menuItem,menu) {
-//              console.log($editbox);
-//              console.log($editbox.get(0));
-//            $editbox.get(0).execCommand("cut");
-//      }},
-//      {'Copy (crtl-c)': function(menuItem,menu) {
-//            execCommand("copy");
-//      }},
-//      {'Paste (crtl-v)': function(menuItem,menu) {
-//            execCommand("paste");
-//      }},
-//      $.contextMenu.separator,
       {'Insert browser URL (alt-v)':
         {
               onclick: function() {that.insertUrl();},

@@ -4,10 +4,11 @@ $(document).ready(function() {
   $("#password").val(localStorage.option_password);
   
   $("#abstractlines").val(localStorage.option_abstractlines == undefined?"3":localStorage.option_abstractlines);
-  
+
   setCBval("#opentonote", localStorage.option_opentonote == undefined || localStorage.option_opentonote == "true");    
   setCBval("#remembercaret", localStorage.option_remembercaret == undefined || localStorage.option_remembercaret == "true");
   setCBval("#contextmenu", localStorage.option_contextmenu == undefined || localStorage.option_contextmenu == "true");
+  setCBval("#contextmenu_cascading", localStorage.option_contextmenu_cascading != undefined && localStorage.option_contextmenu_cascading == "true");
   setCBval("#alwaystab", localStorage.option_alwaystab != undefined && localStorage.option_alwaystab == "true");
   setCBval("#pinnedtab", localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true");
   setCBval("#showdate", localStorage.option_showdate == undefined || localStorage.option_showdate == "true");
@@ -99,10 +100,12 @@ function save_options() {
   localStorage.option_remembercaret = getCBval('#remembercaret');
 
   // context menu
-  if ((localStorage.option_contextmenu=="true") != getCBval('#contextmenu')) {
-      chrome.extension.sendRequest({action:"cm_populate",on:getCBval('#contextmenu')});
-  }
+  var need_cm_refresh = (localStorage.option_contextmenu=="true") != getCBval('#contextmenu') || (localStorage.option_contextmenu_cascading=="true") != getCBval('#contextmenu_cascading');
   localStorage.option_contextmenu = getCBval('#contextmenu');
+  localStorage.option_contextmenu_cascading = getCBval('#contextmenu_cascading');
+  if (need_cm_refresh) {
+      chrome.extension.sendRequest({action:"cm_populate",on:localStorage.option_contextmenu=="true"});
+  }  
 
   localStorage.option_alwaystab = getCBval('#alwaystab');
 

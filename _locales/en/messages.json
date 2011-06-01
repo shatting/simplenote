@@ -46,9 +46,9 @@
     "cm_create_note":       { "message": "Create a note"},
     "cm_append_to":         { "message": "Append to $1"},
     "cm_append_to_pinned":  { "message": "Append to pinned"},
-    "cm_using_selection":   { "message": "..using selection"},
-    "cm_using_page_url":    { "message": "..using page URL"},
-    "cm_using_link_url":    { "message": "..using link URL"},
-    "cm_using_image_url":   { "message": "..using image URL"}
+    "cm_using_selection":   { "message": "selection"},
+    "cm_using_page_url":    { "message": "page URL"},
+    "cm_using_link_url":    { "message": "link URL"},
+    "cm_using_image_url":   { "message": "image URL"}
 
 }        
