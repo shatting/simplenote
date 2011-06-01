@@ -9,6 +9,7 @@ $(document).ready(function() {
   setCBval("#remembercaret", localStorage.option_remembercaret == undefined || localStorage.option_remembercaret == "true");
   setCBval("#contextmenu", localStorage.option_contextmenu == undefined || localStorage.option_contextmenu == "true");
   setCBval("#contextmenu_cascading", localStorage.option_contextmenu_cascading != undefined && localStorage.option_contextmenu_cascading == "true");
+  setCBval("#contextmenu_cascading_pinned", localStorage.option_contextmenu_cascading_pinned != undefined && localStorage.option_contextmenu_cascading_pinned == "true");
   setCBval("#alwaystab", localStorage.option_alwaystab != undefined && localStorage.option_alwaystab == "true");
   setCBval("#pinnedtab", localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true");
   setCBval("#showdate", localStorage.option_showdate == undefined || localStorage.option_showdate == "true");
@@ -100,11 +101,15 @@ function save_options() {
   localStorage.option_remembercaret = getCBval('#remembercaret');
 
   // context menu
-  var need_cm_refresh = (localStorage.option_contextmenu=="true") != getCBval('#contextmenu') || (localStorage.option_contextmenu_cascading=="true") != getCBval('#contextmenu_cascading');
+  var need_cm_refresh = (localStorage.option_contextmenu=="true") != getCBval('#contextmenu') || 
+      (localStorage.option_contextmenu_cascading=="true") != getCBval('#contextmenu_cascading') ||
+      (localStorage.option_contextmenu_cascading_pinned=="true") != getCBval('#contextmenu_cascading_pinned');
+
   localStorage.option_contextmenu = getCBval('#contextmenu');
   localStorage.option_contextmenu_cascading = getCBval('#contextmenu_cascading');
+  localStorage.option_contextmenu_cascading_pinned = getCBval('#contextmenu_cascading_pinned');
   if (need_cm_refresh) {
-      chrome.extension.sendRequest({action:"cm_populate",on:localStorage.option_contextmenu=="true"});
+      chrome.extension.sendRequest({action:"cm_populate"});
   }  
 
   localStorage.option_alwaystab = getCBval('#alwaystab');

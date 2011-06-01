@@ -122,7 +122,7 @@ function handleRequest(request, sender, sendResponse) {
     } else if (request.action === "isoffline") {
         sendResponse(SimplenoteDB.isOffline());
     } else if (request.action == "cm_populate") {
-        SimplenoteCM.populate(request.on == undefined || request.on);
+        SimplenoteCM.populate();
     } else if (request.action == "cm_updatelastopen") {
         SimplenoteCM.updateLastOpen();
     }

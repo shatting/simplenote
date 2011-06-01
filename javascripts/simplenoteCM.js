@@ -223,7 +223,7 @@ var SimplenoteCM = {
 
     cascading: true,
 
-    populate: function(on) {
+    populate: function() {
 
         chrome.contextMenus.removeAll();
 
@@ -231,10 +231,11 @@ var SimplenoteCM = {
         this.create_root = null;
         this.append_pinned_root = null;
         
-        if (!localStorage.option_email || (on != undefined && !on) || (localStorage.option_contextmenu != undefined && localStorage.option_contextmenu == "false"))
+        if (!localStorage.option_email || (localStorage.option_contextmenu != undefined && localStorage.option_contextmenu == "false"))
             return;
 
         this.cascading = localStorage.option_contextmenu_cascading == "true";
+        this.cascading_pinned = localStorage.option_contextmenu_cascading_pinned == "true";
 
         var title, lastopen_key = localStorage.lastopennote_key;
         // create
@@ -295,7 +296,7 @@ var SimplenoteCM = {
             if (!this.cascading && (pinned.length > 1 || lastopen_key != pinned[0].key) )
                 new CMitem({type:"separator", contexts:["all"]});
 
-            if (this.cascading)
+            if (this.cascading_pinned)
                 this.append_pinned_root = new CMitem({title:chrome.i18n.getMessage("cm_append_to_pinned"), contexts:["selection","page","image","link"]});
 
             for (var i in pinned) {
@@ -306,22 +307,22 @@ var SimplenoteCM = {
 
                     title = getNoteHeading(note.key,25);
 
-                    if (SimplenoteCM.cascading)
+                    if (SimplenoteCM.cascading_pinned)
                         var pinnedCM = new CMitem({title:title, contexts:["all"]}, SimplenoteCM.append_pinned_root);
 
-                    new CMitem({title:SimplenoteCM.getCMtitle("cm_append_to","cm_using_selection", title), contexts:["selection"], onclick: function(info, tab){
+                    new CMitem({title:SimplenoteCM.getCMtitle("cm_append_to","cm_using_selection", title, true), contexts:["selection"], onclick: function(info, tab){
                             _gaq.push(['_trackEvent', 'ContextMenu', 'append_selection']);
                             SimplenoteCM.appendToNoteFromBG(info.selectionText + "\n" + "[Source: " + tab.url + "]", note.key, true);
                         }}, pinnedCM);
-                    new CMitem({title:SimplenoteCM.getCMtitle("cm_append_to","cm_using_page_url", title), contexts:["page"], onclick: function(info, tab){
+                    new CMitem({title:SimplenoteCM.getCMtitle("cm_append_to","cm_using_page_url", title, true), contexts:["page"], onclick: function(info, tab){
                             _gaq.push(['_trackEvent', 'ContextMenu', 'append_url']);
                             SimplenoteCM.appendToNoteFromBG(info.pageUrl, note.key, true);
                         }}, pinnedCM);
-                    new CMitem({title:SimplenoteCM.getCMtitle("cm_append_to","cm_using_link_url", title), contexts:["link"],  onclick: function(info, tab){
+                    new CMitem({title:SimplenoteCM.getCMtitle("cm_append_to","cm_using_link_url", title, true), contexts:["link"],  onclick: function(info, tab){
                             _gaq.push(['_trackEvent', 'ContextMenu', 'append_link_url']);
                             SimplenoteCM.appendToNoteFromBG(info.linkUr, note.key, true);
                         }}, pinnedCM);
-                    new CMitem({title:SimplenoteCM.getCMtitle("cm_append_to","cm_using_image_url", title), contexts:["image"], onclick: function(info, tab){
+                    new CMitem({title:SimplenoteCM.getCMtitle("cm_append_to","cm_using_image_url", title, true), contexts:["image"], onclick: function(info, tab){
                             _gaq.push(['_trackEvent', 'ContextMenu', 'append_image_url']);
                             SimplenoteCM.appendToNoteFromBG(info.srcUrl, note.key, true);
                         }}, pinnedCM);
@@ -363,8 +364,8 @@ var SimplenoteCM = {
             this.populate();
     },
 
-    getCMtitle: function(mainId,subId, title) {
-        if (this.cascading)
+    getCMtitle: function(mainId, subId, title, pinned) {
+        if ((this.cascading && !(pinned && !this.cascading_pinned)) || (pinned && this.cascading_pinned))
             return ".." + chrome.i18n.getMessage(subId)
         else
             return chrome.i18n.getMessage(mainId, title) + " (" + chrome.i18n.getMessage(subId) + ")";
