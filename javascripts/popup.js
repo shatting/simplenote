@@ -804,7 +804,13 @@ function indexFillNoteReqComplete(note) {
         if (note.deleted == 0) {
             $("div.noterow#"+note.key).die();
             $("div.noterow#"+note.key).live("click",note, function(event) {
-                snEditor.saveCaretScroll();
+                if (isTab && snEditor.note)
+                    snEditor.saveCaretScroll();
+                
+                snEditor.setNote(event.data);
+            });
+
+            $("div.noterow#"+note.key).live("mousedown",note, function(event) {
                 snEditor.setNote(event.data);
             });
         } else {

@@ -10,6 +10,13 @@ $(document).ready(function() {
   setCBval("#contextmenu", localStorage.option_contextmenu == undefined || localStorage.option_contextmenu == "true");
   setCBval("#contextmenu_cascading", localStorage.option_contextmenu_cascading != undefined && localStorage.option_contextmenu_cascading == "true");
   setCBval("#contextmenu_cascading_pinned", localStorage.option_contextmenu_cascading_pinned != undefined && localStorage.option_contextmenu_cascading_pinned == "true");
+  if (localStorage.option_contextmenu != undefined && localStorage.option_contextmenu != "true") {
+      $('#contextmenu_cascading').attr('disabled', 'disabled');
+      $('#contextmenu_cascading_pinned').attr('disabled', 'disabled');
+      $('#contextmenu_cascading_lbl').css('color', '#ccc');
+      $('#contextmenu_cascading_pinned_lbl').css('color', '#ccc');
+  }
+
   setCBval("#alwaystab", localStorage.option_alwaystab != undefined && localStorage.option_alwaystab == "true");
   setCBval("#pinnedtab", localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true");
   setCBval("#showdate", localStorage.option_showdate == undefined || localStorage.option_showdate == "true");
@@ -111,6 +118,18 @@ function save_options() {
   if (need_cm_refresh) {
       chrome.extension.sendRequest({action:"cm_populate"});
   }  
+  
+  if (localStorage.option_contextmenu != "true") {
+      $('#contextmenu_cascading').attr('disabled', 'disabled');
+      $('#contextmenu_cascading_pinned').attr('disabled', 'disabled');
+      $('#contextmenu_cascading_lbl').css('color', '#ccc');
+      $('#contextmenu_cascading_pinned_lbl').css('color', '#ccc');
+  } else {
+      $('#contextmenu_cascading').removeAttr('disabled');
+      $('#contextmenu_cascading_pinned').removeAttr('disabled');
+      $('#contextmenu_cascading_lbl').css('color', '');
+      $('#contextmenu_cascading_pinned_lbl').css('color', '');
+  }
 
   localStorage.option_alwaystab = getCBval('#alwaystab');
 
