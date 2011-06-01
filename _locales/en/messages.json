@@ -13,7 +13,7 @@
     "popout_tooltip":       { "message": "Browser tab mode ($1). Close the tab to get the popup again." },
     "backtoindex_tooltip" : { "message": "Back to index ($1). [$2 to close popup]" },    
     "wordwrap_tooltip" :    { "message": "Toggle wordwrap ($1)" },    
-    "trash_tooltip":        { "message": "Trash note ($1)" },
+    "trash_tooltip":        { "message": "Trash note$1" },
     "revert_tooltip":       { "message": "Revert changes ($1)" },
     "print_tooltip":        { "message": "Print" },
     "tags_all":             { "message": "(all)" },    
@@ -49,6 +49,7 @@
     "cm_using_selection":   { "message": "selection"},
     "cm_using_page_url":    { "message": "page URL"},
     "cm_using_link_url":    { "message": "link URL"},
-    "cm_using_image_url":   { "message": "image URL"}
-
+    "cm_using_image_url":   { "message": "image URL"},
+    "editorcm_insert_url":  { "message": "Insert browser URL ($1)"},
+    "editorcm_search_selection": { "message": "Search for selection ($1)"}
 }        

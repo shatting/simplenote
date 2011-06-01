@@ -187,7 +187,7 @@
 /* =========== */
 .context-menu-theme-gloss {
 	background:#f4f4f4 url(../images/cmenu-gloss-bg.gif) repeat-y left center;
-	border:1px solid #f4f4f4;
+	border:1px solid #666;
 	padding:1px;
 	padding-right:0;
         -webkit-border-radius: 3px;

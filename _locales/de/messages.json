@@ -13,7 +13,7 @@
     "popout_tooltip":       { "message": "Tabmodus ($1). Schliessen sie den Tab, um wieder in den Popupmodus zu wechseln." },
     "backtoindex_tooltip" : { "message": "Zurück zur Übersicht ($1). [$2 um das Popup zu schliessen]" },
     "wordwrap_tooltip" :    { "message": "Zeilenumbruch umschalten ($1)" },
-    "trash_tooltip":        { "message": "In den Papierkorb ($1)" },
+    "trash_tooltip":        { "message": "In den Papierkorb$1" },
     "revert_tooltip":       { "message": "Änderungen verwerfen ($1)" },
     "print_tooltip":        { "message": "Drucken" },
     "tags_all":             { "message": "(alle)" },
@@ -49,6 +49,8 @@
     "cm_using_selection":   { "message": "Auswahl"},
     "cm_using_page_url":    { "message": "Seiten URL"},
     "cm_using_link_url":    { "message": "Link URL"},
-    "cm_using_image_url":   { "message": "Bild URL"}
+    "cm_using_image_url":   { "message": "Bild URL"},
+    "editorcm_insert_url":  { "message": "Tab URL einfügen ($1)"},
+    "editorcm_search_selection": { "message": "Nach Auswahl suchen ($1)"}
     
 }

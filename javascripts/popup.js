@@ -493,7 +493,7 @@ function popupi18n() {
     $("#tags").attr("title",chrome.i18n.getMessage("tag_tooltip",["alt-t", "alt-e"]));
     $("#pintoggle").attr("title",chrome.i18n.getMessage("pin_tooltip","alt-p"));   
     $("#popout").attr("title",chrome.i18n.getMessage("popout_tooltip","alt-o"));
-    $("#trash").attr("title",chrome.i18n.getMessage("trash_tooltip","ctrl-alt-d"));
+    $("#trash").attr("title",chrome.i18n.getMessage("trash_tooltip"," (ctrl-alt-d)"));
     $("#wraptoggle").attr("title",chrome.i18n.getMessage("wordwrap_tooltip","alt-w"));
     $("#undo").attr("title",chrome.i18n.getMessage("revert_tooltip","alt-r"));    
     $("#print").attr("title",chrome.i18n.getMessage("print_tooltip"));    
@@ -589,6 +589,28 @@ function fillIndex() {
                 if (i<15 && note.content != undefined)
                     indexFillNote(note);
             }
+            $("div.noterow").contextMenu(
+                function() {
+                    var i = {};
+                    i[chrome.i18n.getMessage("trash_tooltip","")] = {
+                        onclick: function() {                            
+                            chrome.extension.sendRequest({action : "update", key : $(this).attr("id"), deleted : 1},
+                                function() {
+                                    snEditor.hideIfNotInIndex();
+                                });
+                        },
+                        icon: "/images/trash.png"
+                    };                    
+                    return [i];
+                },
+                {
+                    theme:'gloss',
+                    offsetX:0,
+                    offsetY:0,                    
+                    direction:'down'
+                }
+            );
+                
             checkInView();
         } else
             $('div#index div#notes').html("<div id='nonotes'>" + chrome.i18n.getMessage("no_notes_to_show") + "</div>");
@@ -801,22 +823,19 @@ function indexFillNoteReqComplete(note) {
         //$noterow.dblclick(maximize);
 
         // add click binding
+        $("div.noterow#"+note.key).unbind();
         if (note.deleted == 0) {
-            $("div.noterow#"+note.key).die();
-            $("div.noterow#"+note.key).live("click",note, function(event) {
+            
+            $("div.noterow#"+note.key).bind("click",note, function(event) {
                 if (isTab && snEditor.note)
                     snEditor.saveCaretScroll();
                 
                 snEditor.setNote(event.data);
             });
 
-            $("div.noterow#"+note.key).live("mousedown",note, function(event) {
-                snEditor.setNote(event.data);
-            });
         } else {
-            $noterow.attr("title", chrome.i18n.getMessage("click_to_undelete"));
-            $("div.noterow#"+note.key).die();
-            $("div.noterow#"+note.key).live("click",note.key,function(event) {
+            $noterow.attr("title", chrome.i18n.getMessage("click_to_undelete"));            
+            $("div.noterow#"+note.key).bind("click",note.key,function(event) {
                 chrome.extension.sendRequest({action : "update", key : event.data, deleted : 0});
             });
         }
@@ -1268,44 +1287,30 @@ SNEditor.prototype.focus = function() {
 SNEditor.prototype.makeContextMenu = function() {
 
     log("CodeMirror.makeContextMenu")
-
-    var $editbox = $(this.codeMirror.editor.container);
+    
     var that = this;
-    var menu1 = [
-      {'Insert browser URL (alt-v)':
-        {
-              onclick: function() {that.insertUrl();},
-              disabled: isTab
-        }
-      },
-
-      {'Search for selection (alt-s)':
-        {
-            onclick: function() {that.searchForSelection();},
-            className: "disableonnoselection"
-        }
-      }
-      //,$.contextMenu.separator
-    ];
-
-    $editbox.contextMenu(menu1,{
-        theme:'gloss',
-        offsetX:isTab?200:0,
-        offsetY:20,
-        direction:'down',
-        beforeShow: function() {
-            if (that.codeMirror.selection().trim() == "")
-                $(this.menu).find('.disableonnoselection').each(function() {
-                        $(this).toggleClass("context-menu-item-disabled", true);
-                 });
-            else
-                $(this.menu).find('.disableonnoselection').each(function() {
-                        $(this).toggleClass("context-menu-item-disabled", false);
-                 });
-
-            return true;
+    $(this.codeMirror.editor.container).contextMenu(
+        function() {
+            var i = {};
+            i[chrome.i18n.getMessage("editorcm_insert_url","alt-v")] = {
+                onclick: function() {that.insertUrl();},
+                disabled: isTab
+            };
+            var s = {};
+            s[chrome.i18n.getMessage("editorcm_search_selection","alt-s")] = {
+                onclick: function() {that.searchForSelection();},
+                disabled: that.codeMirror.selection().trim() == "",
+                icon: "/images/searchfield.png"
+            };
+            return [i,s];
         },
-    });
+        {
+            theme:'gloss',
+            offsetX:isTab?200:0,
+            offsetY:20,
+            direction:'down'
+        }
+    );
 }
 
 //  ---------------------------------------
