@@ -895,9 +895,15 @@ function slideEditor(callback, duration) {
     snEditor.show();
 
     if (!isTab) {
-        $('div#index').animate({left:"-400px"}, {duration: duration, easing: slideEasing});
-        $('div#note').animate({left:"2px"}, {duration: duration, complete: function() {$("#index").hide();if (callback) callback();},easing: slideEasing});
-        $('body').animate({width:"800px"}, {duration: duration, easing: slideEasing});
+        $('div#index').animate({left:"-400px", right:"800px"}, {duration: duration, easing: slideEasing});
+        $('div#note').animate({left:"2px"}, {duration: duration ,easing: slideEasing});
+        $('body').animate({width:"800px"}, {duration: duration, easing: slideEasing,
+           complete: function() {
+                //$("#index").hide();
+                if (callback) callback();
+            }
+        });
+        
     } else
         if (callback) callback();
     
@@ -917,9 +923,15 @@ function slideIndex(callback, duration) {
 
     $("#index").show();
     if (!isTab) {
-        $('div#index').animate({left:"2px"}, {duration: duration, easing: slideEasing});
-        $('div#note').animate({left:"400px"}, {duration:duration, complete: function() {$("#note").hide();if (callback) callback();}, easing: slideEasing});
-        $('body').animate({width : "400px"}, {duration:duration, easing: slideEasing});
+        $('div#note').animate({left:"400px"}, {duration:duration, easing: slideEasing});
+        $('div#index').animate({left:"2px", right:"2px"}, {duration: duration, easing: slideEasing});
+
+        $('body').animate({width : "400px"}, {duration: 0.85*duration, easing: slideEasing,
+            complete: function() {
+                //$("#note").hide();
+                if (callback) callback();
+            }
+        });
     }
     
     currentView = "index";
