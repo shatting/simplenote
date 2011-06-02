@@ -124,6 +124,7 @@ function uiEventListener(eventData, sender, sendResponse) {
         
         if (deleted) {
             if (noteRowCurrentlyVisible(eventData.newnote.key)) {
+                $('div.noterow#' + eventData.newnote.key).attr("deleteanimation","true");
                 $('div.noterow#' + eventData.newnote.key).hide("slow", function() {$(this).remove();});
             }
             if (localStorage.lastopennote_key == eventData.newnote.key) {
@@ -272,7 +273,7 @@ function shorcuts(event) {
                 case 66: //alt-b
                     $('div#note #backtoindex').click();break;
                 case 82: //alt-r
-                    $('div#note #undo').click();break;
+                    $('div#note #revert').click();break;
                 case 79: //alt-o
                     if (!isTab) $('div#note #popout').click();break;
                 case 80: //alt-p
@@ -300,6 +301,18 @@ function shorcuts(event) {
 
 //  ---------------------------------------
 $(document).ready(readyListener);
+
+function noteRowMouseOver(elem) {
+    $("abbr.notetime",elem).css("color","#ddd");
+    $("div.abstract",elem).css("color","#ccc");
+    $("div.noteheading",elem).css("color","#fff");
+}
+
+function noteRowMouseOut(elem) {
+    $("abbr.notetime",elem).css("color","");
+    $("div.abstract",elem).css("color","");
+    $("div.noteheading",elem).css("color","");
+}
 
 function readyListener() {
 
@@ -394,15 +407,11 @@ function readyListener() {
                         })
 
                         $("div.noterow").live("mouseover", function(event) {
-                            $("abbr.notetime",this).css("color","#ddd");
-                            $("div.abstract",this).css("color","#ccc");
-                            $("div.noteheading",this).css("color","#fff");
+                            noteRowMouseOver(this);
                         });
 
                         $("div.noterow").live("mouseleave", function(event) {
-                            $("abbr.notetime",this).css("color","");
-                            $("div.abstract",this).css("color","");
-                            $("div.noteheading",this).css("color","");
+                            noteRowMouseOut(this);
                         });
 
                         // bind SEARCH field
@@ -495,7 +504,7 @@ function popupi18n() {
     $("#popout").attr("title",chrome.i18n.getMessage("popout_tooltip","alt-o"));
     $("#trash").attr("title",chrome.i18n.getMessage("trash_tooltip"," (ctrl-alt-d)"));
     $("#wraptoggle").attr("title",chrome.i18n.getMessage("wordwrap_tooltip","alt-w"));
-    $("#undo").attr("title",chrome.i18n.getMessage("revert_tooltip","alt-r"));    
+    $("#revert").attr("title",chrome.i18n.getMessage("revert_tooltip","alt-r"));    
     $("#print").attr("title",chrome.i18n.getMessage("print_tooltip"));    
 
     if (isTab)
@@ -593,11 +602,12 @@ function fillIndex() {
                 function() {
                     var i = {};
                     i[chrome.i18n.getMessage("trash_tooltip","")] = {
-                        onclick: function() {                            
+                        onclick: function() {                         
                             chrome.extension.sendRequest({action : "update", key : $(this).attr("id"), deleted : 1},
                                 function() {
                                     snEditor.hideIfNotInIndex();
                                 });
+                            noteRowMouseOut(this);
                         },
                         icon: "/images/trash.png"
                     };                    
@@ -718,8 +728,8 @@ function indexAddNote(mode, note){
     $notepin.attr("title",chrome.i18n.getMessage("click_to_pinunpin"));
 
     // bind pinned klick
-    $("#"+note.key+"pin").die();
-    $("#"+note.key+"pin").live("click",{key: note.key, systemtags: note.systemtags},function(event) {
+    $("#"+note.key+"pin").unbind();
+    $("#"+note.key+"pin").bind("click",{key: note.key, systemtags: note.systemtags},function(event) {
             var key = event.data.key;
             var systemtags = event.data.systemtags;
 
@@ -734,8 +744,8 @@ function indexAddNote(mode, note){
         });
     // bind published click
     if (note.publishkey) {
-        $("#"+note.key+"published").die();
-        $("#"+note.key+"published").live("click",note.publishkey,function(event) {
+        $("#"+note.key+"published").unbind();
+        $("#"+note.key+"published").bind("click",note.publishkey,function(event) {
             event.stopPropagation();
             openURLinTab("http://simp.ly/publish/"+event.data);
         });
@@ -816,17 +826,16 @@ function indexFillNoteReqComplete(note) {
         // set actual abstract
         $noteabstract.html(htmlEncode(abstractlines,100).join("<br/>"));
 
-        $noterow.unbind();
+        $noterow.unbind("click");
         // add dblclick binding
         //$noterow.css("height",$noterow.height());
         //$noterow.data('origheight',$noterow.height());
         //$noterow.dblclick(maximize);
 
-        // add click binding
-        $("div.noterow#"+note.key).unbind();
+        // add click binding        
         if (note.deleted == 0) {
             
-            $("div.noterow#"+note.key).bind("click",note, function(event) {
+            $noterow.bind("click",note, function(event) {
                 if (isTab && snEditor.note)
                     snEditor.saveCaretScroll();
                 
@@ -835,7 +844,7 @@ function indexFillNoteReqComplete(note) {
 
         } else {
             $noterow.attr("title", chrome.i18n.getMessage("click_to_undelete"));            
-            $("div.noterow#"+note.key).bind("click",note.key,function(event) {
+            $noterow.bind("click",note.key,function(event) {
                 chrome.extension.sendRequest({action : "update", key : event.data, deleted : 0});
             });
         }
@@ -879,33 +888,42 @@ function localeDateString(d) {
 //  ---------------------------------------
 function slideEditor(callback, duration) {
     log("slideEditor");
+    
     if (duration == undefined)
         duration = slideDuration;
-    $("#note").show();
+
+    snEditor.show();
+
     if (!isTab) {
-        $('div#index').animate({left:"-400px"}, {duration: duration, complete: callback, easing: slideEasing});
+        $('div#index').animate({left:"-400px"}, {duration: duration, easing: slideEasing});
         $('div#note').animate({left:"2px"}, {duration: duration, complete: function() {$("#index").hide();if (callback) callback();},easing: slideEasing});
         $('body').animate({width:"800px"}, {duration: duration, easing: slideEasing});
     } else
         if (callback) callback();
+    
     currentView = "editor";
-    snEditor.show();
+
 }
 //  ---------------------------------------
 function slideIndex(callback, duration) {
     log("slideIndex");
+
     if (duration == undefined)
         duration = slideDuration;
+    
     localStorage.lastopennote_open = "false";
     snEditor.clearDirty();
+    snEditor.saveCaretScroll();
+
     $("#index").show();
     if (!isTab) {
-        $('div#index').animate({left:"2px"}, {duration: duration, complete: callback, easing: slideEasing});
-        $('div#note').animate({left:"400px"}, {duration:duration, complete: function() {$("#note").hide();}, easing: slideEasing});
+        $('div#index').animate({left:"2px"}, {duration: duration, easing: slideEasing});
+        $('div#note').animate({left:"400px"}, {duration:duration, complete: function() {$("#note").hide();if (callback) callback();}, easing: slideEasing});
         $('body').animate({width : "400px"}, {duration:duration, easing: slideEasing});
     }
+    
     currentView = "index";
-    snEditor.saveCaretScroll();
+
     delete snEditor.note;
 }
 
@@ -1085,13 +1103,13 @@ SNEditor.prototype.initialize = function() {
         that.codeMirror.setTextWrapping(snEditor.isWraptoggle());
         that.focus();
     });
-    snEditor.setWraptoggle(localStorage.wordwrap != undefined && localStorage.wordwrap == "true");
+    this.setWraptoggle(localStorage.wordwrap != undefined && localStorage.wordwrap == "true");
     this.codeMirror.setTextWrapping(snEditor.isWraptoggle());
 
 
     // bind UNDO button
-    $('div#note #undo').unbind();
-    $('div#note #undo').click(function(event) {
+    $('div#note #revert').unbind();
+    $('div#note #revert').click(function(event) {
         // reset content
         log("CodeMirror.initialize:undo clicked");
 
@@ -1111,16 +1129,15 @@ SNEditor.prototype.initialize = function() {
             snEditor.setPintoggle(note.systemtags.indexOf("pinned")>=0);
         }
 
-        $('div#note #undo').hide();
+        snEditor.hideRevert();
 
         snEditor.clearDirty(); // should not dont need this here b/c of callbacks
         that.focus();
     });
-    $('div#note #undo').hide();
 
     // bind DELETE/CANCEL
-    $('#trash').unbind();
-    $('#trash').click(function() {
+    $('div#note #trash').unbind();
+    $('div#note #trash').click(function() {
         _gaq.push(['_trackEvent', 'popup', 'trashclicked']);
         that.trashNote();
         slideIndex();
@@ -1168,7 +1185,6 @@ SNEditor.prototype.initialize = function() {
         });
     else {
         $('div#note #popout').hide();
-        $('div#note #undo').hide();        
         $('div#note #backtoindex').unbind();
         $('div#note #backtoindex').click(function(event) {
             window.close();
@@ -1203,7 +1219,7 @@ SNEditor.prototype.saveCaretScroll = function() {
     caretScroll.scrollTop = $(this.codeMirror.editor.container).scrollTop();
     caretScroll.scrollLeft = $(this.codeMirror.editor.container).scrollLeft();
     localStorage[this.note.key + "_caret"] = JSON.stringify(caretScroll);
-    log("caretScroll:" + caretScroll.line + ":" + caretScroll.character + " [" + caretScroll.scrollTop + "/" + caretScroll.scrollLeft + "]");
+    cs2str("saved",caretScroll);
 }
 
 //  ---------------------------------------
@@ -1220,14 +1236,33 @@ SNEditor.prototype.restoreCaretScroll = function () {
             lineH = this.codeMirror.nthLine(caretScroll.line);
 
         var character = Math.min(this.codeMirror.lineContent(lineH).length,caretScroll.character);
+        
+        cs2str("target     ",caretScroll);
+
+        this.logCaretScroll("before curso");
         this.codeMirror.selectLines(lineH, character);
 
-        if (caretScroll.scrollTop)
+        if (caretScroll.scrollTop != undefined)
             $(this.codeMirror.editor.container).scrollTop(caretScroll.scrollTop);
-        if (caretScroll.scrollLeft)
+        if (caretScroll.scrollLeft != undefined)
             $(this.codeMirror.editor.container).scrollLeft(caretScroll.scrollLeft);
-        log("caretScroll:" + caretScroll.line + ":" + caretScroll.character + " [" + caretScroll.scrollTop + "/" + caretScroll.scrollLeft + "]");
+
+        this.logCaretScroll("after ");
     }
+}
+
+SNEditor.prototype.logCaretScroll = function(msg) {
+    var pos = snEditor.codeMirror.cursorPosition();
+    pos.line = snEditor.codeMirror.lineNumber(pos.line);
+    cs2str(msg,pos,$(this.codeMirror.editor.container));
+}
+
+function cs2str(msg,p,$elm) {
+    if ($elm) {
+        p.scrollTop = $elm.scrollTop();
+        p.scrollLeft = $elm.scrollLeft();
+    }
+    log(msg + ": line " + p.line + ", char " + p.character + ", sTop " + p.scrollTop + ", sLeft " + p.scrollLeft);
 }
 
 //  ---------------------------------------
@@ -1257,7 +1292,12 @@ SNEditor.prototype.hideIfNotInIndex = function () {
 
     log("CodeMirror.hideIfNotInIndex")
 
-    var keys = $("div#index div.noterow").map(function(i,e) {return this.id;}).get();
+    var keys = $("div#index div.noterow").map(function(i,e) {
+        if ($(this).attr("deleteanimation") == "true")
+            return "";
+        else
+            return this.id;
+    }).get();
     var that = this;
 
     if (!this.note || (this.note.key != "" && keys.indexOf(this.note.key)<0)) {
@@ -1341,7 +1381,6 @@ SNEditor.prototype.setNote = function(note, options) {
     if (note.key == "") { // new note
 
         $("#trash").hide();
-        $('div#note #undo').hide();
         $('div#note #popout').hide();
 
     } else { // existing note
@@ -1365,6 +1404,7 @@ SNEditor.prototype.setNote = function(note, options) {
     this.setPintoggle(this.note.systemtags.indexOf("pinned")>=0);
 
     this.clearDirty();
+    this.hideRevert();
 
     slideEditor(function () {        
         that.restoreCaretScroll();
@@ -1470,9 +1510,9 @@ SNEditor.prototype.setDirty = function(what, how, event) {
         log(what + " not dirty now (" + event.type + ")");
 
     if (this.isNoteDirty())
-        $('div#note #undo').show();
+        this.showRevert();
     else
-        $('div#note #undo').hide();
+        this.hideRevert();
 
     return true;
 }
@@ -1586,6 +1626,17 @@ SNEditor.prototype.isWraptoggle = function() {
 
 SNEditor.prototype.print = function() {
     this.codeMirror.win.print();
+}
+
+SNEditor.prototype.showRevert = function() {
+    $('div#note #revert').show();
+    //alert($('div#note #pintoggle').css("left"))
+    //$('div#note #tags').animate({right:"+=28"});
+}
+
+SNEditor.prototype.hideRevert = function() {
+    $('div#note #revert').hide();
+    //$('div#note #tags').animate({right:"-=28"});
 }
 
 //  ---------------------------------------

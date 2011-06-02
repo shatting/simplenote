@@ -368,7 +368,7 @@ div#note .toolbarbutton {
     float:right;
 }
 
-#undo {
+#revert {
     background-image:url(/images/undo.png);
 }
 
