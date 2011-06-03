@@ -11,11 +11,8 @@ var SimplenoteLS = {
     syncKeysKey     : "_syncKeys",
     indexTimeKey    : "_indexTime",
 
-    // toggle debug output
-    isDebug : true,
-
     log : function(s) {
-        if (this.isDebug)
+        if (debugFlags.LS)
             logGeneral(s,"SimplenoteLS");
     },
 
@@ -29,7 +26,7 @@ var SimplenoteLS = {
 
     indexTime : function(newIndexTime) {
         if (newIndexTime) {
-            log("indexTime:setting new indexTime:" + convertDate(newIndexTime) );
+            this.log("indexTime:setting new indexTime:" + convertDate(newIndexTime) );
             localStorage[this.indexTimeKey] = newIndexTime;
         } else
             return localStorage[this.indexTimeKey];
@@ -267,9 +264,9 @@ var SimplenoteLS = {
             $.storage.del(key);
 
             uiEvent("notedeleted", {key: key});
-            log("delNote:deleting " + key);
+            this.log("delNote:deleting " + key);
         } else
-            log("delNote:cannot delete unknown note " + key);
+            this.log("delNote:cannot delete unknown note " + key);
     },
 
     getKeys : function() {

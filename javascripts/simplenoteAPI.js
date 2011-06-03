@@ -25,11 +25,8 @@ $.ajaxSetup({
 
 var SimplenoteAPI2 = {
 
-    // toggle debug output
-    isDebug : false,
-
     log : function(s) {
-        if (this.isDebug)
+        if (debugFlags.API)
             logGeneral(s,"SimplenoteAPI2");
     },
 
@@ -128,24 +125,26 @@ var SimplenoteAPI2 = {
             return;
         }
 
+        var that = this;
+
         jQuery.ajax({
             type: "POST",
             url: this.root + "login",
             data: Base64.encode("email=" + this.credentials.email + "&password=" + this.credentials.password),
             dataType: "text",
             success: function (response) {
-                SimplenoteAPI2.log("login success, new token:" + response);
+                that.log("login success, new token:" + response);
 
-                SimplenoteAPI2.credentials.token = response;
-                SimplenoteAPI2.credentials.tokenTime = new Date();
+                that.credentials.token = response;
+                that.credentials.tokenTime = new Date();
                 // this.credentials full valid set now
 
                 if (callbacks.success)
                     callbacks.success(SimplenoteAPI2.credentials);
             },
             error: function (jqXHR, textStatus, errorThrown) {
-                SimplenoteAPI2.log("index::status=" + textStatus + "(" + jqXHR.status + ")");
-                SimplenoteAPI2.credentials = undefined;
+                that.log("index::status=" + textStatus + "(" + jqXHR.status + ")");
+                that.credentials = undefined;
                 switch(jqXHR.status) {
                     case 0:
                         if (callbacks.timeout)
@@ -216,13 +215,14 @@ var SimplenoteAPI2 = {
         if (options.length) urloptions+="&length=" + options.length;
         if (options.mark) urloptions+="&mark=" + options.mark;
         if (options.since) urloptions+="&since=" + options.since;
-        SimplenoteAPI2.log("index::options: " + urloptions);
+        var that = this;
+        this.log("index::options: " + urloptions);
         jQuery.ajax({
             url: url + urloptions,
             dataType: "json",
             //timeout: 3000,
             complete: function(jqXHR, textStatus) {
-                SimplenoteAPI2.log("index::status=" + textStatus + "(" + jqXHR.status + ")");
+                that.log("index::status=" + textStatus + "(" + jqXHR.status + ")");
                 switch (jqXHR.status) {
                     case 200:
                         if (callbacks.success)

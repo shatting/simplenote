@@ -1,8 +1,5 @@
 var background;
 
-var isDebug = true && commonDebug;
-var isDebugToBg =  true && isDebug;
-
 // amount of vertical viewport size to add for preloading notes in index
 var preLoadFactor = 1/4;
 var currentView = "index";
@@ -24,9 +21,9 @@ var fontUrls = {
 }
 
 function log(s) {
-    if (isDebug)
+    if (debugFlags.popup)
         logGeneral(s,"popup.js",console);
-    if (isDebugToBg)
+    if (debugFlags.popup2BG)
         logGeneral(s,"popup.js",background.console);
 }
 
@@ -61,7 +58,7 @@ function unloadListener() {
         log("(unload): note:");
         log(note);
 
-        background.saveNote = note;
+        background.SimplenoteBG.saveNote = note;
     } else
         log("(unload): no background save");
 
@@ -70,7 +67,7 @@ function unloadListener() {
     if (isTab)
         delete background.popouttab;
 
-    background.setTimeout("popupClosed()", 1);
+    background.setTimeout("SimplenoteBG.popupClosed()", 10);
 }
 
 //  ---------------------------------------
@@ -368,6 +365,7 @@ function readyListener() {
                         $("body").css("height", "550px");
                     }
                 }
+                
                 popupi18n();
 
                 chrome.extension.sendRequest({action : "login"}, function(result) {
@@ -896,7 +894,7 @@ function slideEditor(callback, duration) {
 
     if (!isTab) {
         $('div#index').animate({left:"-400px", right:"800px"}, {duration: duration, easing: slideEasing});
-        $('div#note').animate({left:"2px"}, {duration: duration ,easing: slideEasing});
+        $('div#note').animate({left:"2px"}, {duration: duration, easing: slideEasing});
         $('body').animate({width:"800px"}, {duration: duration, easing: slideEasing,
            complete: function() {
                 //$("#index").hide();
@@ -1532,17 +1530,17 @@ SNEditor.prototype.setDirty = function(what, how, event) {
 SNEditor.prototype.needCMRefresh = function(type) {
     switch(type) {
         case "pinned":
-            background.needCMRefresh = true;
+            background.SimplenoteBG.needCMRefresh = true;
             break;
         case "lastopen":
-            background.needLastOpenRefresh = true;
+            background.SimplenoteBG.needLastOpenRefresh = true;
             break;
         default:
             throw "SNEditor.needCMRefresh: unknown type " + type;
     }
 
     if (isTab)
-        background.checkRefreshs();
+        background.SimplenoteBG.checkRefreshs();
 }
 
 //  ---------------------------------------
@@ -1641,7 +1639,8 @@ SNEditor.prototype.print = function() {
 }
 
 SNEditor.prototype.showRevert = function() {
-    $('div#note #revert').show();
+    if (!isTab)
+        $('div#note #revert').show();
     //alert($('div#note #pintoggle').css("left"))
     //$('div#note #tags').animate({right:"+=28"});
 }
@@ -1734,25 +1733,25 @@ function checkInView() {
     }
 }
 
-function isInView($noterow) {
-    $notes = $("#notes");
-    viewportSize   = {height: $notes.height(), width:$notes.width()};
-    viewportOffset = {top: $notes.scrollTop(), left:$notes.scrollLeft()};
-    
-    elementSize   = {
-        height: $noterow.height(),
-        width: $noterow.width()
-    },
-    elementOffset = $noterow.offset();
-
-    //log("checkInView:elementSize=[" + elementSize.height + "," + elementSize.width + "], elementOffset=[" + elementOffset.left + "," + elementOffset.top + "]");
-
-    return elementOffset.top <= viewportOffset.top + viewportSize.height*(1 + preLoadFactor) &&
-        elementOffset.left + elementSize.width >= viewportOffset.left &&
-        elementOffset.left <= viewportOffset.left + viewportSize.width;
-
-//            console.log(i + ": loaded " + loaded + ", inview=" + inview);
-//            console.log(elementOffset);
-//            console.log(elementOffset);
-
-}
+//function isInView($noterow) {
+//    $notes = $("#notes");
+//    viewportSize   = {height: $notes.height(), width:$notes.width()};
+//    viewportOffset = {top: $notes.scrollTop(), left:$notes.scrollLeft()};
+//
+//    elementSize   = {
+//        height: $noterow.height(),
+//        width: $noterow.width()
+//    },
+//    elementOffset = $noterow.offset();
+//
+//    //log("checkInView:elementSize=[" + elementSize.height + "," + elementSize.width + "], elementOffset=[" + elementOffset.left + "," + elementOffset.top + "]");
+//
+//    return elementOffset.top <= viewportOffset.top + viewportSize.height*(1 + preLoadFactor) &&
+//        elementOffset.left + elementSize.width >= viewportOffset.left &&
+//        elementOffset.left <= viewportOffset.left + viewportSize.width;
+//
+////            console.log(i + ": loaded " + loaded + ", inview=" + inview);
+////            console.log(elementOffset);
+////            console.log(elementOffset);
+//
+//}

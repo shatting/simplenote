@@ -2,11 +2,20 @@
 // Simplenote common functions.
 // ------------------------------------------------------------------------------------------------
 
-// global debug switch
-var commonDebug = false;
+// debug switches
+var debugFlags = {
+    general     : true,
+    popup       : true,
+    popup2BG    : true,
+    BG          : true,
+    DB          : true,
+    LS          : true,
+    API         : true,
+    CM          : true
+}
 
 function logGeneral(s,prefix,target) {
-    if (!commonDebug)
+    if (!debugFlags.general)
         return;
 
     if (!target)
@@ -18,21 +27,6 @@ function logGeneral(s,prefix,target) {
         target.log( prefix + '::' + s);
     else
         target.log(s);
-}
-
-function convertDate(serverDate) {
-    return new Date(serverDate*1000);
-}
-
-function dateAgo(d) {
-    var diffms = ((new Date()) - (new Date(d*1000)));
-    var hrs = Math.floor(diffms/(1000*60*60));
-    var mins = Math.floor((diffms % (1000*60*60))/(1000*60));
-    var secs = Math.floor((diffms % (1000*60))/(1000));
-    if (hrs==0)
-        return (mins>0?mins + "m":"") + (secs + "s ") + "ago";
-    else
-        return (hrs>0?hrs + "h":"")+ (mins + "m ") + "ago";
 }
 
 function logNote(note) {
@@ -75,6 +69,21 @@ __proto__: Object*/
             s += "\n[note has no content]";
     }
     return s;
+}
+
+function convertDate(serverDate) {
+    return new Date(serverDate*1000);
+}
+
+function dateAgo(d) {
+    var diffms = ((new Date()) - (new Date(d*1000)));
+    var hrs = Math.floor(diffms/(1000*60*60));
+    var mins = Math.floor((diffms % (1000*60*60))/(1000*60));
+    var secs = Math.floor((diffms % (1000*60))/(1000));
+    if (hrs==0)
+        return (mins>0?mins + "m":"") + (secs + "s ") + "ago";
+    else
+        return (hrs>0?hrs + "h":"")+ (mins + "m ") + "ago";
 }
 
 /**
@@ -321,58 +330,58 @@ function cssprop(e, id) {
 //    return "last";
 //}
 
-function resort(callback) {
-    logGeneral("resort()","common.js");
-    var $filteredData = $("div.noterow").clone();
-    
-    var $sortedData = $filteredData.sorted({
-        reversed:localStorage.option_sortby=="alpha"?localStorage.option_sortbydirection != 1:localStorage.option_sortbydirection == 1,
-        by: function(v) {
-          return $(v).attr('sortkey');
-        }
-      });
-
-
-    $("#notes").css("height",$("#notes").height());
-    // finally, call quicksand
-    $("#notes").quicksand($sortedData, {
-      duration: 500,
-      attribute: "id",
-      adjustHeight: false,
-      //dy: -18,
-      enhancement: function(e) { $(e).css("height","auto"); $(e).find("abbr.notetime").timeago();}
-    }, callback);
-}
-
-// Custom sorting plugin
-(function($) {
-  $.fn.sorted = function(customOptions) {
-    var options = {
-      reversed: false,
-      by: function(a) { return a.text(); }
-    };
-    $.extend(options, customOptions);
-    $data = $(this);
-    arr = $data.get();
-    arr.sort(function(a, b) {
-      $a=$(a);$b=$(b);
-      ap =$a.attr("pinned") == "true"; bp =$b.attr("pinned") == "true";
-      if (ap && bp || !ap && !bp) {
-          var valA = options.by($a);
-          var valB = options.by($b);
-          if (options.reversed) {
-            return (valA < valB) ? 1 : (valA > valB) ? -1 : 0;
-          } else {
-            return (valA < valB) ? -1 : (valA > valB) ? 1 : 0;
-          }
-      } else if (ap)
-          return -1;
-      else
-          return 1;
-    });
-    return $(arr);
-  };
-})(jQuery);
+//function resort(callback) {
+//    logGeneral("resort()","common.js");
+//    var $filteredData = $("div.noterow").clone();
+//
+//    var $sortedData = $filteredData.sorted({
+//        reversed:localStorage.option_sortby=="alpha"?localStorage.option_sortbydirection != 1:localStorage.option_sortbydirection == 1,
+//        by: function(v) {
+//          return $(v).attr('sortkey');
+//        }
+//      });
+//
+//
+//    $("#notes").css("height",$("#notes").height());
+//    // finally, call quicksand
+//    $("#notes").quicksand($sortedData, {
+//      duration: 500,
+//      attribute: "id",
+//      adjustHeight: false,
+//      //dy: -18,
+//      enhancement: function(e) { $(e).css("height","auto"); $(e).find("abbr.notetime").timeago();}
+//    }, callback);
+//}
+//
+//// Custom sorting plugin
+//(function($) {
+//  $.fn.sorted = function(customOptions) {
+//    var options = {
+//      reversed: false,
+//      by: function(a) { return a.text(); }
+//    };
+//    $.extend(options, customOptions);
+//    $data = $(this);
+//    arr = $data.get();
+//    arr.sort(function(a, b) {
+//      $a=$(a);$b=$(b);
+//      ap =$a.attr("pinned") == "true"; bp =$b.attr("pinned") == "true";
+//      if (ap && bp || !ap && !bp) {
+//          var valA = options.by($a);
+//          var valB = options.by($b);
+//          if (options.reversed) {
+//            return (valA < valB) ? 1 : (valA > valB) ? -1 : 0;
+//          } else {
+//            return (valA < valB) ? -1 : (valA > valB) ? 1 : 0;
+//          }
+//      } else if (ap)
+//          return -1;
+//      else
+//          return 1;
+//    });
+//    return $(arr);
+//  };
+//})(jQuery);
 
 function getCBval(sel) {
     return $(sel).attr("checked") == "checked";

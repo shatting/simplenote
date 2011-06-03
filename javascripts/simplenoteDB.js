@@ -7,10 +7,8 @@ var SimplenoteDB = {
 
     //cypherReg : /^\-\-SYNCPADAES\-\-\n(.*)\n\-\-SYNCPADAES\-\-$/m,
 
-    isDebug : true,
-
     log : function(s) {
-        if (this.isDebug)
+        if (debugFlags.DB)
             logGeneral(s,"SimplenoteDB");
     },
 
@@ -53,7 +51,7 @@ var SimplenoteDB = {
 
     sync : function(fullSync, callbackFinished, callbackChunk) {
         if (this.getSyncInProgress()) {
-            log("sync: sync already in progress, returning");
+            this.log("sync: sync already in progress, returning");
             return;
         }
 
@@ -184,6 +182,8 @@ var SimplenoteDB = {
     // mark : (optional) marked note for more
     getIndex : function(apioptions, fullSync) {
 
+        var that = this;
+        
         var callbacks = {
 
             //  count: 20
@@ -191,43 +191,43 @@ var SimplenoteDB = {
             //  mark: "agtzaW1wbGUtbm90ZXINCxIETm90ZRiElc0HDB"
             //  time: "1302261452.277224"
             success :       function(indexData) {
-                SimplenoteDB.offline(false);
+                that.offline(false);
 
-                SimplenoteDB.log("getIndex:success:got " + indexData.count + " keys from server.");
+                that.log("getIndex:success:got " + indexData.count + " keys from server.");
 
                 if (indexData.mark != undefined) {
-                    SimplenoteDB.log("getIndex:success:have mark, getting more.");
+                    that.log("getIndex:success:have mark, getting more.");
                     apioptions.mark = indexData.mark;
-                    SimplenoteDB._gotIndexChunk(indexData, true, fullSync);
+                    that._gotIndexChunk(indexData, true, fullSync);
 
-                    SimplenoteDB.getIndex(apioptions, fullSync);
+                    that.getIndex(apioptions, fullSync);
 
                 } else {
-                    SimplenoteDB.log("getIndex:success:no mark, done.");
-                    SimplenoteDB._gotIndexChunk(indexData, false, fullSync);
+                    that.log("getIndex:success:no mark, done.");
+                    that._gotIndexChunk(indexData, false, fullSync);
                 }
             },
             loginInvalid:   function() {
-                SimplenoteDB.log("getIndex:loginInvalid");
+                that.log("getIndex:loginInvalid");
                 _gaq.push(['_trackEvent', 'DB', 'getIndex','loginInvalid']);
                 //alert("SimplenoteDB::getIndex:loginInvalid");
                 SimplenoteAPI2.resetCredentials();
                 delete localStorage.token;
                 delete localStorage.tokentime;
-                SimplenoteDB._gotIndexChunk("login invalid", false);
+                that._gotIndexChunk("login invalid", false);
             },
             repeat:         function() {
-                SimplenoteDB.log("getIndex:repeat");
+                that.log("getIndex:repeat");
                 //alert("SimplenoteDB::getIndex:repeat");
                 _gaq.push(['_trackEvent', 'DB', 'getIndex','repeat']);
-                SimplenoteDB._gotIndexChunk("repeat", false);
+                that._gotIndexChunk("repeat", false);
             },
             timeout:        function() {
-                SimplenoteDB.log("getIndex:timeout");
-                SimplenoteDB.offline(true);
+                that.log("getIndex:timeout");
+                that.offline(true);
                 _gaq.push(['_trackEvent', 'DB', 'getIndex','timeout']);
                 //alert("SimplenoteDB::getIndex:timeout");
-                SimplenoteDB._gotIndexChunk("timeout", false);
+                that._gotIndexChunk("timeout", false);
             }
         };
 
@@ -239,6 +239,8 @@ var SimplenoteDB = {
     },
 
     getNote : function(key,callback) {
+        var that = this;
+        
         var note = SimplenoteLS.getNote(key);
         if (note && note.content) {
             this.log("getNote:returning note from storage:" + key);
@@ -248,31 +250,31 @@ var SimplenoteDB = {
             this.log("getNote:getting note from server:" + key);
             var callbacks = {
                 success :       function(note) {
-                    SimplenoteDB.offline(false);
+                    that.offline(false);
                     //SimplenoteLS.updateNote(SimplenoteDB._decryptNote(note),"getnote");
                     SimplenoteLS.updateNote(note,"getnote");
                     if (callback)
                         callback(note);
                 },
                 loginInvalid:   function() {
-                    SimplenoteDB.offline(false);
-                    SimplenoteDB.log('getNote::loginInvalid');
+                    that.offline(false);
+                    that.log('getNote::loginInvalid');
                     _gaq.push(['_trackEvent', 'DB', 'getNote', 'loginInvalid']);
                     //alert('SimplenoteDB::getNote::loginInvalid');
                     if (callback)
                         callback();
                 },
                 repeat:         function() {
-                    SimplenoteDB.offline(false);
-                    SimplenoteDB.log('getNote::repeat');
+                    that.offline(false);
+                    that.log('getNote::repeat');
                     _gaq.push(['_trackEvent', 'DB', 'getNote','repeat']);
                     //alert('SimplenoteDB::getNote::repeat');
                     if (callback)
                         callback();
                 },
                 noteNotExist:  function(key) {
-                    SimplenoteDB.offline(false);
-                    SimplenoteDB.log('getNote::noteNotExists');
+                    that.offline(false);
+                    that.log('getNote::noteNotExists');
                     SimplenoteLS.removeFromSyncList(key);
                     SimplenoteLS.delNote(key);
                     _gaq.push(['_trackEvent', 'DB', 'getNote','noteNoteExist']);
@@ -281,8 +283,8 @@ var SimplenoteDB = {
                         callback();
                 },
                 timeout: function(options) {
-                    SimplenoteDB.offline(true);
-                    SimplenoteDB.log('getNote::timeout');
+                    that.offline(true);
+                    that.log('getNote::timeout');
                     _gaq.push(['_trackEvent', 'DB', 'getNote','timeout']);
                     //alert('SimplenoteDB::getNote::timeout');
                     if (callback)
@@ -294,6 +296,9 @@ var SimplenoteDB = {
     },
 
     updateNote : function(data,callback,syncmode) {
+
+        var that = this;
+
         this.log("updateNote, syncMode = " + syncmode + " update data:");
         this.log(data);
 
@@ -332,7 +337,7 @@ var SimplenoteDB = {
 
         var callbacks = {
             success :       function(note) {
-                SimplenoteDB.offline(false);
+                that.offline(false);
                 // TODO: should not have to decrypt, since merging cant happen with cyphertext
                 //SimplenoteLS.updateNote(SimplenoteDB._decryptNote(note),"updateresponse");
                 SimplenoteLS.removeFromSyncList(note.key);
@@ -341,26 +346,26 @@ var SimplenoteDB = {
                     callback(note);
             },
             loginInvalid:   function() {
-                SimplenoteDB.offline(false);
-                SimplenoteDB.log('updateNote::loginInvalid');
+                that.offline(false);
+                that.log('updateNote::loginInvalid');
                 _gaq.push(['_trackEvent', 'DB', 'updateNote','loginInvalid']);
                 alert('SimplenoteDB::updateNote::loginInvalid');
             },
             repeat:         function() {
-                SimplenoteDB.offline(false);
-                SimplenoteDB.log('updateNote::repeat');
+                that.offline(false);
+                that.log('updateNote::repeat');
                 _gaq.push(['_trackEvent', 'DB', 'updateNote','repeat']);
                 //alert('SimplenoteDB::updateNote::repeat');
             },
             noteNotExists:  function() {
-                SimplenoteDB.offline(false);
-                SimplenoteDB.log('updateNote::noteNoteExists');
+                that.offline(false);
+                that.log('updateNote::noteNoteExists');
                 _gaq.push(['_trackEvent', 'DB', 'updateNote','noteNoteExits']);
                 alert('SimplenoteDB::updateNote::noteNoteExists');
             },
             timeout: function(note) {
-                SimplenoteDB.offline(true);
-                SimplenoteDB.log('updateNote::timeout');
+                that.offline(true);
+                that.log('updateNote::timeout');
                 _gaq.push(['_trackEvent', 'DB', 'updateNote','timeout']);
                 //alert('SimplenoteDB::updateNote::timeout');
                 if (callback)
@@ -376,6 +381,9 @@ var SimplenoteDB = {
     },
 
     createNote : function(note,callback,syncmode) {
+
+        var that = this;
+
         this.log("createNote, note data below, syncmode = " +  syncmode);
         this.log(note2str(note,true));
         delete note.action;
@@ -401,7 +409,7 @@ var SimplenoteDB = {
 
         var callbacks = {
             success :       function(newnote) {
-                SimplenoteDB.offline(false);
+                that.offline(false);
                 newnote.content = note.content;
 //                newnote.content = cleartextcontent; // we never get content back on create
 //                if (tempencrypted)
@@ -415,20 +423,20 @@ var SimplenoteDB = {
                     callback(newnote);
             },
             loginInvalid:   function() {
-                SimplenoteDB.offline(false);
-                SimplenoteDB.log("createNote::loginInvalid");
+                that.offline(false);
+                that.log("createNote::loginInvalid");
                 _gaq.push(['_trackEvent', 'DB', 'createNote','loginInvalid']);
                 alert('SimplenoteDB::createNote::loginInvalid');
             },
             repeat:         function() {
-                SimplenoteDB.offline(false);
-                SimplenoteDB.log("createNote::repeat");
+                that.offline(false);
+                that.log("createNote::repeat");
                 _gaq.push(['_trackEvent', 'DB', 'createNote','repeat']);
                 //alert('SimplenoteDB::createNote::repeat');
             },
             timeout: function(note) {
-                SimplenoteDB.offline(true);
-                SimplenoteDB.log("createNote::timeout");
+                that.offline(true);
+                that.log("createNote::timeout");
                 _gaq.push(['_trackEvent', 'DB', 'createNote','timeout']);
                 //alert('SimplenoteDB::createNote::timeout');
                 if (callback)
