@@ -223,7 +223,14 @@ var SimplenoteCM = {
 
     cascading: true,
 
+    log : function(s) {
+        if (debugFlags.CM)
+            logGeneral(s,"SimplenoteCM");
+    },
+
     populate: function() {
+
+        this.log("populate()");
 
         chrome.contextMenus.removeAll();
 
@@ -334,6 +341,9 @@ var SimplenoteCM = {
     },
 
     updateLastOpen: function() {
+
+        this.log("updateLastOpen()");
+
         if (!localStorage.lastopennote_key) {
             if (this.append_root)
                 this.append_root.remove();

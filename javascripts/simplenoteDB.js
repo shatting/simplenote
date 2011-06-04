@@ -385,7 +385,7 @@ var SimplenoteDB = {
         var that = this;
 
         this.log("createNote, note data below, syncmode = " +  syncmode);
-        this.log(note2str(note,true));
+        this.log(note);
         delete note.action;
         var tempkey;
         if (!syncmode) {

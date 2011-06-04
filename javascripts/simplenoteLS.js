@@ -383,42 +383,42 @@ var SimplenoteLS = {
         });
         $.storage.set(this.keysKey,keys);
 
-    },
-
-    _info : function() {
-        var keys = this.getKeys();
-        this.log("last index received " + dateAgo(this.indexTime()));
-        this.log("LS keys array has " + keys.length + " keys.");
-        var notes = this.getNotes();
-        this.log("LS notes " + notes.length + ".");
-        var synckeys = this.getSyncKeys();
-        this.log("LS has " + synckeys.length + " notes to sync.");
-        var item, key;
-        for (var i = 0; i < localStorage.length; i++){
-            key = localStorage.key(i);
-            try {
-                item = $.storage.get(key);
-                if (keys.indexOf(key)<0 && item.deleted !== undefined && item.deleted != 0) {
-                    this.log("Notes not in Keys: key=" + key);
-                    logNote(item);
-                }
-            } catch (e) {
-                this.log("threw error: key=" + key);
-            }
-
-        }
-        for (var i = 0; i < keys.length; i++){
-            key = keys[i];
-            try {
-                item = $.storage.get(key);
-                if (!item || !item.key) {
-                    this.log("Key without note: key=" + key);
-                }
-            } catch (e) {
-                this.log("threw error: key=" + key);
-            }
-
-        }
+//    },
+//
+//    _info : function() {
+//        var keys = this.getKeys();
+//        this.log("last index received " + dateAgo(this.indexTime()));
+//        this.log("LS keys array has " + keys.length + " keys.");
+//        var notes = this.getNotes();
+//        this.log("LS notes " + notes.length + ".");
+//        var synckeys = this.getSyncKeys();
+//        this.log("LS has " + synckeys.length + " notes to sync.");
+//        var item, key;
+//        for (var i = 0; i < localStorage.length; i++){
+//            key = localStorage.key(i);
+//            try {
+//                item = $.storage.get(key);
+//                if (keys.indexOf(key)<0 && item.deleted !== undefined && item.deleted != 0) {
+//                    this.log("Notes not in Keys: key=" + key);
+//                    logNote(item);
+//                }
+//            } catch (e) {
+//                this.log("threw error: key=" + key);
+//            }
+//
+//        }
+//        for (var i = 0; i < keys.length; i++){
+//            key = keys[i];
+//            try {
+//                item = $.storage.get(key);
+//                if (!item || !item.key) {
+//                    this.log("Key without note: key=" + key);
+//                }
+//            } catch (e) {
+//                this.log("threw error: key=" + key);
+//            }
+//
+//        }
 
     }
 

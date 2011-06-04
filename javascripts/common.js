@@ -28,48 +28,48 @@ function logGeneral(s,prefix,target) {
     else
         target.log(s);
 }
+//
+//function logNote(note) {
+//    console.log("NOTE s: " + note.syncnum + "v:" + note.version);
+//    console.log("created " + dateAgo(note.createdate) + ", modified " + dateAgo(note.modifydate));
+//    console.log("note is " + (note.deleted==1?"DELETED":"not deleted"));
+//    console.log(note);
+//}
 
-function logNote(note) {
-    console.log("NOTE s: " + note.syncnum + "v:" + note.version);
-    console.log("created " + dateAgo(note.createdate) + ", modified " + dateAgo(note.modifydate));
-    console.log("note is " + (note.deleted==1?"DELETED":"not deleted"));
-    console.log(note);
-}
-
-function note2str(note, content) {
-    var s = "";
-/*
- *content: "asdfgghhhh↵↵fgghgg"
-  createdate: "1302427972.910837"
-deleted: 0
-key: "agtzaW1wbGUtbm90ZXINCxIETm90ZRi-89kHDA"
-minversion: 1
-modifydate: "1302427972.910837"
-syncnum: 6
-systemtags: Array[0]
-tags: Array[0]
-version: 6
-__proto__: Object*/
-    s += "d:"+note.deleted;
-    s += " s:"+note.syncnum;
-    s += " v:"+note.version;
-    s += " t:";
-    if (note.tags)
-        $.each(note.tags,function(i,e) {s+=e + " ";});
-    s += " st:";
-    if (note.systemtags)
-        $.each(note.systemtags,function(i,e) {s+=e + " ";});
-    s += " m:" + dateAgo(note.modifydate);
-    s += " c:" + dateAgo(note.createdate);
-    s += " <br> k:" + note.key;
-    if (content) {
-        if (note.content)
-            s += "\n" + note.content;
-        else
-            s += "\n[note has no content]";
-    }
-    return s;
-}
+//function note2str(note, content) {
+//    var s = "";
+///*
+// *content: "asdfgghhhh↵↵fgghgg"
+//  createdate: "1302427972.910837"
+//deleted: 0
+//key: "agtzaW1wbGUtbm90ZXINCxIETm90ZRi-89kHDA"
+//minversion: 1
+//modifydate: "1302427972.910837"
+//syncnum: 6
+//systemtags: Array[0]
+//tags: Array[0]
+//version: 6
+//__proto__: Object*/
+//    s += "d:"+note.deleted;
+//    s += " s:"+note.syncnum;
+//    s += " v:"+note.version;
+//    s += " t:";
+//    if (note.tags)
+//        $.each(note.tags,function(i,e) {s+=e + " ";});
+//    s += " st:";
+//    if (note.systemtags)
+//        $.each(note.systemtags,function(i,e) {s+=e + " ";});
+//    s += " m:" + dateAgo(note.modifydate);
+//    s += " c:" + dateAgo(note.createdate);
+//    s += " <br> k:" + note.key;
+//    if (content) {
+//        if (note.content)
+//            s += "\n" + note.content;
+//        else
+//            s += "\n[note has no content]";
+//    }
+//    return s;
+//}
 
 function convertDate(serverDate) {
     return new Date(serverDate*1000);
@@ -119,51 +119,51 @@ function mergeobj(obj1,obj2){
  *   The <td>'s parent (<tr>) will be sorted instead
  *   of the <td> itself.
  */
-jQuery.fn.sortElements = (function(){
-
-    var sort = [].sort;
-
-    return function(comparator, getSortable) {
-
-        getSortable = getSortable || function(){return this;};
-
-        var placements = this.map(function(){
-
-            var sortElement = getSortable.call(this),
-                parentNode = sortElement.parentNode,
-
-                // Since the element itself will change position, we have
-                // to have some way of storing its original position in
-                // the DOM. The easiest way is to have a 'flag' node:
-                nextSibling = parentNode.insertBefore(
-                    document.createTextNode(''),
-                    sortElement.nextSibling
-                );
-
-            return function() {
-
-                if (parentNode === this) {
-                    throw new Error(
-                        "You can't sort elements if any one is a descendant of another."
-                    );
-                }
-
-                // Insert before flag:
-                parentNode.insertBefore(this, nextSibling);
-                // Remove flag:
-                parentNode.removeChild(nextSibling);
-
-            };
-
-        });
-
-        return sort.call(this, comparator).each(function(i){
-            placements[i].call(getSortable.call(this));
-        });
-
-    };
-
-})();
+//jQuery.fn.sortElements = (function(){
+//
+//    var sort = [].sort;
+//
+//    return function(comparator, getSortable) {
+//
+//        getSortable = getSortable || function(){return this;};
+//
+//        var placements = this.map(function(){
+//
+//            var sortElement = getSortable.call(this),
+//                parentNode = sortElement.parentNode,
+//
+//                // Since the element itself will change position, we have
+//                // to have some way of storing its original position in
+//                // the DOM. The easiest way is to have a 'flag' node:
+//                nextSibling = parentNode.insertBefore(
+//                    document.createTextNode(''),
+//                    sortElement.nextSibling
+//                );
+//
+//            return function() {
+//
+//                if (parentNode === this) {
+//                    throw new Error(
+//                        "You can't sort elements if any one is a descendant of another."
+//                    );
+//                }
+//
+//                // Insert before flag:
+//                parentNode.insertBefore(this, nextSibling);
+//                // Remove flag:
+//                parentNode.removeChild(nextSibling);
+//
+//            };
+//
+//        });
+//
+//        return sort.call(this, comparator).each(function(i){
+//            placements[i].call(getSortable.call(this));
+//        });
+//
+//    };
+//
+//})();
 
 function uiEvent(name,data) {
     if (name == undefined)
@@ -195,22 +195,6 @@ function pad(n){
 RegExp.escape = function(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 }
-
-//function parseUrl2(data) {
-//    var e=/((http|https):\/)?\/?([^:\/\s]+)((\/\w+)*\/)([\w\-\.]+\.[^#?\s]+)(#[\w\-]+)?/;
-//
-//    if (data.match(e)) {
-//        return  {url: RegExp['$&'],
-//                protocol: RegExp.$2,
-//                host:RegExp.$3,
-//                path:RegExp.$4,
-//                file:RegExp.$6,
-//                hash:RegExp.$7};
-//    }
-//    else {
-//        return  {url:"", protocol:"",host:"",path:"",file:"",hash:""};
-//    }
-//}
 
 function get_manifest(callback) {
   var xhr = new XMLHttpRequest();
