@@ -245,6 +245,13 @@ var SimplenoteCM = {
         this.cascading_pinned = localStorage.option_contextmenu_cascading_pinned == "true";
 
         var title, lastopen_key = localStorage.lastopennote_key;
+
+        new CMitem({title:"New WebNote", contexts:["all"], onclick: function(info, tab) {
+            SimplenoteBG.handleRequest({action: "webnotes", request: {action: "new"}});
+        }});
+
+        new CMitem({type:"separator", contexts:["all"]});
+
         // create
         if (this.cascading)
             this.create_root = new CMitem({title:chrome.i18n.getMessage("cm_create_note"), contexts:["selection","page","image","link"]});

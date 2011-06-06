@@ -1,4 +1,5 @@
 var background;
+var popup = this;
 
 // amount of vertical viewport size to add for preloading notes in index
 var preLoadFactor = 1/4;
@@ -391,11 +392,20 @@ function readyListener() {
                         $("#note").hide();
 
                         fillTags(true);
-
                         // bind ADD button
-                        $('div#index div#toolbar div#add').click(function() {
-                            _gaq.push(['_trackEvent', 'popup', 'addclicked']);
-                            snEditor.setNote();
+                        $('div#index div#toolbar div#add').click(function(event) {
+                            
+                            if (event.shiftKey) {
+                                _gaq.push(['_trackEvent', 'popup', 'addwebnoteclicked']);
+                                chrome.extension.sendRequest({action: "webnotes", request: {action: "new"}}, function(ok) {
+                                      if (ok)
+                                          popup.close();                                      
+                                });
+                            } else {
+                                _gaq.push(['_trackEvent', 'popup', 'addclicked']);
+                                snEditor.setNote();
+                            }
+                            
                         });
 
                         // bind SYNC div
@@ -801,9 +811,9 @@ function indexFillNoteReqComplete(note) {
         var $noteabstract = $('#' + note.key + "abstract");
 
         var lines = note.content.split("\n").filter(function(line) {
-            return ( line.trim().length > 0 )
+            return ( line.trim().length > 0 && !line.match(webnotereg))
             });
-
+          
         // heading
         $('#' + note.key + 'loader').remove();
         $noteheading.removeAttr("align"); // from loader
@@ -849,6 +859,18 @@ function indexFillNoteReqComplete(note) {
 
         // check new inview, might have changed due to reflow
         $noterow.attr('loaded',"true");
+
+        // webnote icon                
+        var wnm = note.content.match(webnotereg);
+        if (wnm) {
+            var url = wnm[1];
+            $noteheading.prepend("<div class='webnoteicon' id='" + note.key + "webnoteicon'>&nbsp;</div>");
+            $("#" + note.key + "webnoteicon").attr("title","Click to visit this webnote at " + url);
+            $("#" + note.key + "webnoteicon").bind("click",url,function(event) {
+                event.stopPropagation();
+                openURLinTab(event.data);
+            });
+        }
 
         checkInView();
 }

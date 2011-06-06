@@ -309,7 +309,8 @@ var SimplenoteDB = {
                 throw "unknown or missing note, cannot update";
 
             delete data.action;
-
+            var isTrashAction = data.deleted == 1 && note.deleted == 0;
+            
             // client updateable properties:
             if (data.content != undefined)      note.content = data.content;
             if (data.deleted != undefined)      note.deleted = data.deleted;
@@ -332,7 +333,10 @@ var SimplenoteDB = {
 
             SimplenoteLS.addToSyncList(note.key);
             SimplenoteLS.updateNote(note,source);
-            
+            if (isTrashAction) {
+                delete localStorage.lastopennote_key;
+                localStorage.lastopennote_open = "false";
+            }
         }
 
         var callbacks = {

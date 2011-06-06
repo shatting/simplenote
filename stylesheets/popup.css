@@ -269,7 +269,7 @@ div.unpublished {
     display:none;
 }
 
-div.published, div.shared {
+div.published, div.shared, div.webnoteicon {
     display:inline;
     position: relative;
     left: 1px;
@@ -287,6 +287,10 @@ div.published {
 
 div.shared {
     background: transparent url(/images/shared.png) no-repeat;
+}
+
+div.webnoteicon {
+    background: transparent url(/images/webnote.png) no-repeat;
 }
 
 .abstract {

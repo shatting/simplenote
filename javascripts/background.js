@@ -1,5 +1,7 @@
 var SimplenoteBG = {
 
+    webnotesID : undefined,
+
     log : function(s) {
         if (debugFlags.BG)
             logGeneral(s,"background.js");
@@ -43,8 +45,20 @@ var SimplenoteBG = {
         // need to use SimplenoteBG. here because its not called in object context
         SimplenoteBG.log("request: " + request.action);        
         var callbacks;
-
-        if (request.action == "userchanged") {
+        
+        if (request.action == "webnotes") {
+            if (SimplenoteBG.webnotesID != undefined) {
+                chrome.extension.sendRequest(SimplenoteBG.webnotesID,request.request);
+                if (sendResponse)
+                    sendResponse(true);
+            } else {
+                var q=confirm("The Webnotes plugin is not installed. Go to download page now?");
+                if (q)
+                    openURLinTab("https://chrome.google.com/webstore/detail/ajfdaicinlekajkfjoomjmoikoeghimd");
+                if (sendResponse)
+                    sendResponse(false);
+            }
+        } else if (request.action == "userchanged") {
             _gaq.push(['_trackEvent', 'background', 'request','userchanged']);
             SimplenoteLS._reset();
             SimplenoteDB._reset();
@@ -117,7 +131,7 @@ var SimplenoteBG = {
             SimplenoteCM.populate();
         } else if (request.action == "cm_updatelastopen") {
             SimplenoteCM.updateLastOpen();
-        }
+        } 
     },
     
     saveNote : undefined,
@@ -173,3 +187,38 @@ $(document).ready(function() {
 });
 
 chrome.extension.onRequest.addListener(SimplenoteBG.handleRequest);
+
+// plugin listener
+var allowIDs = ["mapleegchccgpbebdikelnklgcgokmom","ajfdaicinlekajkfjoomjmoikoeghimd"];
+chrome.extension.onRequestExternal.addListener(
+    function(request, sender, response) {
+        if (allowIDs.indexOf(sender.id)<0) {
+            SimplenoteBG.log("unauthorized external request from " + sender.id);            
+        } else {
+            SimplenoteBG.log("external request " + request.action + " from " + sender.id);
+            if (request.action == "register_plugin") {
+                if (request.name == "webnotes") {
+                    SimplenoteBG.webnotesID = sender.id;
+                    SimplenoteBG.log("webnotes registered");
+                    get_manifest(function(manifest) {
+                        manifest.syncpad_id = request.syncpad_id;
+                        response(manifest);
+                    })
+                } else {                    
+                    SimplenoteBG.log("unknown plugin " + request.name);
+                    response(false);
+                }
+            } else if (request.action == "have_credentials") {
+                if (localStorage.option_email == undefined || localStorage.option_password == undefined) {
+                    var q=confirm("Not logged in to Simplenote.\n\nGo to options page?");
+                    if (q)
+                        chrome.tabs.create({url:"options.html"});
+                    response(false);
+                } else
+                    response(true);
+            } else {                
+                SimplenoteBG.handleRequest(request, sender, response);
+            }
+        }
+    }
+);
