@@ -52,7 +52,7 @@ var SimplenoteBG = {
                 if (sendResponse)
                     sendResponse(true);
             } else {
-                var q=confirm("The Webnotes plugin is not installed. Go to download page now?");
+                var q=confirm("The Webnotes plugin is not installed or disabled.\n\nGo to download page now?");
                 if (q)
                     openURLinTab("https://chrome.google.com/webstore/detail/ajfdaicinlekajkfjoomjmoikoeghimd");
                 if (sendResponse)
@@ -62,7 +62,7 @@ var SimplenoteBG = {
             _gaq.push(['_trackEvent', 'background', 'request','userchanged']);
             SimplenoteLS._reset();
             SimplenoteDB._reset();
-            this.backgroundSync(true, function(successObj) {
+            SimplenoteBG.backgroundSync(true, function(successObj) {
                 SimplenoteBG.log("handleRequest:userchanged sync done.");
                 SimplenoteBG.handleRequest({action:"cm_populate"});
                 if (sendResponse)

@@ -242,7 +242,8 @@ function save_clicked() {
                     }
                 });
             } else {
-
+                localStorage.option_email = undefined;
+                localStorage.option_password = undefined;
                 if (successObj.reason=="timeout") {
                     _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_timeout']);
                     $("#loginmessage").html("Could not log in: network timeout, please try again later.");
