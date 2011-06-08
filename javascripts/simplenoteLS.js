@@ -148,7 +148,7 @@ var SimplenoteLS = {
      *          contentquery : string (default: "" = all)
      *          sort : "modifydate" | "createdate" | "alphabetical" (default: modifydate)
      *          sortdirection: +1/-1 (default: 1)
-     *          regex: any regex (default: null)
+     *          regex: any content regex (default: null)
      */
     getNotes: function(options) {
         var keys = this.getKeys();

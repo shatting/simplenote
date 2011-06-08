@@ -190,7 +190,7 @@ $(document).ready(function() {
 chrome.extension.onRequest.addListener(SimplenoteBG.handleRequest);
 
 // plugin listener
-var allowIDs = ["mapleegchccgpbebdikelnklgcgokmom","ajfdaicinlekajkfjoomjmoikoeghimd"];
+var allowIDs = ["mapleegchccgpbebdikelnklgcgokmom","ajfdaicinlekajkfjoomjmoikoeghimd","hkjlilomjkhhefjbjnaghbfonmeklpje"];
 chrome.extension.onRequestExternal.addListener(
     function(request, sender, response) {
         if (allowIDs.indexOf(sender.id)<0) {

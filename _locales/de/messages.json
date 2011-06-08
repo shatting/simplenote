@@ -6,6 +6,7 @@
     "search_tooltip":       { "message": "Suchbegriff hier eingeben (Fokus mit $1)", "description": "search field tooltip, $1 is the shortcut combination" },
     "tagselect_tooltip":    { "message": "Notizen mit Tag anzeigen (Fokus mit $1)" },
     "add_tooltip" :         { "message": "Neue Notiz ($1)" },
+    "add_webnote_tooltip":  { "message": "Neue Webnotiz" },
     "sync_tooltip" :        { "message": "Sync starten" },
     "tag_placeholder":      { "message": "Tags hier eingeben" },
     "tag_tooltip":          { "message": "Tags (Mit $1 fokussieren, mit $2 zurück zum Editor)" },

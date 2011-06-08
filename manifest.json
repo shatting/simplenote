@@ -1,6 +1,6 @@
 {
   "name": "Syncpad for Simplenote",
-  "version": "1.8.0.2",
+  "version": "1.8.1",
   "description": "No-hassle note taking. Cloud-aware, offline-capable. Access your notes from every computer and phone you use.",
   "default_locale": "en",
   "icons": {
@@ -15,7 +15,8 @@
   "options_page": "options.html",
   "browser_action": {
     "default_icon": "images/icon_24.png",
-    "popup": "popup.html"
+    "popup": "popup.html",
+    "default_title": "Open Syncpad"
   },
   "permissions": [
     "https://simple-note.appspot.com/",

@@ -6,6 +6,7 @@
     "search_tooltip":       { "message": "Search for notes (shortcut: $1)", "description": "search field tooltip, $1 is the shortcut combination" },
     "tagselect_tooltip":    { "message": "Show notes by tag (shortcut: $1)" },
     "add_tooltip" :         { "message": "New note (shortcut: $1)" },
+    "add_webnote_tooltip":  { "message": "New Webnote" },
     "sync_tooltip" :        { "message": "Start Sync" },
     "tag_placeholder":      { "message": "Tag this note" },
     "tag_tooltip":          { "message": "You can enter tags for this note here ($1 to focus, $2 to get back to editor)" },

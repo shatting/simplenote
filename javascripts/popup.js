@@ -408,6 +408,14 @@ function readyListener() {
                             
                         });
 
+                        $('div#index div#toolbar div#add_webnote').click(function(event) {
+                            _gaq.push(['_trackEvent', 'popup', 'addwebnoteclicked']);
+                            chrome.extension.sendRequest({action: "webnotes", request: {action: "new"}}, function(ok) {
+                                  if (ok)
+                                      popup.close();
+                            });
+                        });
+
                         // bind SYNC div
                         $("#sync").click( function() {
                             _gaq.push(['_trackEvent', 'popup', 'syncclicked']);
@@ -504,7 +512,8 @@ function popupi18n() {
     $("#q").attr("placeholder",chrome.i18n.getMessage("search_placeholder"));
     $("#q").attr("title",chrome.i18n.getMessage("search_tooltip","alt-q"));
     $("#notetags").attr("title",chrome.i18n.getMessage("tagselect_tooltip","alt-n"));
-    $("#add").attr("title",chrome.i18n.getMessage("add_tooltip","alt-a"));    
+    $("#add").attr("title",chrome.i18n.getMessage("add_tooltip","alt-a"));
+    $("#add_webnote").attr("title",chrome.i18n.getMessage("add_webnote_tooltip"));
     $("#sync").attr("title",chrome.i18n.getMessage("sync_tooltip"));
     $("#tags").attr("placeholder",chrome.i18n.getMessage("tag_placeholder"));
     $("#tags").attr("title",chrome.i18n.getMessage("tag_tooltip",["alt-t", "alt-e"]));

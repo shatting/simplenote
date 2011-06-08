@@ -24,8 +24,7 @@ div#index {
     top: 2px;
     bottom: 2px;
     left:2px;
-    right:2px;
-    
+    right:2px;    
     min-width: 380px;    
 }
 
@@ -125,7 +124,7 @@ div#index div#toolbar input#q {
     padding: 4px 6px 4px 24px;
     color: #33;
     font-size: 13px;
-    width:55%;
+    width: 195px;
     border-radius: 12px;
     border: 1px solid #999;
     border: 1px solid rgba(0, 0, 0, 0.3);
@@ -167,6 +166,14 @@ div#index div#toolbar input#q:focus {
     float:right;
     margin-right: 6px;
     margin-top: 3px;       
+}
+
+#add_webnote {
+    background-image:url(/images/add_webnote.png);
+    float:right;
+    margin-right: 3px;
+    margin-top: 3px;
+    margin-left: 0px;
 }
 
 div#nonotes {
