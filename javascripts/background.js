@@ -1,6 +1,7 @@
 var SimplenoteBG = {
 
     webnotesID : undefined,
+    webnotesVersion : undefined,
 
     log : function(s) {
         if (debugFlags.BG)
@@ -198,12 +199,19 @@ chrome.extension.onRequestExternal.addListener(
             SimplenoteBG.log("external request " + request.action + " from " + sender.id);
             if (request.action == "register_plugin") {
                 if (request.name == "webnotes") {
-                    SimplenoteBG.webnotesID = sender.id;
-                    SimplenoteBG.log("webnotes registered");
+                    SimplenoteBG.log("webnotes " + sender.id + " registered, version " + request.version);
+                    if (!SimplenoteBG.webnotesVersion || request.version > SimplenoteBG.webnotesVersion) {
+                        SimplenoteBG.webnotesID = sender.id;
+                        SimplenoteBG.webnotesVersion = request.version;
+                        SimplenoteBG.log("using this");
+                    } else
+                        SimplenoteBG.log("not using this");
+                    
                     get_manifest(function(manifest) {
                         manifest.syncpad_id = request.syncpad_id;
                         response(manifest);
-                    })
+                    });
+                    
                 } else {                    
                     SimplenoteBG.log("unknown plugin " + request.name);
                     response(false);

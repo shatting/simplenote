@@ -201,7 +201,7 @@ var SimplenoteLS = {
             if (!add) continue;
 
             if (regex != undefined)
-                add &= note.content.match(regex) != undefined;
+                add &= note.content != undefined && note.content.match(regex) != undefined;
 
             if (!add) continue;
 
