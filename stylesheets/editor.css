@@ -47,7 +47,8 @@ html {
 
 ::-webkit-scrollbar-track-piece  {
     background-color: #CACFDE;
-    -webkit-border-radius: 6px;
+    background: -webkit-gradient(linear, right top, left top,color-stop(0.0, #F7F8FF),color-stop(1.0, #FFF));    
+    ''-webkit-border-radius: 6px;
     ''background: #4F4F59 url(/images/texture.png);
 }
 
@@ -58,13 +59,10 @@ html {
     background-color: #FAA;
 }*/
 
-::-webkit-scrollbar-thumb:vertical {
+::-webkit-scrollbar-thumb {
     background: -webkit-gradient(linear, right top, left top,color-stop(0.0, #F7F8FF),color-stop(1.0, #FFF));
-    border: 1px solid #CACFDE;
-    -webkit-border-radius: 6px;
-}
-::-webkit-scrollbar-thumb:horizontal {
-    background: -webkit-gradient(linear, right top, left top,color-stop(0.0, #F7F8FF),color-stop(1.0, #FFF));
-    border: 1px solid #CACFDE;
+    background: #CACFDE;
+    background: #F7F8FF;
+    border: 1px solid #999;
     -webkit-border-radius: 6px;
 }

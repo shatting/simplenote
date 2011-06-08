@@ -869,11 +869,11 @@ function indexFillNoteReqComplete(note) {
         // check new inview, might have changed due to reflow
         $noterow.attr('loaded',"true");
 
-        // webnote icon                
+                // webnote icon
         var wnm = note.content.match(webnotereg);
         if (wnm) {
             var url = wnm[1];
-            $noteheading.prepend("<div class='webnoteicon' id='" + note.key + "webnoteicon'>&nbsp;</div>");
+            $("<div class='webnoteicon' id='" + note.key + "webnoteicon'>&nbsp;</div>").insertBefore($noteheading);
             $("#" + note.key + "webnoteicon").attr("title","Click to visit this webnote at " + url);
             $("#" + note.key + "webnoteicon").bind("click",url,function(event) {
                 event.stopPropagation();
