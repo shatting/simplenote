@@ -421,6 +421,11 @@ function readyListener() {
                             _gaq.push(['_trackEvent', 'popup', 'syncclicked']);
                             chrome.extension.sendRequest({action: "sync", fullsync:true});
                         })
+                        $("#snlink").click( function() {
+                            _gaq.push(['_trackEvent', 'popup', 'snlinkclicked']);
+                            openURLinTab("https://simple-note.appspot.com/");
+                        })
+
 
                         $("div.noterow").live("mouseover", function(event) {
                             noteRowMouseOver(this);
@@ -514,6 +519,7 @@ function popupi18n() {
     $("#notetags").attr("title",chrome.i18n.getMessage("tagselect_tooltip","alt-n"));
     $("#add").attr("title",chrome.i18n.getMessage("add_tooltip","alt-a"));
     $("#add_webnote").attr("title",chrome.i18n.getMessage("add_webnote_tooltip"));
+    $("#snlink").attr("title",chrome.i18n.getMessage("snlink_tooltip"));
     $("#sync").attr("title",chrome.i18n.getMessage("sync_tooltip"));
     $("#tags").attr("placeholder",chrome.i18n.getMessage("tag_placeholder"));
     $("#tags").attr("title",chrome.i18n.getMessage("tag_tooltip",["alt-t", "alt-e"]));

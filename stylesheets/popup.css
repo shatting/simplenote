@@ -143,7 +143,7 @@ div#statusbar {
 }
 
 .toolbarbutton:hover {
-    background-color: #aaaaaa;
+    background-color: rgba(190, 190, 203, 0.6);
     cursor: pointer;
 }
 
@@ -270,22 +270,19 @@ div.published, div.shared, div.webnoteicon {
     width: 12px;
     height: 12px;
     margin-right: 5px;
-    float:left;
+    float:right;
     cursor:pointer;
 }
 
-div.published {
-    float: right;
+div.published {    
     background: transparent url(/images/published.png) no-repeat;
 }
 
 div.shared {
-    float: right;
     background: transparent url(/images/shared.png) no-repeat;
 }
 
 div.webnoteicon {
-    float: right;
     background: transparent url(/images/webnote.png) no-repeat;
 }
 
@@ -306,11 +303,27 @@ div.webnoteicon {
     display: inline;
     cursor: default;
 }
-#statusbar div#sync {
+
+#statusbar #sync {
     float:right;
     cursor: pointer;
 }
 
+#statusbar #offline {
+    margin-left: 22px;
+}
+
+#statusbar #snlink {
+    position: absolute;
+    left:2px;
+    bottom:1px;
+    width:18px;
+    height:18px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    cursor: pointer;
+    background: url(/images/simplenote_logo_20.png) no-repeat 50% 50%;
+}
 
 
 /* note div */
