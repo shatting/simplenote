@@ -188,6 +188,15 @@ var SimplenoteLS = {
                     case "#all#":
                         add &= note.deleted == 0;
                         break;
+                    case "#published#":
+                        add &= note.systemtags.indexOf("published") >= 0;
+                        break;
+                    case "#shared#":
+                        add &= note.systemtags.indexOf("shared") >= 0;
+                        break;
+                    case "#webnote#":
+                        add &= note.content != undefined && note.content.match(webnotereg) != undefined;
+                        break;
                     default:
                         add &= note.tags != undefined && note.tags.indexOf(options.tag)>=0;
                 }
@@ -294,16 +303,18 @@ var SimplenoteLS = {
     getTags : function() {
         var keys = this.getKeys();
 
-        var predeftags = [{tag:"#all#",count:0},{tag:"#notag#",count:0},{tag:"#trash#",count:0}];
+        var predeftags = [{tag:"#all#",count:0},{tag:"#notag#",count:0},{tag:"#trash#",count:0},{tag:"#published#",count:0},{tag:"#shared#",count:0},{tag:"#webnote#",count:0}];
         var tags = [];
         var thisnote;
         var thistags;
+        var thissystemtags;
         var thistagfound;
         $.each(keys,function(keyindex,key) {
             thisnote = $.storage.get(key);
             if (thisnote.deleted != 1) {
                 predeftags[0].count++;
                 thistags = thisnote.tags;
+                thissystemtags = thisnote.systemtags;
                 if (thistags==undefined || thistags.length == 0) // undefined for syncCreated notes
                     predeftags[1].count++;
                 else {
@@ -320,6 +331,12 @@ var SimplenoteLS = {
                             tags.push({tag:thistag,count:1});
                     });
                 }
+                if (thissystemtags != undefined && thissystemtags.indexOf("shared") >= 0)
+                    predeftags[4].count++;
+                if (thissystemtags != undefined && thissystemtags.indexOf("published") >= 0)
+                    predeftags[3].count++;
+                if (thisnote.content != undefined && thisnote.content.match(webnotereg))
+                    predeftags[5].count++;
             } else {
                 predeftags[2].count++;
             }
