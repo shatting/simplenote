@@ -2,7 +2,7 @@ var background;
 var popup = this;
 
 // amount of vertical viewport size to add for preloading notes in index
-var preLoadFactor = 1/4;
+var preLoadFactor = 1/2;
 var currentView = "index";
 var slideEasing = "swing"; // swing or linear
 var slideDuration = 200;
@@ -13,7 +13,7 @@ var snIndex;
 
 //  ---------------------------------------
 var fontUrls = {
-    "Droid Sans Mono"   : '<link href="http://fonts.googleapis.com/css?family=Droid+Sans+Mono:regular" rel="stylesheet" type="text/css" >',
+    "Droid Sans Mono"   : '<link href="stylesheets/fonts.css" rel="stylesheet" type="text/css" >',
     "Walter Turncoat"   : '<link href="http://fonts.googleapis.com/css?family=Walter+Turncoat:regular" rel="stylesheet" type="text/css" >',
     "Inconsolata"       : '<link href="http://fonts.googleapis.com/css?family=Inconsolata:regular" rel="stylesheet" type="text/css" >',
     "Lekton"            : '<link href="http://fonts.googleapis.com/css?family=Lekton" rel="stylesheet" type="text/css">',
@@ -839,7 +839,7 @@ function indexFillNoteReqComplete(note) {
         $('#' + note.key + 'loader').remove();
         $noteheading.removeAttr("align"); // from loader
         // set actual heading
-        $noteheading.html(htmlEncode(lines[0],100)); // dont need more than 100 chars
+        $noteheading.html(htmlEncode(lines[0].trim(),100)); // dont need more than 100 chars
         // deleted note css style
         if (note.deleted == 1) {
             $noteheading.addClass("noteheadingdeleted"); // for text color
