@@ -4,7 +4,7 @@
 
 // debug switches
 var debugFlags = {
-    general     : false,
+    general     : true,
     popup       : true,
     popup2BG    : true,
     BG          : true,

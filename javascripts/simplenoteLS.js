@@ -17,6 +17,12 @@ var SimplenoteLS = {
     },
 
     addCustomFields: function(note) {
+        if (!note)
+            return null;
+        
+        if (!note.key)
+            return note;
+        
         if (this.getSyncKeys().indexOf(note.key) >= 0)
                 note._syncNote = true;
         else

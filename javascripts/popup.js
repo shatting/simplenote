@@ -447,7 +447,12 @@ function readyListener() {
                             highlight : false,
                             captureLength : -1 // needed for empty string ('') capture
                         };
-                        $('div#index div#toolbar input#q').typeWatch(options);
+                        $('#q').typeWatch(options);
+                        $('#q').bind("keydown", function(event) {
+                            if (event.which == 13) {
+                                snEditor.setNote({content:$(this).val() + "\n",tags:[],systemtags:[], key:""},{isnewnote: true});
+                            }
+                        });
 
                         $.timeago.settings.strings= {
                             prefixAgo: null,
@@ -537,6 +542,7 @@ function popupi18n() {
     else
         $("#backtoindex").attr("title",chrome.i18n.getMessage("backtoindex_tooltip",["alt-b","alt-x"]));    
 }
+
 /*
  * Displays a status message.
  * @param message The HTML content of the status message to display. All links
@@ -631,10 +637,10 @@ function fillIndex() {
                 if (i<15 && note.content != undefined)
                     indexFillNote(note);
             }
-            $("div.noterow").contextMenu(noteRowCMfn, { theme:'gloss',
+            $("div.noterow").contextMenu(noteRowCMfn, {theme:'gloss',
                                                       offsetX:0,
                                                       offsetY:0,
-                                                      direction:'down' });
+                                                      direction:'down'});
 
             checkInView();
         } else
@@ -672,7 +678,7 @@ function noteRowCMfn(contextmenu) {
         j[chrome.i18n.getMessage("finally_delete")] = {
             onclick: function() {
                 _gaq.push(['_trackEvent', 'popup', 'cm', 'finally_delete']);
-                if (confirm("Finally delete note '" + notename + "'?"))
+                if (confirm("Permanently delete note '" + notename + "'?"))
                     chrome.extension.sendRequest({action : "update", key : $(this).attr("id"), deleted: 1},
                         function(note) {
                             chrome.extension.sendRequest({action : "delete", key : note.key},
@@ -703,7 +709,7 @@ function noteRowCMfn(contextmenu) {
         j[chrome.i18n.getMessage("finally_delete")] = {
             onclick: function() {
                 _gaq.push(['_trackEvent', 'popup', 'cm', 'finally_delete']);
-                if (confirm("Finally delete note '" + notename + "'?"))
+                if (confirm("Permanently delete note '" + notename + "'?"))
                     chrome.extension.sendRequest({action : "delete", key : $(this).attr("id")},
                         function() {
                             snEditor.hideIfNotInIndex();
@@ -1347,11 +1353,15 @@ SNEditor.prototype.saveCaretScroll = function() {
 }
 
 //  ---------------------------------------
-SNEditor.prototype.restoreCaretScroll = function () {
+SNEditor.prototype.restoreCaretScroll = function (caretScroll) {
     log("CodeMirror.restoreCaretScroll")
+    if (!this.note)
+        return;
+    
+    if (!caretScroll && localStorage[this.note.key + "_caret"] && (localStorage.option_remembercaret == undefined || localStorage.option_remembercaret == "true"))
+        caretScroll = JSON.parse(localStorage[this.note.key + "_caret"]);
 
-    if (this.note && localStorage[this.note.key + "_caret"] && (localStorage.option_remembercaret == undefined || localStorage.option_remembercaret == "true")) {
-        var caretScroll = JSON.parse(localStorage[this.note.key + "_caret"]);
+    if ( caretScroll != undefined ) {
 
         var lineH;
         if (caretScroll.line == "lastline")
@@ -1480,7 +1490,7 @@ SNEditor.prototype.makeContextMenu = function() {
 //  ---------------------------------------
 SNEditor.prototype.setNote = function(note, options) {
 
-    // new note dummy data
+    // new note dummy data    
     if (note==undefined)
         note = {content:"",tags:[],systemtags:[], key:""};
 
@@ -1497,7 +1507,12 @@ SNEditor.prototype.setNote = function(note, options) {
         return;
     }
 
+    var inputcontent = note.content;
+
     this.note = note;
+    if (options.isnewnote)
+        this.note.content = "";
+    
     this.setFont();
     this.initialize();
 
@@ -1521,17 +1536,27 @@ SNEditor.prototype.setNote = function(note, options) {
     }
 
     // set content
-    this.codeMirror.setCode(note.content);
+    this.codeMirror.setCode(inputcontent);
     // set tags
     $('div#note input#tags').val(this.note.tags.join(" "));
     // set pinned
     this.setPintoggle(this.note.systemtags.indexOf("pinned")>=0);
 
     this.clearDirty();
-    this.hideRevert();
 
-    slideEditor(function () {        
-        that.restoreCaretScroll();
+    if (options.isnewnote) {
+        this.setDirty("content", true, null);
+    } else
+        this.hideRevert();
+
+
+    slideEditor(function () {
+        if (that.note.key)
+            that.restoreCaretScroll();
+
+        if (options.isnewnote)
+            that.restoreCaretScroll( {line : "lastline", character: 10000});
+
         if (note.systemtags.indexOf("unread")>0) {
 
             note.systemtags.splice(note.systemtags.indexOf("unread"),1);
