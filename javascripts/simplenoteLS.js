@@ -148,7 +148,8 @@ var SimplenoteLS = {
      *          contentquery : string (default: "" = all)
      *          sort : "modifydate" | "createdate" | "alphabetical" (default: modifydate)
      *          sortdirection: +1/-1 (default: 1)
-     *          regex: any content regex (default: null)
+     *          regex: only include by content regex (default: undefined = all)
+     *          notregex: exclude by content regex (default: undefined = none)
      */
     getNotes: function(options) {
         var keys = this.getKeys();
@@ -157,13 +158,16 @@ var SimplenoteLS = {
         var add;
         var note;
         var wordexps;
-        var regex;
+        var regex, notregex;
 
         if (options && options.contentquery && options.contentquery != "") {
             wordexps = options.contentquery.split(" ").map(function(word) {return new RegExp(RegExp.escape(word),'gi');});
         }
         if (options && typeof options.regex == "string")
             regex = new RegExp(options.regex,"m");
+
+        if (options && typeof options.notregex == "string")
+            notregex = new RegExp(options.notregex,"m");
 
         // filter with options
         for (var i = 0; i<keys.length;i++) {
@@ -211,6 +215,9 @@ var SimplenoteLS = {
 
             if (regex != undefined)
                 add &= note.content != undefined && note.content.match(regex) != undefined;
+
+            if (notregex != undefined)
+                add &= note.content == undefined || note.content.match(notregex) == undefined;
 
             if (!add) continue;
 

@@ -196,7 +196,8 @@ RegExp.escape = function(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 }
 
-var webnotereg = new RegExp("^SYNCPADWEBNOTE\\[(.*),(\\d+px),(\\d+px),(\\d+px)?,(\\d+px)?\\]$","m");
+var webnoteregstr = "^SYNCPADWEBNOTE\\[(.*),(\\d+px),(\\d+px),(\\d+px)?,(\\d+px)?\\]$";
+var webnotereg = new RegExp(webnoteregstr,"m");
 
 function get_manifest(callback) {
   var xhr = new XMLHttpRequest();

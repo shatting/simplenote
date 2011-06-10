@@ -17,6 +17,7 @@ $(document).ready(function() {
       $('#contextmenu_cascading_pinned_lbl').css('color', '#ccc');
   }
 
+  setCBval("#hidewebnotes", localStorage.option_hidewebnotes == undefined || localStorage.option_hidewebnotes == "true");
   setCBval("#alwaystab", localStorage.option_alwaystab != undefined && localStorage.option_alwaystab == "true");
   setCBval("#pinnedtab", localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true");
   setCBval("#showdate", localStorage.option_showdate == undefined || localStorage.option_showdate == "true");
@@ -140,6 +141,8 @@ function save_options() {
       }
   }
   localStorage.option_pinnedtab = getCBval('#pinnedtab');
+
+  localStorage.option_hidewebnotes = getCBval('#hidewebnotes');
 
   localStorage.option_showdate  = getCBval('#showdate');
   localStorage.option_sortby = $("#sort").val();

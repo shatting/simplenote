@@ -609,6 +609,8 @@ function fillIndex() {
     req     = mergeobj(req, {tag : $("#notetags").val()});
     req     = mergeobj(req, {contentquery : $('#q').val()});
     req     = mergeobj(req, {sort:localStorage.option_sortby, sortdirection:localStorage.option_sortbydirection});
+    if ((localStorage.option_hidewebnotes == undefined || localStorage.option_hidewebnotes == "true") && (req.tag == "" || req.tag == "#all#"))
+        req     = mergeobj(req, {notregex: webnoteregstr});
 
     log("fillIndex:");
     log(req);
@@ -839,7 +841,7 @@ function indexFillNoteReqComplete(note) {
         $('#' + note.key + 'loader').remove();
         $noteheading.removeAttr("align"); // from loader
         // set actual heading
-        $noteheading.html(htmlEncode(lines[0].trim(),100)); // dont need more than 100 chars
+        $noteheading.html(htmlEncode(lines[0] != undefined?lines[0].trim():" ",100)); // dont need more than 100 chars
         // deleted note css style
         if (note.deleted == 1) {
             $noteheading.addClass("noteheadingdeleted"); // for text color
@@ -1049,7 +1051,7 @@ SNEditor.prototype.setFont = function() {
     // set colors
     if (localStorage.option_color_editor)
         $editbox.css("background-color",localStorage.option_color_editor);
-    if (localStorage.option_color_editor)
+    if (localStorage.option_color_editor_font)
         $editbox.css("color",localStorage.option_color_editor_font);
 }
 //  ---------------------------------------
