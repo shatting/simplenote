@@ -110,7 +110,7 @@ NOTICE: sadly, i had to add the new extension permission "tabs" for getting the 
 1.5.1 [April 30]
 ----------------
 - textwrap in editor
-- more fonts, including variable width. if you want a font added, just tell me :) you can find some here: http://www.google.com/webfonts
+- more fonts, including variable width. if you want a font added, just tell me :) you can find some [here](http://www.google.com/webfonts)
 - link clicking should be more responsive
 
 1.5 [April 29, 2011]

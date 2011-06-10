@@ -1,7 +1,7 @@
 {
   "name": "Syncpad for Simplenote",
-  "version": "1.8.2",
-  "description": "No-hassle note taking. Cloud-aware, offline-capable. Access your notes from every computer and phone you use.",
+  "version": "1.8.2.1",
+  "description": "Easy to use, yet powerful plaintext notepad for Chrome. Notes are automatically synchronized to all your Chrome installations, handhelds and PCs. Offline-capable.",
   "default_locale": "en",
   "icons": {
     "96": "imanges/icon_96.png",
