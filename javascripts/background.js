@@ -52,9 +52,8 @@ var SimplenoteBG = {
                 chrome.extension.sendRequest(SimplenoteBG.webnotesID,request.request);
                 if (sendResponse)
                     sendResponse(true);
-            } else {
-                var q=confirm("The Webnotes plugin is not installed or disabled.\n\nGo to download page now?");
-                if (q)
+            } else {                
+                if (confirm("The Webnotes plugin is not installed or disabled.\n\nGo to download page now?"))
                     openURLinTab("https://chrome.google.com/webstore/detail/ajfdaicinlekajkfjoomjmoikoeghimd");
                 if (sendResponse)
                     sendResponse(false);
