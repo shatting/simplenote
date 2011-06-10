@@ -10,6 +10,7 @@ var isTab = false;
 var editorSaveTime = 3000;
 var snEditor;
 var snIndex;
+var offlineMode = false;
 
 //  ---------------------------------------
 var fontUrls = {
@@ -208,6 +209,7 @@ function uiEventListener(eventData, sender, sendResponse) {
     } else if (eventName == "notedeleted") {
         log("EventListener:notedeleted:" + eventData.key);
         $('div.noterow#' + eventData.key).remove();
+        fillTags(false);
     } else {
         log("EventListener:" + eventName);
     }
@@ -580,7 +582,7 @@ function fillTags(callFillIndex) {
                 $("#notetags").append('<option value="#shared#" ' + style +  '>' + chrome.i18n.getMessage("tags_shared") + ' [' + taginfo.count + ']</option>');
             else if (taginfo.tag == "#webnote#")
                 $("#notetags").append('<option value="#webnote#" ' + style +  '>' + chrome.i18n.getMessage("tags_webnote") + ' [' + taginfo.count + ']</option>');
-            else
+            else if (taginfo.tag != "webnote")
                 $("#notetags").append('<option value="' + taginfo.tag + '" ' + style +  '>' + taginfo.tag + " [" + taginfo.count + "] </option>");
 
             if (oldval == taginfo.tag)
@@ -614,7 +616,7 @@ function fillIndex() {
 
     log("fillIndex:");
     log(req);
-
+    
     chrome.extension.sendRequest(req, function(notes) {
         log("fillIndex:request complete");
         var note;
@@ -629,41 +631,105 @@ function fillIndex() {
                 if (i<15 && note.content != undefined)
                     indexFillNote(note);
             }
-            $("div.noterow").contextMenu(
-                function() {
-                    var i = {};
-                    i[chrome.i18n.getMessage("trash_tooltip","")] = {
-                        onclick: function() {                         
-                            chrome.extension.sendRequest({action : "update", key : $(this).attr("id"), deleted : 1},
-                                function() {
-                                    snEditor.hideIfNotInIndex();
-                                });
-                            noteRowMouseOut(this);
-                        },
-                        icon: "/images/trash.png"
-                    };                    
-                    return [i];
-                },
-                {
-                    theme:'gloss',
-                    offsetX:0,
-                    offsetY:0,                    
-                    direction:'down'
-                }
-            );
-                
+            $("div.noterow").contextMenu(noteRowCMfn, { theme:'gloss',
+                                                      offsetX:0,
+                                                      offsetY:0,
+                                                      direction:'down' });
+
             checkInView();
         } else
             $('div#index div#notes').html("<div id='nonotes'>" + chrome.i18n.getMessage("no_notes_to_show") + "</div>");
 
         $('div#notes').scrollTop(0);
         $('div#notes').scroll(checkInView);
-        
+
         snEditor.hideIfNotInIndex();
 
     });
 
 }
+
+function noteRowCMfn(contextmenu) {
+            
+    var notename = $("#" + $(contextmenu.target).attr("id") + "heading").text();
+    var istrash = $(contextmenu.target).hasClass("noterowdeleted");
+    
+    var i = {};
+    if (!istrash) {
+        i[chrome.i18n.getMessage("trash_tooltip","")] = {
+            onclick: function() {
+                _gaq.push(['_trackEvent', 'popup', 'cm', 'trash']);
+                chrome.extension.sendRequest({action : "update", key : $(this).attr("id"), deleted : 1},
+                    function() {
+                        snEditor.hideIfNotInIndex();
+                        checkInView();
+                    });
+                noteRowMouseOut(this);
+            },
+            icon: "/images/trash.png"
+        };
+        var j = {};
+        j[chrome.i18n.getMessage("finally_delete")] = {
+            onclick: function() {
+                _gaq.push(['_trackEvent', 'popup', 'cm', 'finally_delete']);
+                if (confirm("Finally delete note '" + notename + "'?"))
+                    chrome.extension.sendRequest({action : "update", key : $(this).attr("id"), deleted: 1},
+                        function(note) {
+                            chrome.extension.sendRequest({action : "delete", key : note.key},
+                                function() {
+                                    snEditor.hideIfNotInIndex();
+                                    checkInView();
+                                });
+                        });
+                noteRowMouseOut(this);
+            },
+            icon: "/images/delete.gif"
+        };
+        return [i,j];
+    } else {
+        i[chrome.i18n.getMessage("recover_from_trash")] = {
+            onclick: function() {
+                _gaq.push(['_trackEvent', 'popup', 'cm', 'recover_trash']);
+                chrome.extension.sendRequest({action : "update", key : $(this).attr("id"), deleted : 0},
+                    function() {
+                        snEditor.hideIfNotInIndex();
+                        checkInView();
+                    });
+                noteRowMouseOut(this);
+            },
+            icon: "/images/untrash.png"
+        };
+        var j = {};
+        j[chrome.i18n.getMessage("finally_delete")] = {
+            onclick: function() {
+                _gaq.push(['_trackEvent', 'popup', 'cm', 'finally_delete']);
+                if (confirm("Finally delete note '" + notename + "'?"))
+                    chrome.extension.sendRequest({action : "delete", key : $(this).attr("id")},
+                        function() {
+                            snEditor.hideIfNotInIndex();
+                            checkInView();
+                        });
+                noteRowMouseOut(this);
+            },
+            icon: "/images/delete.gif"
+        };
+        var k = {};
+        k[chrome.i18n.getMessage("empty_trash")] = {
+            onclick: function() {
+                _gaq.push(['_trackEvent', 'popup', 'cm', 'empty_trash']);
+                if (confirm("Empty trash?"))
+                    chrome.extension.sendRequest({action : "emptytrash"},
+                        function() {
+                            fillTags(true);
+                        });
+                noteRowMouseOut(this);
+            }
+        };
+        return [i,j,$.contextMenu.separator,k];
+    }
+            
+}
+
 /*
  * Appends/prepends/replaces a noterow div in the index pane.
  *
@@ -748,7 +814,7 @@ function indexAddNote(mode, note){
     if (localStorage.option_showdate == "true")
         $notetime.timeago();
     
-    $noterow.attr('loaded',"false");
+    $noterow.attr('filledcontent',"false");
 
     // deleted note
     if (note.deleted == 1) {
@@ -805,7 +871,7 @@ function indexAddNote(mode, note){
  */
 function indexFillNote(elementOrNote) {
 
-    if (elementOrNote.key) {//note
+    if (elementOrNote.content != undefined) {//note
         indexFillNoteReqComplete(elementOrNote);
     } else {
         var key = elementOrNote.attr("id");
@@ -830,6 +896,9 @@ function indexFillNote(elementOrNote) {
 function indexFillNoteReqComplete(note) {
 
         var $noterow = $('#' + note.key);
+        // check new inview, might have changed due to reflow
+        $noterow.attr('filledcontent',"true");
+        
         var $noteheading = $('#' + note.key + "heading");
         var $noteabstract = $('#' + note.key + "abstract");
 
@@ -880,20 +949,20 @@ function indexFillNoteReqComplete(note) {
             });
         }
 
-        // check new inview, might have changed due to reflow
-        $noterow.attr('loaded',"true");
-
-                // webnote icon
+        // webnote icon
         var wnm = note.content.match(webnotereg);
         if (wnm) {
             var url = wnm[1];
             $("<div class='webnoteicon' id='" + note.key + "webnoteicon'>&nbsp;</div>").insertBefore($noteheading);
-            $("#" + note.key + "webnoteicon").attr("title","Click to visit this webnote at " + url);
-            $("#" + note.key + "webnoteicon").bind("click",url,function(event) {
-                event.stopPropagation();
-                openURLinTab(event.data);
-            });
-        }
+            $noteabstract.prepend("[" + url + "]<br>");
+            if (note.deleted == 0) {
+                $("#" + note.key + "webnoteicon").attr("title","Click to visit this webnote at " + url);
+                $("#" + note.key + "webnoteicon").bind("click",url,function(event) {
+                    event.stopPropagation();
+                    openURLinTab(event.data);
+                });
+            }
+        }       
 
         checkInView();
 }
@@ -1733,9 +1802,8 @@ function getViewportOffset() {
 // from inview.js
 function checkInView() {
     var elements = $('div.noterow').get(), elementsLength, i = 0, viewportSize, viewportOffset;
-    var allLoaded = true;
     elements = elements.filter(function (e) {
-        return $(e).attr('loaded') != "true";
+        return $(e).attr('filledcontent') != "true";
     });
     elementsLength = elements.length;
 
@@ -1757,7 +1825,7 @@ function checkInView() {
                 width: $element.width()
             },
             elementOffset = $element.offset(),
-            loaded        = $element.attr('loaded') == "true",
+            loaded        = $element.attr('filledcontent') == "true",
             inview        = false;
 
             //log("checkInView:elementSize=[" + elementSize.height + "," + elementSize.width + "], elementOffset=[" + elementOffset.left + "," + elementOffset.top + "]");
@@ -1770,7 +1838,6 @@ function checkInView() {
 //            console.log(elementOffset);
 //            console.log(elementOffset);
 
-            allLoaded = allLoaded && loaded;
             if (!loaded && inview) {
                 indexFillNote($element);
             }

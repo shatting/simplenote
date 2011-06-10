@@ -89,7 +89,7 @@ $(document).ready(function() {
  * Saves options to localStorage.
  */
 function save_options() {
-
+  console.log("options saved")
   // abstract lines
   localStorage.option_abstractlines = $("#abstractlines").val();
 
@@ -234,6 +234,7 @@ function save_clicked() {
                 delete localStorage.lastopennote_key;
                 localStorage.lastopennote_open = "false";
                 chrome.extension.sendRequest({action:"userchanged"}, function(successObj) {
+                    save_options();
                     if (successObj && successObj.success) {
                         _gaq.push(['_trackEvent', 'Options', 'save_clicked','sync_success',successObj.numKeys]);
                         $("#loginmessage").html("<center>Account info saved, initial sync done.<br>Happy Syncpad-ing!</center>");

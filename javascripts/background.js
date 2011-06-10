@@ -119,7 +119,11 @@ var SimplenoteBG = {
         } else if (request.action === "getnotes") {
             sendResponse(SimplenoteLS.getNotes(request));
         } else if (request.action === "delete") {
-            SimplenoteDB.deleteNote(request, sendResponse);
+            if (SimplenoteDB.isOffline()) {
+                alert("Offline note delete not supported. Please try again when online!");
+                sendResponse(false);
+            } else
+                SimplenoteDB.deleteNote(request.key, sendResponse);
         } else if (request.action === "update") {
             SimplenoteDB.updateNote(request, sendResponse);
         } else if (request.action === "create") {
@@ -128,6 +132,12 @@ var SimplenoteBG = {
             sendResponse(SimplenoteLS.getTags());
         } else if (request.action === "isoffline") {
             sendResponse(SimplenoteDB.isOffline());
+        } else if (request.action === "emptytrash") {
+            if (SimplenoteDB.isOffline()) {
+                alert("Offline trash empty not supported. Please try again when online!");
+                sendResponse(false);
+            } else
+                SimplenoteDB.emptyTrash(sendResponse);
         } else if (request.action == "cm_populate") {
             SimplenoteCM.populate();
         } else if (request.action == "cm_updatelastopen") {
@@ -185,6 +195,12 @@ var SimplenoteBG = {
 $(document).ready(function() {
     SimplenoteCM.populate();
     SimplenoteBG.backgroundSync(true);
+
+    // some info about settings
+    _gaq.push(['_trackEvent', 'settings', 'editorfont', localStorage.option_editorfont]);
+    _gaq.push(['_trackEvent', 'settings', 'editorfontsize', localStorage.option_editorfontsize]);
+    _gaq.push(['_trackEvent', 'settings', 'sortby', localStorage.option_sortby]);
+    _gaq.push(['_trackEvent', 'settings', 'alwaystab', localStorage.option_alwaystab]);
 });
 
 chrome.extension.onRequest.addListener(SimplenoteBG.handleRequest);

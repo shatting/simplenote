@@ -2,6 +2,7 @@
 // Simplenote API2 js implementation.
 // ------------------------------------------------------------------------------------------------
 var emulateOffline = false;
+//var emulateSloppy = false; // sloppy connection
 
 /*
  * returns true iff there is a credentials.token and credentials.tokenTime not older than 24hrs
@@ -20,7 +21,7 @@ function isTokenValid(credentials) {
 }
 
 $.ajaxSetup({
-  timeout: emulateOffline?1:5000
+  timeout: emulateOffline?1:3000
 });
 
 var SimplenoteAPI2 = {

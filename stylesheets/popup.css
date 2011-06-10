@@ -229,15 +229,22 @@ div.noteheading { color:#111;}
 div.noteheadingdeleted { color:#666;}
 
 div.noterowdeleted:hover {
-     background: #4F92EB url(/images/undelete.png) no-repeat 50% 2px -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
+     background: #4F92EB url(/images/untrash.png) no-repeat 50% 2px -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
      cursor: pointer;
 }
 
-div#index div.pinned:hover {
+div.noterow div.pinned:hover {
     -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
 }
-div#index div.unpinned:hover {
+div.noterow div.unpinned:hover {
     -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
+}
+
+div.noterowdeleted div.pinned:hover {
+    -webkit-box-shadow: 0 0px 0px white;
+}
+div.noterowdeleted div.unpinned:hover {
+    -webkit-box-shadow: 0 0px 0px white;
 }
 
 div#index div.pinned, div#index div.unpinned {
