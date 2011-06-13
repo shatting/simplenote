@@ -302,18 +302,6 @@ function shorcuts(event) {
 //  ---------------------------------------
 $(document).ready(readyListener);
 
-function noteRowMouseOver(elem) {
-    $("abbr.notetime",elem).css("color","#ddd");
-    $("div.abstract",elem).css("color","#ccc");
-    $("div.noteheading",elem).css("color","#fff");
-}
-
-function noteRowMouseOut(elem) {
-    $("abbr.notetime",elem).css("color","");
-    $("div.abstract",elem).css("color","");
-    $("div.noteheading",elem).css("color","");
-}
-
 function readyListener() {
 
     background = chrome.extension.getBackgroundPage();
@@ -427,15 +415,6 @@ function readyListener() {
                             _gaq.push(['_trackEvent', 'popup', 'snlinkclicked']);
                             openURLinTab("https://simple-note.appspot.com/");
                         })
-
-
-                        $("div.noterow").live("mouseover", function(event) {
-                            noteRowMouseOver(this);
-                        });
-
-                        $("div.noterow").live("mouseleave", function(event) {
-                            noteRowMouseOut(this);
-                        });
 
                         // bind SEARCH field
                         var options = {
@@ -658,7 +637,7 @@ function fillIndex() {
 function noteRowCMfn(contextmenu) {
             
     var notename = $("#" + $(contextmenu.target).attr("id") + "heading").text();
-    var istrash = $(contextmenu.target).hasClass("noterowdeleted");
+    var istrash = $(contextmenu.target).hasClass("noterowdeleted");    
     
     var i = {};
     if (!istrash) {
@@ -764,7 +743,8 @@ function indexAddNote(mode, note){
     // pin/shared/published
     //if (note.deleted == 0) {
         html+=      "<div class='" + (note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + "' id='" + note.key + "pin'>&nbsp;</div>";
-        html+=      "<div title='" + chrome.i18n.getMessage("published_tooltip") + "' class='" + (note.publishkey != undefined?"published":"unpublished") + "' id='" + note.key + "published'>&nbsp;</div>";
+        if (note.publishkey != undefined)
+            html+=      "<div title='" + chrome.i18n.getMessage("published_tooltip") + "' class='published' id='" + note.key + "published'>&nbsp;</div>";
 
         if (note.systemtags.indexOf("shared") >= 0) {
 
@@ -853,6 +833,14 @@ function indexAddNote(mode, note){
             openURLinTab("http://simp.ly/publish/"+event.data);
         });
     }
+    // bind published click
+    if (note.sharekey) {
+        $("#"+note.key+"shared").unbind();
+        $("#"+note.key+"shared").bind("click",note.sharekey,function(event) {
+            event.stopPropagation();
+            openURLinTab("http://simp.ly/share/"+event.data);
+        });
+    }
 
     // unread
     if (note.systemtags.indexOf("unread")>0)
@@ -919,7 +907,6 @@ function indexFillNoteReqComplete(note) {
         $noteheading.html(htmlEncode(lines[0] != undefined?lines[0].trim():" ",100)); // dont need more than 100 chars
         // deleted note css style
         if (note.deleted == 1) {
-            $noteheading.addClass("noteheadingdeleted"); // for text color
             $noterow.addClass("noterowdeleted"); // for undelete image on hover
         }
 

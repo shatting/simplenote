@@ -9,14 +9,6 @@ body {
   background-image: url(/images/texture.png);  
 }
 
-/*#container {
-    position:absolute;
-    top:2px;
-    bottom:2px;
-    left:2px;
-    right:2px;
-}*/
-
 /* main divs */
 
 div#index {
@@ -27,22 +19,6 @@ div#index {
     right:2px;    
     min-width: 380px;    
 }
-
-/*.vsplitbar {
-    width:15px;
-    margin-right: 2px;
-    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
-    border-radius: 3px;
-}*/
-/*div#slider {
-    position:absolute;
-    left:402px;
-    width:15px;
-    top:2px;
-    bottom:2px;
-    background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
-    border-radius: 3px;
-}*/
 
 div#note {
     position: absolute;
@@ -97,6 +73,19 @@ div#statusbar {
     padding-right: 4px;
     ''border-radius: 3px;
 }
+
+#nonotes {
+    position: absolute;
+    top: 38px;
+    left: 2px;
+    right: 2px;
+    bottom: 27px;
+    color: #aaa;
+    text-align: center;
+    padding-top : 30px ;
+}
+
+/*toolbar stuff*/
 
 #notetags, #q, #tags {
     border-radius: 12px;
@@ -165,16 +154,7 @@ div#statusbar {
     margin-top: 3px;
 }
 
-#nonotes {
-    position: absolute;
-    top: 38px;
-    left: 2px;
-    right: 2px;
-    bottom: 27px;
-    color: #aaa;
-    text-align: center;
-    padding-top : 30px ;
-}
+/* noterow */
 
 div.noterow {
     ''background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
@@ -191,6 +171,9 @@ div.noterow:hover {
     background: #4F92EB -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
     -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
 }
+div.noterow:hover div.noteheading { color: #fff}
+div.noterow:hover div.abstract { color: #ccc}
+div.noterow:hover abbr.notetime { color: #ddd}
 
 div.unread {
     background: #aaeeaa;
@@ -206,15 +189,7 @@ div.syncnote {
     background-repeat: no-repeat;
 }
 
-abbr.notetime {
-    min-width: 40px;
-    color: #aaa;
-    text-align : right;
-    padding-right:5px;
-    cursor: pointer;
-    float: right;
-    cursor: help;
-}
+/* noterow children */
 
 div.noteheading, div.abstract {
     cursor: pointer;
@@ -226,50 +201,30 @@ div.noteheading, div.abstract {
 }
 
 div.noteheading { color:#111;}
-div.noteheadingdeleted { color:#666;}
+div.noterowdeleted div.noteheading { color:#666;}
 
-div.noterowdeleted:hover {
-     background: #4F92EB url(/images/untrash.png) no-repeat 50% 2px -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
-     cursor: pointer;
-}
-
-div.noterow div.pinned:hover {
-    -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
-}
-div.noterow div.unpinned:hover {
-    -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);
+div.abstract {
+  color: #999;
+  font-size: 10px;
 }
 
-div.noterowdeleted div.pinned:hover {
-    -webkit-box-shadow: 0 0px 0px white;
-}
-div.noterowdeleted div.unpinned:hover {
-    -webkit-box-shadow: 0 0px 0px white;
-}
-
-div#index div.pinned, div#index div.unpinned {
+abbr.notetime {
+    min-width: 40px;
+    color: #aaa;
+    text-align : right;
+    padding-right:5px;
     cursor: pointer;
-    width: 12px;
-    height:12px;
-    margin-left: 3px;
-    margin-right: 5px;
     float: right;
-    margin-top: 3px;
+    cursor: help;
 }
 
-div#index div.pinned {
-    background: transparent url(/images/pinned.png) no-repeat;
-}
+/*div.noterowdeleted:hover {
+     background: #4F92EB  no-repeat 50% 2px -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF)) !important;
+     background-image: url(/images/untrash.png);
+}*/
 
-div#index div.unpinned {
-    background: transparent url(/images/unpinned.png) no-repeat;
-}
-
-div.unpublished {
-    display:none;
-}
-
-div.published, div.shared, div.webnoteicon {
+/* noterow icons */
+div.published, div.shared, div.webnoteicon, div#index div.pinned, div#index div.unpinned {
     display:inline;
     position: relative;
     left: 1px;
@@ -279,32 +234,26 @@ div.published, div.shared, div.webnoteicon {
     margin-right: 5px;
     float:right;
     cursor:pointer;
+    border-radius: 3px;
 }
 
-div.published {    
-    background: transparent url(/images/published.png) no-repeat;
+div#index div.pinned    { background: transparent url(/images/pinned.png) no-repeat;   }
+div#index div.unpinned  { background: transparent url(/images/unpinned.png) no-repeat; }
+div.published           { background: transparent url(/images/published.png) no-repeat;}
+div.shared              { background: transparent url(/images/shared.png) no-repeat;   }
+div.webnoteicon         { background: transparent url(/images/webnote.png) no-repeat;  }
+
+div.noterowdeleted div.published:hover, div.noterowdeleted div.shared:hover, div.noterowdeleted div.webnoteicon:hover, div.noterowdeleted div.pinned:hover, div.noterowdeleted div.unpinned:hover {
+    -webkit-box-shadow: none !important;
+    background-color: transparent !important;
 }
 
-div.shared {
-    background: transparent url(/images/shared.png) no-repeat;
+div.published:hover, div.shared:hover, div.webnoteicon:hover, div#index div.pinned:hover, div#index div.unpinned:hover {
+    -webkit-box-shadow: 0 0px 6px rgba(255,255,255,0.9);
+    background-color: rgba(255,255,255,0.9);
 }
 
-div.webnoteicon {
-    background: transparent url(/images/webnote.png) no-repeat;
-}
-
-.abstract {
-  color: #999;
-  font-size: 10px;
-}
-
-#loader {
-  background-image: url('/images/loader.gif');
-  width: 64px;
-  height: 64px;
-  margin: 100px auto;
-  display: none;
-}
+/* statusbar */
 
 #statusbar div {
     display: inline;
