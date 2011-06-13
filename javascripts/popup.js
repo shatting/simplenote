@@ -283,12 +283,12 @@ function shorcuts(event) {
                     $("div#note #wraptoggle").click();
                     break;
                 case 84: //alt-t
-                    $("div#note input#tags").focus();
-                    event.preventDefault();                    
+                    $("#tagsauto").focus();
+                    event.stopPropagation();
                     break;
                 case 69: //alt-e
                     snEditor.focus();
-                    event.preventDefault();                    
+                    event.stopPropagation();
                     break;
             }
         if (event.altKey && !event.shiftKey && event.ctrlKey)
@@ -430,7 +430,13 @@ function readyListener() {
                         $('#q').bind("keydown", function(event) {
                             if (event.which == 13) {
                                 snEditor.setNote({content:$(this).val() + "\n",tags:[],systemtags:[], key:""},{isnewnote: true});
-                            }
+                            } else if (event.which == 27)
+                                $("#q_clear").click();
+                        });
+                        $("#q_clear").click(function(event) {
+                            $('#q').val("");
+                            $("#q_clear").hide();
+                            fillIndex();
                         });
 
                         $.timeago.settings.strings= {
@@ -482,8 +488,7 @@ function readyListener() {
                             $("div#index").css("width",cssprop("div#note","left")-4)
                         } else {
                             $("div#slider").hide();
-                        }
-
+                        }                        
                     }
                     else {
                         _gaq.push(['_trackEvent', 'popup', 'ready', 'login_err']);
@@ -506,9 +511,7 @@ function popupi18n() {
     $("#add").attr("title",chrome.i18n.getMessage("add_tooltip","alt-a"));
     $("#add_webnote").attr("title",chrome.i18n.getMessage("add_webnote_tooltip"));
     $("#snlink").attr("title",chrome.i18n.getMessage("snlink_tooltip"));
-    $("#sync").attr("title",chrome.i18n.getMessage("sync_tooltip"));
-    $("#tags").attr("placeholder",chrome.i18n.getMessage("tag_placeholder"));
-    $("#tags").attr("title",chrome.i18n.getMessage("tag_tooltip",["alt-t", "alt-e"]));
+    $("#sync").attr("title",chrome.i18n.getMessage("sync_tooltip"));    
     $("#pintoggle").attr("title",chrome.i18n.getMessage("pin_tooltip","alt-p"));   
     $("#popout").attr("title",chrome.i18n.getMessage("popout_tooltip","alt-o"));
     $("#trash").attr("title",chrome.i18n.getMessage("trash_tooltip"," (ctrl-alt-d)"));
@@ -553,6 +556,7 @@ function fillTags(callFillIndex) {
         var oldval = $("#notetags").val();
         $("#notetags").html("");
         var style;
+        
         $.each(taginfos,function(i,taginfo) {
             style = taginfo.count > 0?"":'style="color:#aaa"';
             if (taginfo.tag == "#all#")
@@ -567,15 +571,16 @@ function fillTags(callFillIndex) {
                 $("#notetags").append('<option value="#shared#" ' + style +  '>' + chrome.i18n.getMessage("tags_shared") + ' [' + taginfo.count + ']</option>');
             else if (taginfo.tag == "#webnote#")
                 $("#notetags").append('<option value="#webnote#" ' + style +  '>' + chrome.i18n.getMessage("tags_webnote") + ' [' + taginfo.count + ']</option>');
-            else if (taginfo.tag != "webnote")
-                $("#notetags").append('<option value="' + taginfo.tag + '" ' + style +  '>' + taginfo.tag + " [" + taginfo.count + "] </option>");
-
+            else if (taginfo.tag != "webnote") {
+                $("#notetags").append('<option value="' + taginfo.tag + '" ' + style +  '>' + taginfo.tag + " [" + taginfo.count + "] </option>");                
+            }
             if (oldval == taginfo.tag)
                 stillhavetag = true;
         });
         if (!stillhavetag) {
             oldval = "#all#";
         }
+        log("fillTags done");
        // add handler
         $("#notetags").val(oldval);
         $("#notetags").change(function(event) {
@@ -584,7 +589,7 @@ function fillTags(callFillIndex) {
         });
 
         if (callFillIndex)
-            fillIndex();
+            fillIndex();        
     });
 }
 /*
@@ -602,6 +607,11 @@ function fillIndex() {
     log("fillIndex:");
     log(req);
     
+    if ($("#q").val() != "") {
+        $("#q_clear").show();
+    } else
+        $("#q_clear").hide();
+
     chrome.extension.sendRequest(req, function(notes) {
         log("fillIndex:request complete");
         var note;
@@ -825,21 +835,25 @@ function indexAddNote(mode, note){
             }
             chrome.extension.sendRequest({action:"update", key:key, systemtags:systemtags});
         });
+    $("#"+note.key+"pin").tipTip({defaultPosition:"top"});
+
     // bind published click
-    if (note.publishkey) {
+    if (note.publishkey) {        
         $("#"+note.key+"published").unbind();
         $("#"+note.key+"published").bind("click",note.publishkey,function(event) {
             event.stopPropagation();
             openURLinTab("http://simp.ly/publish/"+event.data);
         });
+        $("#"+note.key+"published").tipTip({defaultPosition:"top"});
     }
     // bind published click
-    if (note.sharekey) {
+    if (note.sharekey) {        
         $("#"+note.key+"shared").unbind();
         $("#"+note.key+"shared").bind("click",note.sharekey,function(event) {
             event.stopPropagation();
             openURLinTab("http://simp.ly/share/"+event.data);
         });
+        $("#"+note.key+"shared").tipTip({defaultPosition:"top"});
     }
 
     // unread
@@ -856,6 +870,9 @@ function indexAddNote(mode, note){
         $noteheading.addClass("syncnote");
     else
         $noteheading.removeClass("syncnote");
+
+    // tooltips
+    $("#" + note.key + "time").tipTip({defaultPosition:"top"});
 }
 
 /*
@@ -950,6 +967,9 @@ function indexFillNoteReqComplete(note) {
             $noteabstract.prepend("[" + url + "]<br>");
             if (note.deleted == 0) {
                 $("#" + note.key + "webnoteicon").attr("title","Click to visit this webnote at " + url);
+                
+                $("#" + note.key + "webnoteicon").tipTip({defaultPosition:"top"});
+
                 $("#" + note.key + "webnoteicon").bind("click",url,function(event) {
                     event.stopPropagation();
                     openURLinTab(event.data);
@@ -1075,7 +1095,7 @@ function SNEditor() {
 }
 //  ---------------------------------------
 SNEditor.prototype.setFont = function() {
-    log("CodeMirror.setFont")
+    log("SNEditor.setFont")
     var $head = $(this.codeMirror.editor.container.ownerDocument.head);
     var $editbox = $(this.codeMirror.editor.container);
     // get fontinfo if there
@@ -1118,18 +1138,25 @@ SNEditor.prototype.setFont = function() {
 }
 //  ---------------------------------------
 SNEditor.prototype.getTags = function() {
-    log("CodeMirror.getTags")
-    var tags = $("div#note input#tags").val().trim().split(" ").map(function(e) {return e.trim();});
+    log("SNEditor.getTags")
+    if ($("#as-values-tagsauto").length == 0)
+        return false;
+    var vals = $("#as-selections-tagsauto .as-selection-item").get().map(function(e) { return e.textContent.substr(1)});
+    //log(vals)
+//    var rawtags = $("#as-values-tagsauto").val().trim();
+    //log(rawtags)
+    var tags = vals.map(function(e) {return e.trim();}).filter(function(e) {return e != ""});
+    //log(tags);
     return tags;
 }
 
 //  ---------------------------------------
 SNEditor.prototype.initialize = function() {
-
+    
     if (this.initialized)
         return;
 
-    log("CodeMirror.intitalize");
+    log("SNEditor.intitalize");
 
     var $editbox = $(this.codeMirror.editor.container);
     var that = this;
@@ -1178,10 +1205,10 @@ SNEditor.prototype.initialize = function() {
     });
 
     // add note tags change (dirty) event listeners
-    $('div#note input#tags').unbind();
-    $('div#note input#tags').bind('change keyup paste cut', function(event) {
-        that.setDirty("tags", !arrayEqual(that.note.tags,that.getTags()), event);
-    });
+//    $('div#note input#tags').unbind();
+//    $('div#note input#tags').bind('change keyup paste cut', function(event) {
+//        that.setDirty("tags", !arrayEqual(that.note.tags,that.getTags()), event);
+//    });
 
     // add note pinned (dirty) event listener
     $('div#note #pintoggle').unbind();
@@ -1228,7 +1255,7 @@ SNEditor.prototype.initialize = function() {
     $('div#note #revert').unbind();
     $('div#note #revert').click(function(event) {
         // reset content
-        log("CodeMirror.initialize:undo clicked");
+        log("SNEditor.initialize:undo clicked");
 
         _gaq.push(['_trackEvent', 'popup', 'undoclicked']);
 
@@ -1240,7 +1267,8 @@ SNEditor.prototype.initialize = function() {
         }
         // reset tags
         if (that.dirty.tags)
-            $('div#note input#tags').val(note.tags.join(" "));
+            that.setupTags();
+//            $('div#note input#tags').val(note.tags.join(" "));
         // reset pinned
         if (that.dirty.pinned) {
             snEditor.setPintoggle(note.systemtags.indexOf("pinned")>=0);
@@ -1308,16 +1336,16 @@ SNEditor.prototype.initialize = function() {
         });
 
         // bind typewatch TAGS field
-        var options = {
-            callback : function() {
-                log("typewatch: tags changed");
-                that.saveNote();
-            },
-            wait : editorSaveTime,
-            highlight : false,
-            captureLength : -1 // needed for empty string ('') capture
-        };
-        $('div#note input#tags').typeWatch(options);
+//        var options = {
+//            callback : function() {
+//                log("typewatch: tags changed");
+//                that.saveNote();
+//            },
+//            wait : editorSaveTime,
+//            highlight : false,
+//            captureLength : -1 // needed for empty string ('') capture
+//        };
+//        $('div#note input#tags').typeWatch(options);
     }
     // add context menu
     this.makeContextMenu();
@@ -1327,7 +1355,7 @@ SNEditor.prototype.initialize = function() {
 
 //  ---------------------------------------
 SNEditor.prototype.saveCaretScroll = function() {
-    log("CodeMirror.saveCaretScroll");
+    log("SNEditor.saveCaretScroll");
     if (localStorage.option_remembercaret != undefined && localStorage.option_remembercaret == "false" || !this.note)
         return;
 
@@ -1341,7 +1369,7 @@ SNEditor.prototype.saveCaretScroll = function() {
 
 //  ---------------------------------------
 SNEditor.prototype.restoreCaretScroll = function (caretScroll) {
-    log("CodeMirror.restoreCaretScroll")
+    log("SNEditor.restoreCaretScroll")
     if (!this.note)
         return;
     
@@ -1388,7 +1416,7 @@ function cs2str(msg,p,$elm) {
 
 //  ---------------------------------------
 SNEditor.prototype.insertUrl = function() {
-    log("CodeMirror.insertUrl")
+    log("SNEditor.insertUrl")
     _gaq.push(['_trackEvent', 'popup', 'insertUrl']);
 
     var that = this;
@@ -1400,7 +1428,7 @@ SNEditor.prototype.insertUrl = function() {
 
 //  ---------------------------------------
 SNEditor.prototype.searchForSelection = function () {
-    log("CodeMirror.searchForSelection")
+    log("SNEditor.searchForSelection")
     _gaq.push(['_trackEvent', 'popup', 'searchForSelection']);
 
     openURLinTab("http://google.com/search?q=" + encodeURIComponent(this.codeMirror.selection().trim()));
@@ -1411,7 +1439,7 @@ SNEditor.prototype.hideIfNotInIndex = function () {
     if (!isTab)
         return;
 
-    log("CodeMirror.hideIfNotInIndex")
+    log("SNEditor.hideIfNotInIndex")
 
     var keys = $("div#index div.noterow").map(function(i,e) {
         if ($(this).attr("deleteanimation") == "true")
@@ -1447,7 +1475,7 @@ SNEditor.prototype.focus = function() {
 //  ---------------------------------------
 SNEditor.prototype.makeContextMenu = function() {
 
-    log("CodeMirror.makeContextMenu")
+    log("SNEditor.makeContextMenu")
     
     var that = this;
     $(this.codeMirror.editor.container).contextMenu(
@@ -1484,7 +1512,7 @@ SNEditor.prototype.setNote = function(note, options) {
     if (!options)
         options = {focus:true};
 
-    log("CodeMirror.setNote: " + note.key);
+    log("SNEditor.setNote: " + note.key);
 
     var that = this;
     if (this.isNoteDirty()) {
@@ -1525,7 +1553,8 @@ SNEditor.prototype.setNote = function(note, options) {
     // set content
     this.codeMirror.setCode(inputcontent);
     // set tags
-    $('div#note input#tags').val(this.note.tags.join(" "));
+    //$('div#note input#tags').val(this.note.tags.join(" "));
+    
     // set pinned
     this.setPintoggle(this.note.systemtags.indexOf("pinned")>=0);
 
@@ -1536,22 +1565,26 @@ SNEditor.prototype.setNote = function(note, options) {
     } else
         this.hideRevert();
 
+    slideEditor(function () {        
 
-    slideEditor(function () {
         if (that.note.key)
             that.restoreCaretScroll();
 
         if (options.isnewnote)
             that.restoreCaretScroll( {line : "lastline", character: 10000});
 
+        that.setupTags();
+        
         if (note.systemtags.indexOf("unread")>0) {
 
             note.systemtags.splice(note.systemtags.indexOf("unread"),1);
             chrome.extension.sendRequest({action:"update", key:note.key, systemtags:note.systemtags}, function() {
                 $("#" + note.key).removeClass("unread");
             });
-        }
+        }       
+
         that.focus();
+        
     }, options.duration);
 
     if (isTab) {
@@ -1568,7 +1601,7 @@ SNEditor.prototype.saveNote = function(callback) {
     if(!this.isNoteDirty())
         return;
 
-    log("CodeMirror.saveNote");
+    log("SNEditor.saveNote");
 
     var key = this.note.key;
 
@@ -1668,7 +1701,45 @@ SNEditor.prototype.needCMRefresh = function(type) {
     if (isTab)
         background.SimplenoteBG.checkRefreshs();
 }
+SNEditor.prototype.setupTags = function() {
+    var that = this;
+    
+    chrome.extension.sendRequest({action:"tags"}, function(taginfos) {
+        $("#as-selections-tagsauto").remove();
+        $("#as-results-tagsauto").remove();
+        $("#tags").remove();
 
+        taginfos = taginfos.map(function(e) {return {value: e.tag};}).filter(function(e) {return !e.value.match(/^#.*#$/)});
+
+        $('div#note').prepend('<input type="text" id="tags" spellcheck="false" tabindex="0"/>');
+        $('div#note input#tags').autoSuggest(taginfos, {
+                asHtmlID: "tagsauto",
+                startText: chrome.i18n.getMessage("tag_placeholder"),
+                preFill: that.note.tags.join(","),
+                //selectionClick: function(elem){ elem.fadeTo("slow", 0.33); },
+                selectionAdded: function(elem) {
+                    if (that.getTags())
+                        that.setDirty("tags", !arrayEqual(that.note.tags,that.getTags()));
+                    $(elem).hover(function(elem) {
+                        $(".as-close",this).show("fast");
+                    } ,function(elem) {
+                        $(".as-close",this).hide("fast");
+                    });
+                    //$(elem).attr("title"," ");
+                    //log($(".as-selections").css("height"))
+                    $("#cmwrapper").css("top", (parseInt($(".as-selections").css("height")) + 4) + "px");
+                },
+                selectionRemoved: function(elem) {
+                    elem.remove();
+                    if (that.getTags())
+                        that.setDirty("tags", !arrayEqual(that.note.tags,that.getTags()));                    
+                    $("#cmwrapper").css("top", (parseInt($(".as-selections").css("height")) + 4) + "px");
+                },
+                keyDelay: 0
+            });
+        $("#as-selections-tagsauto").attr("title",chrome.i18n.getMessage("tag_tooltip",["alt-t", "alt-e"]));
+    });
+}
 //  ---------------------------------------
 SNEditor.prototype.trashNote = function() {
     if (!this.note || this.note.key == "")
