@@ -1,4 +1,4 @@
- /*
+/*
  * AutoSuggest
  * Copyright 2009-2010 Drew Wilson
  * www.drewwilson.com
@@ -20,373 +20,540 @@
  */
 
 (function($){
-	$.fn.autoSuggest = function(data, options) {
-		var defaults = { 
-			asHtmlID: false,
-			startText: "Enter Name Here",                        
-			emptyText: "No Results Found",
-			preFill: {},
-			limitText: "No More Selections Are Allowed",
-			selectedItemProp: "value", //name of object property
-			selectedValuesProp: "value", //name of object property
-			searchObjProps: "value", //comma separated list of object property names
-			queryParam: "q",
-			retrieveLimit: false, //number for 'limit' param on ajax request
-			extraParams: "",
-			matchCase: false,
-			minChars: 1,
-			keyDelay: 400,
-			resultsHighlight: true,
-			neverSubmit: false,
-			selectionLimit: false,
-			showResultList: true,
-		  	start: function(){},
-		  	selectionClick: function(elem){},
-		  	selectionAdded: function(elem){},
-		  	selectionRemoved: function(elem){elem.remove();},
-		  	formatList: false, //callback function
-		  	beforeRetrieve: function(string){return string;},
-		  	retrieveComplete: function(data){return data;},
-		  	resultClick: function(data){},
-		  	resultsComplete: function(){}
-	  	};  
-	 	var opts = $.extend(defaults, options);	 	
-		
-		var d_type = "object";
-		var d_count = 0;
-		if(typeof data == "string") {
-			d_type = "string";
-			var req_string = data;
-		} else {
-			var org_data = data;
-			for (k in data) if (data.hasOwnProperty(k)) d_count++;
-		}
-		if((d_type == "object" && d_count > 0) || d_type == "string"){
-			return this.each(function(x){
-				if(!opts.asHtmlID){
-					x = x+""+Math.floor(Math.random()*100); //this ensures there will be unique IDs on the page if autoSuggest() is called multiple times
-					var x_id = "as-input-"+x;
-				} else {
-					x = opts.asHtmlID;
-					var x_id = x;
-				}
-				opts.start.call(this);
-				var input = $(this);
-				input.attr("autocomplete","off").addClass("as-input").attr("id",x_id).val(opts.startText);
-				var input_focus = false;
-				
-				// Setup basic elements and render them to the DOM
-				input.wrap('<ul class="as-selections" id="as-selections-'+x+'"></ul>').wrap('<li class="as-original" id="as-original-'+x+'"></li>');
-				var selections_holder = $("#as-selections-"+x);
-				var org_li = $("#as-original-"+x);				
-				var results_holder = $('<div class="as-results" id="as-results-'+x+'"></div>').hide();
-				var results_ul =  $('<ul class="as-list"></ul>');
-				var values_input = $('<input type="hidden" class="as-values" name="as_values_'+x+'" id="as-values-'+x+'" />');
-				var prefill_value = "";
-				if(typeof opts.preFill == "string"){
-					var vals = opts.preFill.split(",");					
-					for(var i=0; i < vals.length; i++){
-						var v_data = {};
-						v_data[opts.selectedValuesProp] = vals[i];
-						if(vals[i] != ""){
-							add_selected_item(v_data, "000"+i);	
-						}		
-					}
-					prefill_value = opts.preFill;
-				} else {
-					prefill_value = "";
-					var prefill_count = 0;
-					for (k in opts.preFill) if (opts.preFill.hasOwnProperty(k)) prefill_count++;
-					if(prefill_count > 0){
-						for(var i=0; i < prefill_count; i++){
-							var new_v = opts.preFill[i][opts.selectedValuesProp];
-							if(new_v == undefined){new_v = "";}
-							prefill_value = prefill_value+new_v+",";
-							if(new_v != ""){
-								add_selected_item(opts.preFill[i], "000"+i);	
-							}		
-						}
-					}
-				}
-				if(prefill_value != ""){
-					input.val("");
-					var lastChar = prefill_value.substring(prefill_value.length-1);
-					if(lastChar != ","){prefill_value = prefill_value+",";}
-					values_input.val(","+prefill_value);
-					$("li.as-selection-item", selections_holder).addClass("blur").removeClass("selected");
-				}
-				input.after(values_input);
-				selections_holder.click(function(){
-					input_focus = true;
-					input.focus();
-				}).mousedown(function(){input_focus = false;}).after(results_holder);	
+    $.fn.autoSuggest = function(data, options) {
+        var defaults = {
+            asHtmlID: false,
+            startText: "Enter Name Here",
+            emptyText: "No Results Found",
+            preFill: {},
+            limitText: "No More Selections Are Allowed",
+            selectedItemProp: "value", //name of object property
+            selectedValuesProp: "value", //name of object property
+            searchObjProps: "value", //comma separated list of object property names
+            queryParam: "q",
+            retrieveLimit: false, //number for 'limit' param on ajax request
+            extraParams: "",
+            matchCase: false,
+            minChars: 1,
+            keyDelay: 400,
+            resultsHighlight: true,
+            neverSubmit: false,
+            selectionLimit: false,
+            showResultList: true,
+            start: function(){},
+            selectionClick: function(elem){},
+            selectionAdded: function(elem){},
+            selectionRemoved: function(elem){
+                elem.remove();
+            },
+            formatList: false, //callback function
+            beforeRetrieve: function(string){
+                return string;
+            },
+            retrieveComplete: function(data){
+                return data;
+            },
+            resultClick: function(data){},
+            resultsComplete: function(){},
+            onChange: function() {},
+            onSetupDone: function() {}
+        };
+        var opts = $.extend(defaults, options);
 
-				var timeout = null;
-				var prev = "";
-				var totalSelections = 0;
-				var tab_press = false;
-				
-				// Handle input field events
-				input.focus(function(){			
-					if($(this).val() == opts.startText && values_input.val() == ""){
-						$(this).val("");
-					} else if(input_focus){
-						$("li.as-selection-item", selections_holder).removeClass("blur");
-						if($(this).val() != ""){
-							//results_ul.css("width",selections_holder.outerWidth());
-							results_holder.show();
-						}
-					}
-					input_focus = true;
-					return true;
-				}).blur(function(){
-                                        console.log("BLUR")
-					if($(this).val() == "" && values_input.val() == ""){                                                
-						$(this).val(opts.startText);
-					} else if(input_focus){
-                                                
-						$("li.as-selection-item", selections_holder).addClass("blur").removeClass("selected");
-						results_holder.hide();
+        var d_type = "object";
+        var data_itemcount = 0;
+        if(typeof data == "string") {
+            d_type = "string";
+            var req_string = data;
+        } else {
+            var org_data = data;
+            for (k in data) if (data.hasOwnProperty(k)) data_itemcount++;
+        }
+        if((d_type == "object" && data_itemcount >= 0) || d_type == "string"){
+            return this.each(function(x){
+                if(!opts.asHtmlID){
+                    x = x+""+Math.floor(Math.random()*100); //this ensures there will be unique IDs on the page if autoSuggest() is called multiple times
+                    var x_id = "as-input-"+x;
+                } else {
+                    x = opts.asHtmlID;
+                    var x_id = x;
+                }
 
-                                                var i_input = input.val().replace(/(,)/g, "");
-						if(i_input != "" && values_input.val().search(","+i_input+",") < 0 && i_input.length >= opts.minChars){
-								
-                                                        var n_data = {};
-                                                        n_data[opts.selectedItemProp] = i_input;
-                                                        n_data[opts.selectedValuesProp] = i_input;
-                                                        var lis = $("li", selections_holder).length;
-                                                        add_selected_item(n_data, "00"+(lis+1));
-                                                        input.val("");
-                                                }
-					} 
-				}).keydown(function(e) {
-					// track last key pressed
-					lastKeyPressCode = e.keyCode;
-					first_focus = false;
-					switch(e.keyCode) {
-						case 38: // up
-							e.preventDefault();
-							moveSelection("up");
-							break;
-						case 40: // down
-							e.preventDefault();
-							moveSelection("down");
-							break;
-						case 8:  // delete
-							if(input.val() == ""){							
-								var last = values_input.val().split(",");
-								last = last[last.length - 2];
-								selections_holder.children().not(org_li.prev()).removeClass("selected");
-								if(org_li.prev().hasClass("selected")){
-									values_input.val(values_input.val().replace(","+last+",",","));
-                                                                        if (values_input.val() == ",")
-                                                                            values_input.val("");
-									opts.selectionRemoved.call(this, org_li.prev());
-								} else {
-									opts.selectionClick.call(this, org_li.prev());
-									org_li.prev().addClass("selected");		
-								}
-							}
-							if(input.val().length == 1){
-								results_holder.hide();
-								prev = "";
-							}
-							if($(":visible",results_holder).length > 0){
-								if (timeout){clearTimeout(timeout);}
-								timeout = setTimeout(function(){keyChange();}, opts.keyDelay);
-							}                                                        
-							break;
-						case 9: case 188: case 32:  // tab or comma
-							tab_press = true;
-							var i_input = input.val().replace(/(,)/g, "");
-							if(i_input != "" && values_input.val().search(","+i_input+",") < 0 && i_input.length >= opts.minChars){	
-								e.preventDefault();
-								var n_data = {};
-								n_data[opts.selectedItemProp] = i_input;
-								n_data[opts.selectedValuesProp] = i_input;																				
-								var lis = $("li", selections_holder).length;
-								add_selected_item(n_data, "00"+(lis+1));
-								input.val("");
-							}
-						case 13: // return
-							tab_press = false;
-							var active = $("li.active:first", results_holder);
-							if(active.length > 0){
-								active.click();
-								results_holder.hide();
-							}
-							if(opts.neverSubmit || active.length > 0){
-								e.preventDefault();
-							}
-							break;
-						default:
-							if(opts.showResultList){
-								if(opts.selectionLimit && $("li.as-selection-item", selections_holder).length >= opts.selectionLimit){
-									results_ul.html('<li class="as-message">'+opts.limitText+'</li>');
-									results_holder.show();
-								} else {
-									if (timeout){clearTimeout(timeout);}
-									timeout = setTimeout(function(){keyChange();}, opts.keyDelay);
-								}
-							}
-							break;
-					}
-				});
-				
-				function keyChange(forceshow) {
-					// ignore if the following keys are pressed: [del] [shift] [capslock]
-					if( lastKeyPressCode == 46 || (lastKeyPressCode > 8 && lastKeyPressCode < 32) ){return results_holder.hide();}
-					var string = input.val().replace(/[\\]+|[\/]+/g,"");
-					if (string == prev && !forceshow) return;
-					prev = string;
-					if (string.length >= opts.minChars || forceshow) {
-						selections_holder.addClass("loading");
-						if(d_type == "string"){
-							var limit = "";
-							if(opts.retrieveLimit){
-								limit = "&limit="+encodeURIComponent(opts.retrieveLimit);
-							}
-							if(opts.beforeRetrieve){
-								string = opts.beforeRetrieve.call(this, string);
-							}
-							$.getJSON(req_string+"?"+opts.queryParam+"="+encodeURIComponent(string)+limit+opts.extraParams, function(data){ 
-								d_count = 0;
-								var new_data = opts.retrieveComplete.call(this, data);
-								for (k in new_data) if (new_data.hasOwnProperty(k)) d_count++;
-								processData(new_data, string); 
-							});
-						} else {
-							if(opts.beforeRetrieve){
-								string = opts.beforeRetrieve.call(this, string);
-							}
-							processData(org_data, string);
-						}
-					} else {
-						selections_holder.removeClass("loading");
-						results_holder.hide();
-					}
-				}
-				var num_count = 0;
-				function processData(data, query){
-					if (!opts.matchCase){query = query.toLowerCase();}
-					var matchCount = 0;
-					results_holder.html(results_ul.html("")).hide();
-					for(var i=0;i<d_count;i++){				
-						var num = i;
-						num_count++;
-						var forward = false;
-						if(opts.searchObjProps == "value") {
-							var str = data[num].value;
-						} else {	
-							var str = "";
-							var names = opts.searchObjProps.split(",");
-							for(var y=0;y<names.length;y++){
-								var name = $.trim(names[y]);
-								str = str+data[num][name]+" ";
-							}
-						}
-						if(str){
-							if (!opts.matchCase){str = str.toLowerCase();}				
-							if(str.search(query) != -1 && values_input.val().search(","+data[num][opts.selectedValuesProp]+",") == -1){
-								forward = true;
-							}	
-						}
-						if(forward){
-							var formatted = $('<li class="as-result-item" id="as-result-item-'+num+'"></li>').click(function(){
-									var raw_data = $(this).data("data");
-									var number = raw_data.num;
-									if($("#as-selection-"+number, selections_holder).length <= 0 && !tab_press){
-										var data = raw_data.attributes;
-										input.val("").focus();
-										prev = "";
-										add_selected_item(data, number);
-										opts.resultClick.call(this, raw_data);
-										results_holder.hide();
-									}
-									tab_press = false;
-								}).mousedown(function(){input_focus = false;}).mouseover(function(){
-									$("li", results_ul).removeClass("active");
-									$(this).addClass("active");
-								}).data("data",{attributes: data[num], num: num_count});
-							var this_data = $.extend({},data[num]);
-							if (!opts.matchCase){ 
-								var regx = new RegExp("(?![^&;]+;)(?!<[^<>]*)(" + query + ")(?![^<>]*>)(?![^&;]+;)", "gi");
-							} else {
-								var regx = new RegExp("(?![^&;]+;)(?!<[^<>]*)(" + query + ")(?![^<>]*>)(?![^&;]+;)", "g");
-							}
-							
-							if(opts.resultsHighlight){
-								this_data[opts.selectedItemProp] = this_data[opts.selectedItemProp].replace(regx,"<em>$1</em>");
-							}
-							if(!opts.formatList){
-								formatted = formatted.html(this_data[opts.selectedItemProp]);
-							} else {
-								formatted = opts.formatList.call(this, this_data, formatted);	
-							}
-							results_ul.append(formatted);
-							delete this_data;
-							matchCount++;
-							if(opts.retrieveLimit && opts.retrieveLimit == matchCount ){break;}
-						}
-					}
-					selections_holder.removeClass("loading");
-					if(matchCount <= 0){
-						results_ul.html('<li class="as-message">'+opts.emptyText+'</li>');
-					} else {
-                                            //results_ul.css("width", selections_holder.outerWidth());                                            
-                                            results_holder.css("position","absolute")
-                                            results_holder.css("left",($(input).get(0).offsetLeft - 30) + "px");
-                                            results_holder.css("top",($(input).get(0).offsetTop) + "px");
-                                            results_holder.show();
-                                        }
-					opts.resultsComplete.call(this);
-				}
-				
-				function add_selected_item(data, num){
-					values_input.val(values_input.val()+data[opts.selectedValuesProp]+",");
-					var item = $('<li class="as-selection-item" id="as-selection-'+num+'"></li>').click(function(){
-							opts.selectionClick.call(this, $(this));
-							selections_holder.children().removeClass("selected");
-							$(this).addClass("selected");
-						}).mousedown(function(){input_focus = false;});
-					var close = $('<a class="as-close">&times;</a>').click(function(){
-							values_input.val(values_input.val().replace(","+data[opts.selectedValuesProp]+",",","));
-                                                        if (values_input.val() == ",")
-                                                            values_input.val("");
-							opts.selectionRemoved.call(this, item);
-							input_focus = true;
-							input.focus();
-							return false;
-						}).hide();
-					org_li.before(item.html(data[opts.selectedItemProp]).prepend(close));
-					opts.selectionAdded.call(this, org_li.prev());
-                                        results_holder.hide();                                        
-				}
-				
-				function moveSelection(direction){
-					if($(":visible",results_holder).length > 0){
-						var lis = $("li", results_holder);
-						if(direction == "down"){
-							var start = lis.eq(0);
-						} else {
-							var start = lis.filter(":last");
-						}					
-						var active = $("li.active:first", results_holder);
-						if(active.length > 0){
-							if(direction == "down"){
-							start = active.next();
-							} else {
-								start = active.prev();
-							}	
-						}
-						lis.removeClass("active");
-						start.addClass("active");
-					} else
-                                            keyChange(true);
+                opts.start.call(this);
 
-				}
-									
-			});
-		}
-	}
-})(jQuery);  	
+                var input = $(this);
+                input.attr("autocomplete","off").addClass("as-input").attr("id",x_id);
+
+                var input_focus = false;
+                var values_array = [];
+                var lastKeyPressCode;
+
+                // Setup basic elements and render them to the DOM
+                input.wrap('<ul class="as-selections" id="as-selections-'+x+'"></ul>').wrap('<li class="as-original" id="as-original-'+x+'"></li>');
+
+                var item_holder = $("#as-selections-"+x);
+                var org_li = $("#as-original-"+x);
+                var results_holder = $('<div class="as-results" id="as-results-'+x+'"></div>').hide();
+                var results_ul =  $('<ul class="as-list"></ul>');
+
+                if(typeof opts.preFill == "string"){
+                    var vals = opts.preFill.split(",");
+                    for(var i=0; i < vals.length; i++){
+                        var v_data = {};
+                        v_data[opts.selectedValuesProp] = vals[i];
+                        if(vals[i] != ""){
+                            addListItem(v_data, "000"+i, true);
+                        }
+                    }
+                } else {
+                    var prefill_count = 0;
+                    for (k in opts.preFill) if (opts.preFill.hasOwnProperty(k)) prefill_count++;
+                    if(prefill_count > 0){
+                        for(var i=0; i < prefill_count; i++){
+                            var new_v = opts.preFill[i][opts.selectedValuesProp];
+                            if(new_v == undefined){
+                                new_v = "";
+                            }
+                            if(new_v != ""){
+                                addListItem(opts.preFill[i], "000"+i,true);
+                            }
+                        }
+                    }
+                }
+                if(values_array.length > 0){
+                    input.val("");
+                    $("li.as-selection-item", item_holder).addClass("blur").removeClass("selected");
+                } else
+                    input.val(opts.startText);
+
+                item_holder.click(function(){
+                    input_focus = true;
+                    input.focus();
+                }).mousedown(function(){
+                    input_focus = false;
+                }).after(results_holder);
+
+                adjustInputWidth();
+
+                opts.onSetupDone.call(this);
+
+                var timeout = null;
+                var prev_query = "";
+                var tab_press = false;
+
+                // Handle input field events
+                input.focus(function(){
+                    if($(this).val() == opts.startText){
+                        $(this).val("");
+                        adjustInputWidth();
+
+                    } else if(input_focus){
+                        $("li.as-selection-item", item_holder).removeClass("blur");
+                        if($(this).val() != ""){
+                            //results_ul.css("width",item_holder.outerWidth());
+                            results_holder.show();
+                        }
+                    }
+                    input_focus = true;
+                    return true;
+                }).blur(function(){
+                    $(".as-selection-item",item_holder).css("border-color","")
+
+                    if($(this).val() == "" && values_array.length == 0){
+
+                        $(this).val(opts.startText);
+                        adjustInputWidth();
+
+                    } else if(input_focus){
+
+                        $("li.as-selection-item", item_holder).addClass("blur").removeClass("selected");
+                        results_holder.hide();
+
+                        var i_input = getInputValue();
+
+                        if(i_input != "" && values_array.indexOf(i_input) < 0 && i_input.length >= opts.minChars){
+
+                            var n_data = {};
+                            n_data[opts.selectedItemProp] = i_input;
+                            n_data[opts.selectedValuesProp] = i_input;
+
+                            var lis = $("li", item_holder).length;
+
+                            addListItem(n_data, "00"+(lis+1));
+
+                        }
+                        input.val("");
+                    }
+                }).keydown(function(e) {
+                    // track last key pressed
+                    lastKeyPressCode = e.keyCode;
+
+                    $(".as-selection-item",item_holder).css("border-color","")
+
+                    switch(e.keyCode) {
+                        case 38: // up
+                            e.preventDefault();
+                            moveSuggestionsSelection("up");
+                            break;
+                        case 40: // down
+                            e.preventDefault();
+                            moveSuggestionsSelection("down");
+                            break;
+                        case 8:  // delete
+                            if(input.val() == ""){ // select or delete previous
+
+                                item_holder.children().not(org_li.prev()).removeClass("selected");
+
+                                if(org_li.prev().hasClass("selected")){ // delete
+
+                                    removeListItem();
+                                    opts.selectionRemoved.call(this, org_li.prev());
+                                    opts.onChange.call(this,"removed");
+                                } else if (org_li.prev().length > 0) { // select
+                                    opts.selectionClick.call(this, org_li.prev());
+                                    org_li.prev().addClass("selected");
+                                }
+
+                            } else
+                                opts.onChange.call(this,"edited");
+
+                            if(input.val().length == 1){ // emptied input with this delete press
+                                results_holder.hide();
+                                prev_query = "";
+                            }
+                            adjustInputWidth();
+
+                            //if($(":visible",results_holder).length > 0){
+                            if (timeout){
+                                clearTimeout(timeout);
+                            }
+                            timeout = setTimeout(function(){
+                                showSuggestions();
+                            }, opts.keyDelay);
+                            //}
+                            break;
+                        case 9: case 32: // tab or space
+
+                            e.preventDefault();
+                            tab_press = true;
+                            var i_input = getInputValue();
+
+                            if(i_input != "" && values_array.indexOf(i_input) < 0 && i_input.length >= opts.minChars){
+
+                                var n_data = {};
+                                n_data[opts.selectedItemProp] = i_input;
+                                n_data[opts.selectedValuesProp] = i_input;
+
+                                var lis = $("li", item_holder).length;
+
+                                addListItem(n_data, "00"+(lis+1));
+
+                                input.val("");
+                            } else if (i_input != "" && values_array.indexOf(i_input) >= 0) {
+                                $($(".as-selection-item",item_holder).get(values_array.indexOf(i_input))).css("border-color","red")
+                            } else if (i_input == "")
+                                showSuggestions(true);
+
+                        case 13: // return
+
+                            tab_press = false;
+                            var active = $("li.active:first", results_holder);
+                            if(active.length > 0){
+                                active.click();
+                                results_holder.hide();
+                            }
+                            if(opts.neverSubmit || active.length > 0){
+                                e.preventDefault();
+                            }
+                            break;
+
+                        default:
+                            if(opts.showResultList){
+                                if(opts.selectionLimit && $("li.as-selection-item", item_holder).length >= opts.selectionLimit){
+                                    results_ul.html('<li class="as-message">'+opts.limitText+'</li>');
+                                    results_holder.show();
+                                } else {
+                                    if (timeout){
+                                        clearTimeout(timeout);
+                                    }
+                                    timeout = setTimeout(function(){
+                                        showSuggestions();
+                                    }, opts.keyDelay);
+                                }
+                            }
+                            opts.onChange.call(this,"edited");
+                            break;
+                    }
+
+                    adjustInputWidth();
+
+                }).bind("cut paste",function() {
+                    // autosize input
+                    $(".as-selection-item",item_holder).css("border-color","")
+
+                    adjustInputWidth();
+                    opts.onChange.call(this,"edited");
+
+                }).bind("keyup", function() {
+                    
+                });
+
+                function getInputValue() {
+                    return input.val().replace(" ","").trim();
+                }
+
+                function getNextItemID() {
+
+                }
+
+                function showSuggestions(forceshow) {
+                    // ignore if the following keys are pressed: [del] [shift] [capslock]
+                    if( lastKeyPressCode == 46 || (lastKeyPressCode > 8 && lastKeyPressCode < 32) ){
+                        results_holder.hide();
+                        return;
+                    }
+
+                    var query = input.val().trim();
+
+                    if (query == prev_query && !forceshow) return;
+
+                    prev_query = query;
+
+                    if (query.length >= opts.minChars || forceshow) {
+
+                        item_holder.addClass("loading");
+
+                        if(d_type == "string"){ //AJAX
+                            var limit = "";
+                            if(opts.retrieveLimit){
+                                limit = "&limit="+encodeURIComponent(opts.retrieveLimit);
+                            }
+                            if(opts.beforeRetrieve){
+                                query = opts.beforeRetrieve.call(this, query);
+                            }
+                            $.getJSON(req_string+"?"+opts.queryParam+"="+encodeURIComponent(query)+limit+opts.extraParams, function(data){
+                                data_itemcount = 0;
+                                var new_data = opts.retrieveComplete.call(this, data);
+
+                                for (var k in new_data) if (new_data.hasOwnProperty(k)) data_itemcount++;
+
+                                processSuggestionData(new_data, query);
+                            });
+                        } else { //static data
+                            if(opts.beforeRetrieve){
+                                query = opts.beforeRetrieve.call(this, query);
+                            }
+                            processSuggestionData(org_data, query);
+                        }
+                    } else {
+                        item_holder.removeClass("loading");
+                        results_holder.hide();
+                    }
+                }
+
+                var num_count = 0;
+
+                function processSuggestionData(data, query){
+
+                    if (!opts.matchCase){
+                        query = query.toLowerCase();
+                    }
+
+                    query=query.trim();
+
+                    var matchCount = 0;
+
+                    results_holder.html(results_ul.html("")).hide();
+
+                    for(var i=0;i<data_itemcount;i++){
+                        var num = i;
+                        num_count++;
+
+                        var data_string = "";
+
+                        if(opts.searchObjProps == "value") {
+                            data_string = data[num].value;
+                        } else {
+                            var names = opts.searchObjProps.split(",");
+                            for(var y=0;y<names.length;y++){
+                                var name = $.trim(names[y]);
+                                data_string = data_string+data[num][name]+" ";
+                            }
+                        }
+
+                        if (!opts.matchCase)
+                            data_string = data_string.toLowerCase();
+
+                        if((query == "" || data_string.indexOf(query) >= 0) && values_array.indexOf(data[num][opts.selectedValuesProp]) == -1) {
+
+                            var formatted = $('<li class="as-result-item" id="as-result-item-'+num+'"></li>').click(function(){
+                                var raw_data = $(this).data("data");
+                                var number = raw_data.num;
+                                if($("#as-selection-"+number, item_holder).length <= 0 && !tab_press){
+                                    var data = raw_data.attributes;
+                                    input.val("").focus();
+                                    prev_query = "";
+                                    addListItem(data, number);
+                                    opts.resultClick.call(this, raw_data);
+                                    results_holder.hide();
+                                }
+                                tab_press = false;
+                            }).mousedown(function(){
+                                input_focus = false;
+                            }).mouseover(function(){
+                                $("li", results_ul).removeClass("active");
+                                $(this).addClass("active");
+                            }).data("data",{
+                                attributes: data[num],
+                                num: num_count
+                            });
+                            
+                            var this_data = $.extend({},data[num]);
+                            var regx = new RegExp("(?![^&;]+;)(?!<[^<>]*)(" + RegExp.escape(query) + ")(?![^<>]*>)(?![^&;]+;)", "g" + (opts.matchCase?"":"i"));
+
+                            if(opts.resultsHighlight){
+                                this_data[opts.selectedItemProp] = this_data[opts.selectedItemProp].replace(regx,"<em>$1</em>");
+                            }
+                            if(!opts.formatList){
+                                formatted = formatted.html(this_data[opts.selectedItemProp]);
+                            } else {
+                                formatted = opts.formatList.call(this, this_data, formatted);
+                            }
+                            results_ul.append(formatted);
+                            delete this_data;
+                            matchCount++;
+                            if(opts.retrieveLimit && opts.retrieveLimit == matchCount ){
+                                break;
+                            }
+
+                        }
+                    }
+
+                    item_holder.removeClass("loading");
+
+                    if(matchCount == 0){
+                        results_ul.html('<li class="as-message">'+opts.emptyText+'</li>');
+                    } else {
+                        results_holder.css("position","absolute")
+                        results_holder.css("left",($(input).get(0).offsetLeft - 30) + "px");
+                        results_holder.css("top",($(input).get(0).offsetTop) + "px");
+                        results_holder.show();
+                        var offset = $("#as-results-tagsauto .as-list").offset();
+                        var height = $("#as-results-tagsauto .as-list").height();
+                        var win_height = $(window).height();
+                        //                                            log(offset.top)
+                        //                                            log(height)
+                        //                                            log(win_height)
+                        var MARGIN_BOTTOM = 25;
+                        $("#as-results-tagsauto .as-list").css("max-height",(win_height - offset.top - MARGIN_BOTTOM) + "px");
+                        if (height > win_height - offset.top - MARGIN_BOTTOM) // adjust width for scrollbar
+                            $("#as-results-tagsauto .as-list").css("width",($("#as-results-tagsauto .as-list").width() + 15) + "px");
+
+                    }
+
+                    opts.resultsComplete.call(this);
+                }
+
+                function addListItem(data, num, initial_value){
+
+                    values_array.push(data[opts.selectedValuesProp]);
+
+                    var item = $('<li class="as-selection-item" id="as-selection-'+num+'"></li>').click(function(){
+                        opts.selectionClick.call(this, $(this));
+                    //item_holder.children().removeClass("selected");
+                    //$(this).addClass("selected");
+                    }).mousedown(function(){
+                        input_focus = false;
+                    });
+
+                    var close = $('<a class="as-close">&times;</a>').click(function(){
+
+                        removeListItem(data[opts.selectedValuesProp]);
+                        
+                        opts.selectionRemoved.call(this, item);
+                        opts.onChange.call(this,"removed");
+                        
+                        input_focus = true;
+                        input.focus();
+                        return false;
+                    }).hide();
+
+                    org_li.before(item.html(data[opts.selectedItemProp]).prepend(close));
+
+                    if (!initial_value) {
+                        opts.selectionAdded.call(this, org_li.prev());
+                        opts.onChange.call(this,"added");
+                    }
+
+                    org_li.prev().hover(function(elem) {
+                        $(".as-close",this).show("fast");
+                    } ,function(elem) {
+                        $(".as-close",this).hide("fast");
+                    });
+
+                    results_holder.hide();
+                }
+
+                function removeListItem(value) {
+                    if (!value)
+                        values_array.splice(values_array.length-1,1);
+                    else
+                        values_array.splice(values_array.indexOf(value),1);
+                }
+
+                function adjustInputWidth() {
+                    input.get(0).style.width = ((input.val().length + 6)/1.8)+'em';
+                }
+
+                function moveSuggestionsSelection(direction){
+                    if($(":visible",results_holder).length > 0){
+                        var lis = $("li", results_holder);
+
+                        if(direction == "down"){
+                            var start = lis.eq(0);
+                        } else {
+                            var start = lis.filter(":last");
+                        }
+                        
+                        var active = $("li.active:first", results_holder);
+                        if(active.length > 0){
+                            if(direction == "down"){
+                                start = active.next();
+                            } else {
+                                start = active.prev();
+                            }
+                        }
+                        
+                        lis.removeClass("active");
+                        start.addClass("active");
+
+                        if (start.length != 0) {
+                            // scroll
+                            var ul = $("#as-results-tagsauto .as-list");
+                            var ul_st = ul.scrollTop();
+                            var ul_height = ul.height();
+                            var ul_top = ul.offset().top;
+
+                            var top = start.offset();
+                            var elm_top = top.top-ul_top + ul_st;
+                            var elm_height = start.outerHeight();
+
+                            //                                                    console.log("windowheight=%s, scrollheight=%s, ul_top=%s, ul_height=%s",$(window).height(),ul.get(0).scrollHeight,ul_top,ul_height)
+                            //                                                    console.log("elm_top=%s, ul_st=%s",elm_top,ul_st)
+                            if (elm_top + elm_height < ul_st || elm_top > ul_st + ul_height) // not in sight
+                                ul.scrollTop(elm_top-0.5*ul_height)
+                            else if (elm_top < ul_st + 1/4*ul_height)
+                                ul.scrollTop(ul_st - elm_height)
+                            else if (ul_st + 3/4*ul_height < elm_top + elm_height)
+                                ul.scrollTop(ul_st + elm_height)
+                        }
+
+                    } else if (direction == "down")
+                        showSuggestions(true); // show all on down
+
+                }
+
+            });
+        }
+    }
+})(jQuery);

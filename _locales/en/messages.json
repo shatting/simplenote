@@ -10,7 +10,7 @@
     "snlink_tooltip":       { "message": "Open Simplenote" },
     "sync_tooltip" :        { "message": "Start Sync" },
     "tag_placeholder":      { "message": "Tag this note" },
-    "tag_tooltip":          { "message": "You can enter tags for this note here ($1 to focus, $2 to get back to editor)" },
+    "tag_tooltip":          { "message": "You can tag notes here. <ul><li>Accept a tag by pressing [space] or [tab]</li><li>Delete a tag with [backspace] or with your mouse</li></ul><p>Shortcuts: $1 to focus, $2 to get back to editor" },
     "pin_tooltip":          { "message": "Pin/unpin this note. Pinned notes always show on top (shortcut: $1)" },
     "popout_tooltip":       { "message": "Browser tab mode ($1). Close the tab to get the popup again." },
     "backtoindex_tooltip" : { "message": "Back to index ($1). [$2 to close popup]" },    

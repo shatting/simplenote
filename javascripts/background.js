@@ -128,7 +128,7 @@ var SimplenoteBG = {
         } else if (request.action === "create") {
             SimplenoteDB.createNote(request, sendResponse);
         } else if (request.action === "tags") {
-            sendResponse(SimplenoteLS.getTags());
+            sendResponse(SimplenoteLS.getTags(request.options));
         } else if (request.action === "isoffline") {
             sendResponse(SimplenoteDB.isOffline());
         } else if (request.action === "emptytrash") {

@@ -313,7 +313,14 @@ var SimplenoteLS = {
             keys = [];
         return keys;
     },
-    getTags : function() {
+    getTags : function(options) {
+        if (!options)
+            options = {};
+        if (options.sort === undefined)
+            options.sort = "frequency";
+        if (options.predef === undefined)
+            options.predef = true;
+        
         var keys = this.getKeys();
 
         var predeftags = [{tag:"#all#",count:0},{tag:"#notag#",count:0},{tag:"#trash#",count:0},{tag:"#published#",count:0},{tag:"#shared#",count:0},{tag:"#webnote#",count:0}];
@@ -355,9 +362,15 @@ var SimplenoteLS = {
             }
         });
 
-        tags.sort(function(t1,t2) {var diff = - t1.count + t2.count;return diff!=0?diff:t2.tag<t1.tag;});
+        if (options.sort == "frequency")
+            tags.sort(function(t1,t2) {var diff = - t1.count + t2.count;return diff!=0?diff:(t2.tag<t1.tag?1:-1);});
+        else if (options.sort == "alpha")
+            tags.sort(function(t1,t2) {return t2.tag<t1.tag?1:-1});
 
-        return predeftags.concat(tags);
+        if (options.predef)
+            return predeftags.concat(tags);
+        else
+            return tags;
     },
 
     getCreatedNoteTempKey : function() {

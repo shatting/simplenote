@@ -428,7 +428,7 @@ var SimplenoteAPI2 = {
      * @param note note object to be created
      * @param callbacks.success(noteObj) (optional) called after note successfully created. created note is passed back.
      * @param callbacks.loginInvalid() (optional) User invalid, either authorization key expired or user incorrect, retry login
-     * @param callbacks.repeat(key,callbacks) (optional) Any other error, retry
+     * @param callbacks.repeat(note,callbacks) (optional) Any other error, retry
      */
     create: function(note, callbacks) {
         if (!callbacks) callbacks = {};

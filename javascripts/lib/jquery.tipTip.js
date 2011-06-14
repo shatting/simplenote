@@ -23,7 +23,7 @@
 	$.fn.tipTip = function(options) {
 		var defaults = { 
 			activation: "hover",
-			keepAlive: false,
+			keepAlive: true,
 			maxWidth: "200px",
 			edgeOffset: 3,
 			defaultPosition: "bottom",

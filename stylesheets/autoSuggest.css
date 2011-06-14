@@ -6,7 +6,7 @@ ul.as-selections {
 	border-bottom: 1px solid #b6b6b6;
 	border-left: 1px solid #aaa;
 	border-right: 1px solid #aaa;*/
-        padding-left: 30px;	
+        
         margin-top: 2px;
 	overflow: hidden;	
 	''-webkit-box-shadow:inset 0 0px 2px #888;
@@ -15,7 +15,8 @@ ul.as-selections {
         right: 240px;
         left: 2px;
         font-size: 13px;
-        background: transparent url(/images/tag_dunkel.png) no-repeat 6px 8px;
+        padding-left: 2px;
+        ''background: transparent url(/images/tag_dunkel.png) no-repeat 6px 8px;
 /*        border-radius: 12px;
         border: 1px solid #999;*/
         color: #333;
@@ -104,9 +105,10 @@ ul.as-selections li:hover.as-selection-item a.as-close {
 
 ul.as-selections li.as-selection-item.selected {
 	''border-color: #1f30e4;
-        border-color: #666;
-        border-top-color: #bbb;
-        border-bottom-color: #999;
+        border-color: #555;
+        border-top-color: #aaa;
+        border-bottom-color: #888;
+        background-color: #ddd;
 }
 
 ul.as-selections li.as-selection-item a:hover.as-close {
@@ -118,21 +120,22 @@ ul.as-selections li.as-selection-item a:active.as-close {
 }
 
 ul.as-selections li.as-original {
-	margin-left: 0;
+	margin-left: 0px;
+        margin-right: 0px;
+        right: 0px;
 }
 
 ul.as-selections li.as-original input {
-	border: 1px solid transparent;
+	border: none;
 	outline: none;
 	font-size: 13px;
-	left:0px;
-        right:0px;
 	height: 18px;
-	padding-top: 3px;
-        background: transparent;
         color: #aaa;
-        margin-top: 2px;
-        margin-bottom: 2px;
+        margin-top: 3px;
+        margin-bottom: 3px;
+        padding-left: 22px;
+        background: transparent url(/images/tag_dunkel.png) no-repeat 0px 50%;
+        width: 40px;
 }
 
 ul.as-selections li.as-original input:focus {
@@ -152,6 +155,8 @@ ul.as-list {
 	z-index: 2;
 	box-shadow: 0 2px 12px #222;
 	border-radius: 5px;
+        overflow-y: auto;
+        overflow-x: hidden;
 }
 
 li.as-result-item, li.as-message {
@@ -197,6 +202,9 @@ li.as-result-item.active em {
 	''color: #fff;
 }
 
+.as-list::-webkit-scrollbar-track-piece  {
+    -webkit-border-radius: 6px;
+}
 /* Webkit Hacks  */
 /*@media screen and (-webkit-min-device-pixel-ratio:0) {
 	ul.as-selections {

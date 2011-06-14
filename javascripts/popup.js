@@ -659,7 +659,7 @@ function noteRowCMfn(contextmenu) {
                         snEditor.hideIfNotInIndex();
                         checkInView();
                     });
-                noteRowMouseOut(this);
+//                noteRowMouseOut(this);
             },
             icon: "/images/trash.png"
         };
@@ -676,7 +676,7 @@ function noteRowCMfn(contextmenu) {
                                     checkInView();
                                 });
                         });
-                noteRowMouseOut(this);
+//                noteRowMouseOut(this);
             },
             icon: "/images/delete.gif"
         };
@@ -690,7 +690,7 @@ function noteRowCMfn(contextmenu) {
                         snEditor.hideIfNotInIndex();
                         checkInView();
                     });
-                noteRowMouseOut(this);
+//                noteRowMouseOut(this);
             },
             icon: "/images/untrash.png"
         };
@@ -704,7 +704,7 @@ function noteRowCMfn(contextmenu) {
                             snEditor.hideIfNotInIndex();
                             checkInView();
                         });
-                noteRowMouseOut(this);
+//                noteRowMouseOut(this);
             },
             icon: "/images/delete.gif"
         };
@@ -717,7 +717,7 @@ function noteRowCMfn(contextmenu) {
                         function() {
                             fillTags(true);
                         });
-                noteRowMouseOut(this);
+//                noteRowMouseOut(this);
             }
         };
         return [i,j,$.contextMenu.separator,k];
@@ -900,9 +900,6 @@ function indexFillNote(elementOrNote) {
     }
 }
 /*
- *  Fills a noterow div from the note.content. Callback from checkInView.
- *
- *  @param note note with .content, .key and .deleted
  */
 function indexFillNoteReqComplete(note) {
 
@@ -961,14 +958,14 @@ function indexFillNoteReqComplete(note) {
 
         // webnote icon
         var wnm = note.content.match(webnotereg);
-        if (wnm) {
+        if (wnm && $("#" + note.key + "webnoteicon").length == 0) {
             var url = wnm[1];
             $("<div class='webnoteicon' id='" + note.key + "webnoteicon'>&nbsp;</div>").insertBefore($noteheading);
             $noteabstract.prepend("[" + url + "]<br>");
             if (note.deleted == 0) {
                 $("#" + note.key + "webnoteicon").attr("title","Click to visit this webnote at " + url);
                 
-                $("#" + note.key + "webnoteicon").tipTip({defaultPosition:"top"});
+                $("#" + note.key + "webnoteicon").tipTip({defaultPosition:"left"});
 
                 $("#" + note.key + "webnoteicon").bind("click",url,function(event) {
                     event.stopPropagation();
@@ -1080,7 +1077,6 @@ function SNEditor() {
                     indentUnit: 4,
                     enterMode: "keep",
                     electricChars : false
-                   // onChange: function() {if(isTab) that.saveNote();}
                 });
 
     // set ids for important nodes
@@ -1139,20 +1135,16 @@ SNEditor.prototype.setFont = function() {
 //  ---------------------------------------
 SNEditor.prototype.getTags = function() {
     log("SNEditor.getTags")
-    if ($("#as-values-tagsauto").length == 0)
-        return false;
-    var vals = $("#as-selections-tagsauto .as-selection-item").get().map(function(e) { return e.textContent.substr(1)});
-    //log(vals)
-//    var rawtags = $("#as-values-tagsauto").val().trim();
-    //log(rawtags)
+        
+    var vals = $("#as-selections-tagsauto .as-selection-item").get().map(function(e) {return e.textContent.substr(1)});
     var tags = vals.map(function(e) {return e.trim();}).filter(function(e) {return e != ""});
-    //log(tags);
+
     return tags;
 }
 
 //  ---------------------------------------
 SNEditor.prototype.initialize = function() {
-    
+       
     if (this.initialized)
         return;
 
@@ -1168,8 +1160,6 @@ SNEditor.prototype.initialize = function() {
     $editbox.bind('change keyup paste cut', function(event) {
         that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);        
     });
-
-    this.typeWatchInit($editbox);
 
     // fix for home not scrolling all to the left
     $editbox.keydown(shorcuts);
@@ -1203,12 +1193,6 @@ SNEditor.prototype.initialize = function() {
                 break;
         }
     });
-
-    // add note tags change (dirty) event listeners
-//    $('div#note input#tags').unbind();
-//    $('div#note input#tags').bind('change keyup paste cut', function(event) {
-//        that.setDirty("tags", !arrayEqual(that.note.tags,that.getTags()), event);
-//    });
 
     // add note pinned (dirty) event listener
     $('div#note #pintoggle').unbind();
@@ -1268,7 +1252,7 @@ SNEditor.prototype.initialize = function() {
         // reset tags
         if (that.dirty.tags)
             that.setupTags();
-//            $('div#note input#tags').val(note.tags.join(" "));
+
         // reset pinned
         if (that.dirty.pinned) {
             snEditor.setPintoggle(note.systemtags.indexOf("pinned")>=0);
@@ -1334,18 +1318,6 @@ SNEditor.prototype.initialize = function() {
         $('div#note #backtoindex').click(function(event) {
             window.close();
         });
-
-        // bind typewatch TAGS field
-//        var options = {
-//            callback : function() {
-//                log("typewatch: tags changed");
-//                that.saveNote();
-//            },
-//            wait : editorSaveTime,
-//            highlight : false,
-//            captureLength : -1 // needed for empty string ('') capture
-//        };
-//        $('div#note input#tags').typeWatch(options);
     }
     // add context menu
     this.makeContextMenu();
@@ -1386,9 +1358,9 @@ SNEditor.prototype.restoreCaretScroll = function (caretScroll) {
 
         var character = Math.min(this.codeMirror.lineContent(lineH).length,caretScroll.character);
         
-        cs2str("target     ",caretScroll);
+//        cs2str("target     ",caretScroll);
 
-        this.logCaretScroll("before curso");
+//        this.logCaretScroll("before curso");
         this.codeMirror.selectLines(lineH, character);
 
         if (caretScroll.scrollTop != undefined)
@@ -1396,7 +1368,7 @@ SNEditor.prototype.restoreCaretScroll = function (caretScroll) {
         if (caretScroll.scrollLeft != undefined)
             $(this.codeMirror.editor.container).scrollLeft(caretScroll.scrollLeft);
 
-        this.logCaretScroll("after ");
+//        this.logCaretScroll("after ");
     }
 }
 
@@ -1516,9 +1488,9 @@ SNEditor.prototype.setNote = function(note, options) {
 
     var that = this;
     if (this.isNoteDirty()) {
-        this.saveNote(function() {
-            that.setNote(note, options);
-        });
+        this.saveNote();
+        this.clearDirty();
+        this.setNote(note, options);
         return;
     }
 
@@ -1551,9 +1523,7 @@ SNEditor.prototype.setNote = function(note, options) {
     }
 
     // set content
-    this.codeMirror.setCode(inputcontent);
-    // set tags
-    //$('div#note input#tags').val(this.note.tags.join(" "));
+    this.codeMirror.setCode(inputcontent);    
     
     // set pinned
     this.setPintoggle(this.note.systemtags.indexOf("pinned")>=0);
@@ -1564,6 +1534,10 @@ SNEditor.prototype.setNote = function(note, options) {
         this.setDirty("content", true, null);
     } else
         this.hideRevert();
+
+    // looks better
+    $("#as-selections-tagsauto").remove();
+    $("#as-results-tagsauto").remove();
 
     slideEditor(function () {        
 
@@ -1584,6 +1558,8 @@ SNEditor.prototype.setNote = function(note, options) {
         }       
 
         that.focus();
+
+        that.saveTimerInit();
         
     }, options.duration);
 
@@ -1598,6 +1574,9 @@ SNEditor.prototype.setNote = function(note, options) {
 
 //  ---------------------------------------
 SNEditor.prototype.saveNote = function(callback) {
+    
+    this.saveTimerClear();
+
     if(!this.isNoteDirty())
         return;
 
@@ -1634,12 +1613,14 @@ SNEditor.prototype.saveNote = function(callback) {
 
     if (noteData.action) {
         chrome.extension.sendRequest(noteData, function(note) {
-            that.note = note;
-            that.clearDirty();
+            if (that.note && (that.note.key == note.key || that.note.key == "")) {
+                that.note = note;
+                that.clearDirty();
+            }
             log("CodeMirror.saveNote: request complete");
             if (callback && typeof callback == "function")
                 callback();
-        });
+        });        
     }
 
 }
@@ -1652,7 +1633,7 @@ SNEditor.prototype.clearDirty = function() {
     log("SNEditor.clearDirty");
     this.setDirty("content",false);
     this.setDirty("pinned",false);
-    this.setDirty("tags",false);
+    this.setDirty("tags",false);    
     //$('div#note input#encrypted').removeAttr('dirty');
 }
 //  ---------------------------------------
@@ -1703,13 +1684,15 @@ SNEditor.prototype.needCMRefresh = function(type) {
 }
 SNEditor.prototype.setupTags = function() {
     var that = this;
-    
-    chrome.extension.sendRequest({action:"tags"}, function(taginfos) {
+    log("SNEditor.setupTags:sending request")
+    chrome.extension.sendRequest({action:"tags",options: {sort:"frequency",predef:false}}, function(taginfos) {        
+
         $("#as-selections-tagsauto").remove();
         $("#as-results-tagsauto").remove();
         $("#tags").remove();
 
-        taginfos = taginfos.map(function(e) {return {value: e.tag};}).filter(function(e) {return !e.value.match(/^#.*#$/)});
+        taginfos = taginfos.map(function(e) {return {value: e.tag};}).filter(function(e) {return e.value != "webnote"});
+        log("SNEditor.setupTags:request complete, numtags=" + taginfos.length)
 
         $('div#note').prepend('<input type="text" id="tags" spellcheck="false" tabindex="0"/>');
         $('div#note input#tags').autoSuggest(taginfos, {
@@ -1719,25 +1702,26 @@ SNEditor.prototype.setupTags = function() {
                 //selectionClick: function(elem){ elem.fadeTo("slow", 0.33); },
                 selectionAdded: function(elem) {
                     if (that.getTags())
-                        that.setDirty("tags", !arrayEqual(that.note.tags,that.getTags()));
-                    $(elem).hover(function(elem) {
-                        $(".as-close",this).show("fast");
-                    } ,function(elem) {
-                        $(".as-close",this).hide("fast");
-                    });
-                    //$(elem).attr("title"," ");
-                    //log($(".as-selections").css("height"))
-                    $("#cmwrapper").css("top", (parseInt($(".as-selections").css("height")) + 4) + "px");
+                        that.setDirty("tags", !arrayEqual(that.note.tags,that.getTags()));                                        
                 },
                 selectionRemoved: function(elem) {
                     elem.remove();
                     if (that.getTags())
-                        that.setDirty("tags", !arrayEqual(that.note.tags,that.getTags()));                    
-                    $("#cmwrapper").css("top", (parseInt($(".as-selections").css("height")) + 4) + "px");
+                        that.setDirty("tags", !arrayEqual(that.note.tags,that.getTags()));
+                    
                 },
-                keyDelay: 0
+                onChange: function() {
+                    $("#cmwrapper").css("top", Math.max($(".as-selections").height() + 4,32) + "px");
+                    that.saveTimerRearm();
+                },
+                onSetupDone: function() {
+                    console.log($(".as-selections").height())
+                    $("#cmwrapper").css("top", Math.max($(".as-selections").height() + 4,32) + "px");
+                    $("#as-selections-tagsauto").tipTip({defaultPosition:"top", content: chrome.i18n.getMessage("tag_tooltip",["alt-t", "alt-e"]), delay: 800, maxWidth: "400px"});
+                },
+                keyDelay: 10
             });
-        $("#as-selections-tagsauto").attr("title",chrome.i18n.getMessage("tag_tooltip",["alt-t", "alt-e"]));
+        
     });
 }
 //  ---------------------------------------
@@ -1746,61 +1730,54 @@ SNEditor.prototype.trashNote = function() {
         return;
     var that = this;
     log("SNEditor.trashNote");
-    $('div#note input').attr('disabled', 'disabled');
     chrome.extension.sendRequest({action : "update", key : this.note.key, deleted : 1},
             function() {
-                $('div#note input').removeAttr('disabled');
-
-                that.hideIfNotInIndex();
+                    that.hideIfNotInIndex();
             });
 }
 
-SNEditor.prototype.typeWatchInit = function($editorelm) {
-
+SNEditor.prototype.saveTimerInit = function() {
     if (!isTab)
-        return;
-
+        return;       
     var that = this;
 
-    function checkElement(timer) {
-            var elTxt = that.codeMirror.getCode();
-
-            // Fire if text > options.captureLength AND text != saved txt OR if override AND text > options.captureLength
-            if (elTxt != timer.text)  {
-                    timer.text = elTxt;
-                    that.saveNote();
-            }
-    };
-		
-    function watchElement($elm) {
-            // Allocate timer element
-            var timer = {
-                    timer : null,
-                    text : that.codeMirror.getCode(),
-                    wait : editorSaveTime
-            };
-
-            // Key watcher / clear and reset the timer
-            var startWatch = function(evt) {
-                    var timerWait = timer.wait;
-
-                    var timerCallbackFx = function()
-                    {
-                            checkElement(timer)
-                    }
-
-                    // Clear timer
-                    clearTimeout(timer.timer);
-                    timer.timer = setTimeout(timerCallbackFx, timerWait);
-
-            };
-
-            $elm.keydown(startWatch);
-            
+    // Allocate timer element
+    this.savetimer = {
+            timer : null,
+            text : that.codeMirror.getCode(),            
+            wait : editorSaveTime
     };
 
-    watchElement($editorelm);
+    $(this.codeMirror.editor.container).keydown(function() {that.saveTimerRearm()});
 
+}
+SNEditor.prototype.saveTimerClear = function() {
+    if (!isTab)
+        return;
+    
+    if (this.savetimer)
+        clearTimeout(this.savetimer.timer);
+}
+SNEditor.prototype.saveTimerRearm = function() {
+    if (!isTab)
+        return;
+    var that = this;
+    
+    clearTimeout(this.savetimer.timer);
+    this.savetimer.timer = setTimeout(function() {that._saveTimerExecute();}, this.savetimer.wait);
+}
+
+SNEditor.prototype._saveTimerExecute = function() {
+    if (!isTab)
+        return;
+    
+    var elTxt = this.codeMirror.getCode();
+
+    // Fire if text > options.captureLength AND text != saved txt OR if override AND text > options.captureLength
+    //if ( elTxt != that.timer.text )  {
+            this.savetimer.text = elTxt;
+            this.saveNote();
+    //}
 }
 
 SNEditor.prototype.setPintoggle = function(to) {
