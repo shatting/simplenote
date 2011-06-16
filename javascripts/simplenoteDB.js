@@ -153,6 +153,9 @@ var SimplenoteDB = {
                         this.log("_gotIndexChunk: no remote deletions.");
 
                     successObj.numKeys = SimplenoteDB._indexKeysTemp.length;
+                    
+                    SimplenoteLS.sanitizeSyncList();
+                    
                 }
 
                 this._setSyncInProgress(false);

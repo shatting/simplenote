@@ -59,6 +59,7 @@
     "cm_using_link_url":    { "message": "Link URL"},
     "cm_using_image_url":   { "message": "Bild URL"},
     "editorcm_insert_url":  { "message": "Tab URL einfügen ($1)"},
-    "editorcm_search_selection": { "message": "Nach Auswahl suchen ($1)"}
-    
+    "editorcm_search_selection": { "message": "Nach Auswahl suchen ($1)"},
+    "webnote_icon":         { "message": "Klicken um Webnote auf '$1' zu besuchen" },
+    "syncnote_tooltip":     { "message": "Diese Notiz wurde noch nicht zum Server hochgeladen" }
 }

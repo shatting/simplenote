@@ -11,13 +11,18 @@ var debugFlags = {
     DB          : true,
     LS          : true,
     API         : true,
-    CM          : true
+    CM          : true,
+    Timestamp   : true
 }
 
 function logGeneral(s,prefix,target) {
     if (!debugFlags.general)
         return;
 
+    if (debugFlags.Timestamp) {
+        var t = new Date();
+        prefix = t.toTimeString().substr(0,t.toTimeString().indexOf(" "))+ "." + pad(t.getMilliseconds(),3) + " - " + prefix;
+    }
     if (!target)
         target=console;
     if (!prefix)
@@ -188,8 +193,11 @@ function openURLinTab(href) {
 
 //  ---------------------------------------
 
-function pad(n){
-    return n<10 ? '0'+n : n
+function pad(n,k){
+    if (k == undefined || k == 2)
+        return n<10 ? '0'+n : n
+    else if (k == 3)
+        return n<100 ? '0'+pad(n) : n
 }
 
 RegExp.escape = function(text) {
@@ -387,4 +395,13 @@ function setCBval(sel, bool) {
         $(sel).attr("checked","checked");
     else
         $(sel).removeAttr("checked");
+}
+
+function exceptionCaught(e) {
+    if (e.message)
+        _gaq.push(['_trackEvent', 'exceptions', e.message.replace(" ","_")]);
+    else if (typeof e == "string")
+        _gaq.push(['_trackEvent', 'exceptions', e.replace(" ","_")]);
+    else
+        _gaq.push(['_trackEvent', 'exceptions', e]);
 }

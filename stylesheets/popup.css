@@ -208,12 +208,12 @@ div.unread {
 div.selectednote {
     background: #4F92EB -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
 }
-
+/*
 div.syncnote {
-    background-image: url(/images/sync.png);
-    background-position: right center;
+    background-image: url(/images/sync_16.png);
+    background-position: 95% center;
     background-repeat: no-repeat;
-}
+}*/
 
 /* noterow children */
 
@@ -250,7 +250,7 @@ abbr.notetime {
 }*/
 
 /* noterow icons */
-div.published, div.shared, div.webnoteicon, div#index div.pinned, div#index div.unpinned {
+div.published, div.shared, div.webnoteicon, div#index div.pinned, div#index div.unpinned, div.syncicon {
     display:inline;
     position: relative;
     left: 1px;
@@ -268,6 +268,13 @@ div#index div.unpinned  { background: transparent url(/images/unpinned.png) no-r
 div.published           { background: transparent url(/images/published.png) no-repeat;}
 div.shared              { background: transparent url(/images/shared.png) no-repeat;   }
 div.webnoteicon         { background: transparent url(/images/webnote.png) no-repeat;  }
+div.syncicon            {
+    background: transparent url(/images/sync_16.png) no-repeat;
+    width: 16px;
+    height: 16px;
+    cursor:default;
+    margin-right: 10px;
+}
 
 div.noterowdeleted div.published:hover, div.noterowdeleted div.shared:hover, div.noterowdeleted div.webnoteicon:hover, div.noterowdeleted div.pinned:hover, div.noterowdeleted div.unpinned:hover {
     -webkit-box-shadow: none !important;

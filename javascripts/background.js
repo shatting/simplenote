@@ -1,3 +1,7 @@
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-22573090-2']);
+_gaq.push(['_trackPageview']);
+
 var SimplenoteBG = {
 
     webnotesID : undefined,
@@ -29,7 +33,10 @@ var SimplenoteBG = {
         this.log("backgroundSync: fullsync: " + fullSync);
 
         this.handleRequest({action:"login"}, {}, function(successObj) {
-            if (successObj.success) {
+            if (successObj.reason == "offlinemode") {
+                SimplenoteBG.log("backgroundSync: sync aborted, offlinemode.");                
+                uiEvent("offlinechanged", {status:true});
+            } else if (successObj.success) {
                 SimplenoteBG.log("backgroundSync: login request completed, requesting sync. fullSync=" + fullSync);
                 SimplenoteDB.sync(fullSync, function(successObj) {                    
                     if (callbackComplete)
@@ -73,25 +80,29 @@ var SimplenoteBG = {
             callbacks = {
                 success:   function(credentials) {
 
-                    if (credentials) // callback cause of token returns no credentials
-                        SimplenoteDB.offline(false);
-
                     if (credentials) {
+                        SimplenoteDB.offline(false); // callback cause of token returns no credentials                    
                         localStorage.token = credentials.token;
                         localStorage.tokenTime = credentials.tokenTime;
+                        
+                        localStorage.credentialsValid = "true";
+
                     }
                     sendResponse({success:true, reason:credentials?"success":"token"});
                 },
                 loginInvalid:     function() {
                     SimplenoteDB.offline(false);
+                    
+                    localStorage.credentialsValid = "false";
+
                     sendResponse({success:false, reason:"logininvalid"});
                 },
                 timeout: function() {
 
                     SimplenoteDB.offline(true);
 
-                    if (localStorage.token) // offline mode despite token older than 24hrs
-                        sendResponse({success:true})
+                    if (localStorage.token && localStorage.credentialsValid) // offline mode despite token older than 24hrs
+                        sendResponse({success:true, reason:"offlinemode"})
                     else
                         sendResponse({
                             success:false,
@@ -192,14 +203,28 @@ var SimplenoteBG = {
 
 // sync on browser start
 $(document).ready(function() {
-    SimplenoteCM.populate();
-    SimplenoteBG.backgroundSync(true);
+    try {
+        SimplenoteCM.populate();
+        SimplenoteBG.backgroundSync(true);        
+    } catch (e) {
+        exceptionCaught(e)
+    }
 
+    SimplenoteBG.log("(ready) setting up ga");
     // some info about settings
     _gaq.push(['_trackEvent', 'settings', 'editorfont', localStorage.option_editorfont]);
     _gaq.push(['_trackEvent', 'settings', 'editorfontsize', localStorage.option_editorfontsize]);
     _gaq.push(['_trackEvent', 'settings', 'sortby', localStorage.option_sortby]);
     _gaq.push(['_trackEvent', 'settings', 'alwaystab', localStorage.option_alwaystab]);
+
+    setTimeout(function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = 'https://ssl.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    },10);
+
+    SimplenoteBG.log("(ready) done");
+
 });
 
 chrome.extension.onRequest.addListener(SimplenoteBG.handleRequest);
