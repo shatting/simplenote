@@ -208,12 +208,7 @@ div.unread {
 div.selectednote {
     background: #4F92EB -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
 }
-/*
-div.syncnote {
-    background-image: url(/images/sync_16.png);
-    background-position: 95% center;
-    background-repeat: no-repeat;
-}*/
+
 
 /* noterow children */
 

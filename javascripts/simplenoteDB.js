@@ -72,7 +72,8 @@ var SimplenoteDB = {
                     SimplenoteDB.createNote(note, undefined, true);
                 else
                     SimplenoteDB.updateNote(note, undefined, true);
-            }
+            } else
+                SimplenoteLS.removeFromSyncList(key);
         });
 
         // get index
@@ -91,6 +92,7 @@ var SimplenoteDB = {
         this.getIndex(apioptions, fullSync);
 
     },
+    
     //  count: 20
     //  data: Array[20]
     //  mark: "agtzaW1wbGUtbm90ZXINCxIETm90ZRiElc0HDB"
@@ -154,7 +156,7 @@ var SimplenoteDB = {
 
                     successObj.numKeys = SimplenoteDB._indexKeysTemp.length;
                     
-                    SimplenoteLS.sanitizeSyncList();
+                    //SimplenoteLS.sanitizeSyncList();
                     
                 }
 
@@ -512,6 +514,29 @@ var SimplenoteDB = {
                     });
             })(i);
         }
+    },
+
+    fillContents: function(response) {
+        var keys = SimplenoteLS.getKeys();        
+        var note;
+        var got = new Array(keys.length);
+        this.log("fillContents");        
+
+        // push local changes
+        $.each(keys, function(i,key) {
+            note = SimplenoteLS.getNote(key);
+            if (note.deleted == 0 && note.content == undefined ) {
+                note = SimplenoteDB.getNote(key);
+
+                if (note != undefined) {
+                    got[i] = true;
+                }
+            } else {
+                got[i] = true;
+            }
+        });
+        if (response)
+            response({success: !got.some(function(e) {return e!= true})});
     },
     
     _deleteAllRemote : function() {

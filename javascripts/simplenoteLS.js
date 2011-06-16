@@ -413,13 +413,13 @@ var SimplenoteLS = {
         }
     },
 
-    sanitizeSyncList : function() {
-        var syncKeys = this.getSyncKeys();
-        var keys = this.getKeys();
-        for (var i = 0; i<syncKeys.length; i++)
-            if (keys.indexOf(syncKeys[i]) < 0)
-                this.removeFromSyncList(syncKeys[i]);
-    },
+//    sanitizeSyncList : function() {
+//        var syncKeys = this.getSyncKeys();
+//        var keys = this.getKeys();
+//        for (var i = 0; i<syncKeys.length; i++)
+//            if (keys.indexOf(syncKeys[i]) < 0)
+//                this.removeFromSyncList(syncKeys[i]);
+//    },
 
     _reset : function () {
         $.each(this.getKeys(), function (i,e) {

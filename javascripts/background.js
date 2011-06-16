@@ -72,9 +72,12 @@ var SimplenoteBG = {
             SimplenoteBG.backgroundSync(true, function(successObj) {
                 SimplenoteBG.log("handleRequest:userchanged sync done.");
                 SimplenoteBG.handleRequest({action:"cm_populate"});
+                                
                 if (sendResponse)
                     sendResponse(successObj);
             });
+        } else if (request.action == "fillcontents") {
+            SimplenoteDB.fillContents(sendResponse);
         } else if (request.action === "login") {
 
             callbacks = {

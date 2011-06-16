@@ -4,8 +4,8 @@ _gaq.push(['_trackPageview']);
 
 $(document).ready(function() {
 
-  $("#email").val(localStorage.option_email);
-  $("#password").val(localStorage.option_password);
+  $("#email").val(localStorage.option_email != undefined?localStorage.option_email:"");
+  $("#password").val(localStorage.option_password != undefined?localStorage.option_password:"");
   
   $("#abstractlines").val(localStorage.option_abstractlines == undefined?"3":localStorage.option_abstractlines);
 
@@ -201,7 +201,7 @@ function save_options() {
 
 function save_clicked() {
 
-    var email = $("#email").val();
+    var email = $("#email").val().trim();
     var password = $("#password").val();
 
     $("#save").attr("disabled","disabled");
@@ -232,7 +232,7 @@ function save_clicked() {
     localStorage.option_email = email;
     localStorage.option_password = password;
 
-    $("#loginmessage").html("Logging in..");
+    $("#loginmessage").html("<center>Logging in..</center>");
     $("#loginmessage").css("color","black");
     closeTabAnd(function() {
         chrome.extension.sendRequest({action:"login"}, function(successObj) {
@@ -244,12 +244,25 @@ function save_clicked() {
                 $("#loginmessage").css("color","#ff66ff");
                 delete localStorage.lastopennote_key;
                 localStorage.lastopennote_open = "false";
-                chrome.extension.sendRequest({action:"userchanged"}, function(successObj) {
-                    save_options();
+
+                save_options();
+
+                chrome.extension.sendRequest({action:"userchanged"}, function(successObj) {                    
                     if (successObj && successObj.success) {
                         _gaq.push(['_trackEvent', 'Options', 'save_clicked','sync_success',successObj.numKeys]);
-                        $("#loginmessage").html("<center>Account info saved, initial sync done.<br>Happy Syncpad-ing!</center>");
-                        $("#loginmessage").css("color","green");
+                        $("#loginmessage").html("<center>Account info saved, initial sync done.<br>Getting notes..</center>");
+
+                        chrome.extension.sendRequest({action:"fillcontents"}, function(successObj) {
+                            $("#loginmessage").html("<center>Account info saved, initial sync done.<br>Getting notes..</center>");
+                            if (successObj.success) {
+                                $("#loginmessage").html("<center>All done.<br>Happy Syncpad-ing!</center>");
+                                $("#loginmessage").css("color","green");
+                            } else {
+                                $("#loginmessage").html("<center>There were problems getting notes, but might still work!<br>Happy Syncpad-ing!</center>");
+                            }
+                            
+                        });
+                        
                     } else {
                         _gaq.push(['_trackEvent', 'Options', 'save_clicked','sync_error']);
                         $("#loginmessage").html("<center>Logged in, but initial sync had problems.<br>Might still work!</center>");
@@ -257,8 +270,8 @@ function save_clicked() {
                     }
                 });
             } else {
-                localStorage.option_email = undefined;
-                localStorage.option_password = undefined;
+                delete localStorage.option_email;
+                delete localStorage.option_password;
                 if (successObj.reason=="timeout") {
                     _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_timeout']);
                     $("#loginmessage").html("Could not log in: network timeout, please try again later.");
