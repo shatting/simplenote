@@ -155,11 +155,23 @@
 			var iconStyle = (o.icon)?'background-image:url('+o.icon+');':'';
 			var $div = $('<div class="'+cmenu.itemClassName+' '+o.className+((o.disabled)?' '+cmenu.disabledItemClassName:'')+'" title="'+o.title+'"></div>')
 							// If the item is disabled, don't do anything when it is clicked
-							.click(function(e){if(cmenu.isItemDisabled(this)){return false;}else{return o.onclick.call(cmenu.target,this,cmenu,e)}})
+							.bind("mousedown",
+                                                            function(e){
+                                                                if(cmenu.isItemDisabled(this))
+                                                                    return false;
+                                                                else {
+                                                                    cmenu.hide();
+                                                                    return o.onclick.call(cmenu.target,this,cmenu,e);                                                                    
+                                                                }
+                                                            })
 							// Change the class of the item when hovered over
-							.hover( function(){ o.hoverItem.call(this,(cmenu.isItemDisabled(this))?cmenu.disabledItemHoverClassName:o.hoverClassName); }
-									,function(){ o.hoverItemOut.call(this,(cmenu.isItemDisabled(this))?cmenu.disabledItemHoverClassName:o.hoverClassName); }
-							);
+							.hover(
+                                                            function(){
+                                                                o.hoverItem.call(this,(cmenu.isItemDisabled(this))?cmenu.disabledItemHoverClassName:o.hoverClassName);
+                                                            },
+                                                            function(){ 
+                                                                o.hoverItemOut.call(this,(cmenu.isItemDisabled(this))?cmenu.disabledItemHoverClassName:o.hoverClassName);
+                                                            });
 			var $idiv = $('<div class="'+cmenu.innerDivClassName+'" style="'+iconStyle+'">'+label+'</div>');
 			$div.append($idiv);
 			return $div;

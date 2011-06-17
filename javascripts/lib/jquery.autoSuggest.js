@@ -56,7 +56,8 @@
             resultClick: function(data){},
             resultsComplete: function(){},
             onChange: function() {},
-            onSetupDone: function() {}
+            onSetupDone: function() {},
+            onTabOut: function() {}
         };
         var opts = $.extend(defaults, options);
 
@@ -251,8 +252,12 @@
                                 input.val("");
                             } else if (i_input != "" && values_array.indexOf(i_input) >= 0) {
                                 $($(".as-selection-item",item_holder).get(values_array.indexOf(i_input))).css("border-color","red")
-                            } else if (i_input == "")
-                                showSuggestions(true);
+                            } else if (i_input == "") {
+                                if (e.keyCode == 9)
+                                    opts.onTabOut.call(this);
+                                else
+                                    showSuggestions(true);
+                            }
 
                         case 13: // return
 

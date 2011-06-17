@@ -1,8 +1,19 @@
 CHANGELOG
 ===============
+1.8.3 [June 17]
+---------------
+- tags autocomplete (the hover animation is a bit choppy - couldnt find the reason)
+- some redesigns
+- offline mode should be much improved
+- ctrl-click or alt-click opens non-editor links in background tabs
+- shift-click or alt-click opens editor links in background tabs
+- show pinned webnotes in (all) category
+- search field is now instant search
+- lots of other stuff, bugfixes
 
 1.8.2 [June 10]
 ----------------
+- Notational Velocity style search field: type and hit enter to create a note
 - added context menu items for single note delete, and empty trash (the latter only in the (trash) cat). delete and empty trash only work in online mode.
 - option: hide webnotes in index (all) category (default: hide them)
 - simplenote link in statusbar

@@ -222,7 +222,10 @@ $(document).ready(function() {
 
     setTimeout(function() {
         var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-        ga.src = 'https://ssl.google-analytics.com/ga.js';
+        if (debugFlags.GA)
+            ga.src = 'https://ssl.google-analytics.com/u/ga_debug.js';
+        else
+            ga.src = 'https://ssl.google-analytics.com/ga.js';
         var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
     },10);
 

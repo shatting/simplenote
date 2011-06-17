@@ -364,8 +364,6 @@ function readyListener() {
                 _gaq.push(['_trackEvent', 'popup', 'ready', 'no_email_or_password']);
 
                 log("(ready): no email or password");
-                $("body").css("width", "400px");
-                $("body").css("height", "550px");
                 displayStatusMessage(chrome.i18n.getMessage("welcometext", [signUpLink, optionsLink]));
 
             } else if (localStorage.credentialsValid != "true") {
@@ -373,8 +371,6 @@ function readyListener() {
                 _gaq.push(['_trackEvent', 'popup', 'ready', 'credentails_not_valid']);
 
                 log("(ready): credentials not valid");                                
-                $("body").css("width", "400px");
-                $("body").css("height", "550px");
                 displayStatusMessage("Login for email '" + localStorage.option_email + "' failed, please check your Simplenote email address and password on the " + optionsLink + "!");
 
             } else {
@@ -556,7 +552,10 @@ function readyListener() {
 
     setTimeout(function() {
         var ga = document.createElement('script');ga.type = 'text/javascript';ga.async = true;
-        ga.src = 'https://ssl.google-analytics.com/ga.js';
+        if (debugFlags.GA)
+            ga.src = 'https://ssl.google-analytics.com/u/ga_debug.js';
+        else
+            ga.src = 'https://ssl.google-analytics.com/ga.js';
         var s = document.getElementsByTagName('script')[0];s.parentNode.insertBefore(ga, s);
     },10);
 
@@ -594,11 +593,13 @@ function displayStatusMessage(message) {
     $('#toolbar').hide();
     $('#statusbar').hide();
     $('#note').hide();
+    
     $('#notes').html(message);
     $('body').css("background","#fff");
-    links = $('a');
-    links.attr('target', '_blank');
-    links.click(function() {window.close();});
+    $("body").css("width", "400px");
+    $("body").css("height", "150px");    
+
+    $('a').attr('target', '_blank').click(function() {window.close();});
 }
 
 /*
@@ -735,7 +736,6 @@ function noteRowCMfn(contextmenu) {
                         snEditor.hideIfNotInIndex();
                         checkInView();
                     });
-//                noteRowMouseOut(this);
             },
             icon: "/images/trash.png"
         };
@@ -752,7 +752,6 @@ function noteRowCMfn(contextmenu) {
                                     checkInView();
                                 });
                         });
-//                noteRowMouseOut(this);
             },
             icon: "/images/delete.gif"
         };
@@ -766,7 +765,6 @@ function noteRowCMfn(contextmenu) {
                         snEditor.hideIfNotInIndex();
                         checkInView();
                     });
-//                noteRowMouseOut(this);
             },
             icon: "/images/untrash.png"
         };
@@ -780,7 +778,6 @@ function noteRowCMfn(contextmenu) {
                             snEditor.hideIfNotInIndex();
                             checkInView();
                         });
-//                noteRowMouseOut(this);
             },
             icon: "/images/delete.gif"
         };
@@ -793,7 +790,6 @@ function noteRowCMfn(contextmenu) {
                         function() {
                             fillTags(true);
                         });
-//                noteRowMouseOut(this);
             }
         };
         return [i,j,$.contextMenu.separator,k];
@@ -921,7 +917,7 @@ function indexAddNote(mode, note){
         //$("#"+note.key+"published").tipTip({defaultPosition:"top"});
     }
     // bind published click
-    if (note.sharekey) {        
+    if (note.systemtags.indexOf("shared") >= 0) {
         $("#"+note.key+"shared").unbind();
         $("#"+note.key+"shared").bind("click","https://simple-note.appspot.com/#"+note.key,genericUrlOpenHandler);
         //$("#"+note.key+"shared").tipTip({defaultPosition:"top"});
@@ -1467,10 +1463,11 @@ SNEditor.prototype.insertUrl = function() {
 
 //  ---------------------------------------
 SNEditor.prototype.searchForSelection = function () {
-    log("SNEditor.searchForSelection")
-    _gaq.push(['_trackEvent', 'popup', 'searchForSelection']);
-
-    openURLinTab("http://google.com/search?q=" + encodeURIComponent(this.codeMirror.selection().trim()));
+    log("SNEditor.searchForSelection")    
+    if (this.codeMirror.selection().trim() != "") {
+        _gaq.push(['_trackEvent', 'popup', 'searchForSelection']);
+        openURLinTab("http://google.com/search?q=" + encodeURIComponent(this.codeMirror.selection().trim()));
+    }
 }
 
 //  ---------------------------------------
@@ -1797,7 +1794,10 @@ SNEditor.prototype.setupTags = function() {
                     //$("#as-selections-tagsauto").tipTip({defaultPosition:"top", content: chrome.i18n.getMessage("tag_tooltip_html",["alt-t", "alt-e"]), delay: 800, maxWidth: "400px"});
                     $("#as-selections-tagsauto").attr("title",chrome.i18n.getMessage("tag_tooltip",["alt-t", "alt-e"]));
                 },
-                keyDelay: 10
+                keyDelay: 10,
+                onTabOut: function() {
+                    snEditor.focus();
+                }
             });
         
     });

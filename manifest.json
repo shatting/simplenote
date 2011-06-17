@@ -1,7 +1,7 @@
 {
   "name": "Syncpad for Simplenote",
   "version": "1.8.3",
-  "description": "Easy to use, yet powerful plaintext notepad for Chrome. Synchronizes with all your Chrome installations, handhelds and PCs.",
+  "description": "Easy to use, yet powerful plaintext notepad for Chrome. Synchronizes with all your Chrome installations, Devices and PCs.",
   "default_locale": "en",
   "icons": {
     "96": "imanges/icon_96.png",

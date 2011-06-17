@@ -4,7 +4,7 @@
 
 // debug switches
 var debugFlags = {
-    general     : true,
+    general     : false,
     popup       : true,
     popup2BG    : true,
     BG          : true,
@@ -12,7 +12,8 @@ var debugFlags = {
     LS          : true,
     API         : true,
     CM          : true,
-    Timestamp   : true
+    Timestamp   : true,
+    GA          : false
 }
 
 function logGeneral(s,prefix,target) {

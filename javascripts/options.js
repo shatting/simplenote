@@ -90,7 +90,10 @@ $(document).ready(function() {
 
   (function() {
     var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = 'https://ssl.google-analytics.com/ga.js';
+    if (debugFlags.GA)
+        ga.src = 'https://ssl.google-analytics.com/u/ga_debug.js';
+    else
+        ga.src = 'https://ssl.google-analytics.com/ga.js';
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
   })();
 
@@ -255,7 +258,7 @@ function save_clicked() {
                         chrome.extension.sendRequest({action:"fillcontents"}, function(successObj) {
                             $("#loginmessage").html("<center>Account info saved, initial sync done.<br>Getting notes..</center>");
                             if (successObj.success) {
-                                $("#loginmessage").html("<center>All done.<br>Happy Syncpad-ing!</center>");
+                                $("#loginmessage").html("<center>All done. Happy Syncpad-ing!</center>");
                                 $("#loginmessage").css("color","green");
                             } else {
                                 $("#loginmessage").html("<center>There were problems getting notes, but might still work!<br>Happy Syncpad-ing!</center>");
