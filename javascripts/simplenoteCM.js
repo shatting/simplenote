@@ -246,7 +246,7 @@ var SimplenoteCM = {
 
         var title, lastopen_key = localStorage.lastopennote_key;
 
-        new CMitem({title:"New WebNote", contexts:["all"], onclick: function(info, tab) {
+        new CMitem({title:chrome.i18n.getMessage("cm_new_webnote"), contexts:["all"], onclick: function(info, tab) {
             SimplenoteBG.handleRequest({action: "webnotes", request: {action: "new"}});
         }});
 

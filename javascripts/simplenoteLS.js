@@ -223,7 +223,7 @@ var SimplenoteLS = {
                 add &= note.content != undefined && note.content.match(regex) != undefined;
 
             if (notregex != undefined)
-                add &= note.content == undefined || note.content.match(notregex) == undefined;
+                add &= note.content == undefined || note.content.match(notregex) == undefined || note.systemtags.indexOf("pinned") >= 0; // workaround, notregex only used for webnotes by now
 
             if (!add) continue;
 
@@ -355,8 +355,10 @@ var SimplenoteLS = {
                     predeftags[4].count++;
                 if (thissystemtags != undefined && thissystemtags.indexOf("published") >= 0)
                     predeftags[3].count++;
-                if (thisnote.content != undefined && thisnote.content.match(webnotereg))
+                if (thisnote.content != undefined && thisnote.content.match(webnotereg)) {
                     predeftags[5].count++;
+                    predeftags[0].count--;
+                }
             } else {
                 predeftags[2].count++;
             }

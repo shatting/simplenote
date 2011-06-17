@@ -187,8 +187,8 @@ function validateEmail(email)
  return email.match(re)
 }
 
-function openURLinTab(href) {
-    chrome.tabs.create({url:href});
+function openURLinTab(href, inBackground) {    
+     chrome.tabs.create({url:href, selected:!inBackground});    
 }
 
 //  ---------------------------------------

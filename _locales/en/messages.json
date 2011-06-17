@@ -7,7 +7,7 @@
     "tagselect_tooltip":    { "message": "Show notes by tag (shortcut: $1)" },
     "add_tooltip" :         { "message": "New note (shortcut: $1)" },
     "add_webnote_tooltip":  { "message": "New Webnote" },
-    "snlink_tooltip":       { "message": "Open Simplenote" },
+    "snlink_tooltip":       { "message": "Open Simplenote in a tab (ctrl-click for background tab)" },
     "sync_tooltip" :        { "message": "Start Sync" },
     "tag_placeholder":      { "message": "Tag this note" },
     "tag_tooltip":          { "message": "You can tag notes here. Accept a tag by pressing [space] or [tab]. Delete a tag with [backspace] or with your mouse. ($1 to focus, $2 to get back to editor)" },
@@ -62,5 +62,6 @@
     "editorcm_insert_url":  { "message": "Insert browser URL ($1)"},
     "editorcm_search_selection": { "message": "Search for selection ($1)"},
     "webnote_icon":         { "message": "Click to visit this webnote at $1" },
-    "syncnote_tooltip":     { "message": "This note has not yet been uploaded to the server." }
+    "syncnote_tooltip":     { "message": "This note has not yet been uploaded to the server." },
+    "cm_new_webnote":       { "message": "New Webnote" }
 }        
