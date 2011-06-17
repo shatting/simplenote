@@ -50,6 +50,8 @@
 		hideSpeed:null,
 		showCallback:null,
 		hideCallback:null,
+                onBeforeShow:null,
+                onBeforeHide:null,
 
 		className:'context-menu',
 		itemClassName:'context-menu-item',
@@ -211,14 +213,15 @@
 					cmenu.menu.css({display:'none'});
 					$(cmenu.appendTo).append(cmenu.menu);
 				}
-				var $c = cmenu.menu;
-				x+=cmenu.offsetX; y+=cmenu.offsetY;
+				var $c = cmenu.menu;				
 				var pos = cmenu.getPosition(x,y,cmenu,e); // Extracted to method for extensibility
 				cmenu.showShadow(pos.x,pos.y,e);
 				// Resize the iframe if needed
 				if (cmenu.useIframe) {
 					$c.find('iframe').css({width:$c.width()+cmenu.shadowOffsetX+cmenu.shadowWidthAdjust,height:$c.height()+cmenu.shadowOffsetY+cmenu.shadowHeightAdjust});
 				}
+                                if (cmenu.onBeforeShow)
+                                    cmenu.onBeforeShow.call(cmenu);
 				$c.css( {top:pos.y+"px", left:pos.x+"px", position:"absolute",zIndex:9999} )[cmenu.showTransition](cmenu.showSpeed,((cmenu.showCallback)?function(){cmenu.showCallback.call(cmenu);}:null));
 				cmenu.shown=true;
 				$(document).one('click',null,function(){cmenu.hide()}); // Handle a single click to the document to hide the menu                                
@@ -249,6 +252,8 @@
 			var cmenu=this;
 			if (cmenu.shown) {
 				if (cmenu.iframe) { $(cmenu.iframe).hide(); }
+                                if (cmenu.onBeforeHide)
+                                    cmenu.onBeforeHide.call(cmenu);
 				if (cmenu.menu) { cmenu.menu[cmenu.hideTransition](cmenu.hideSpeed,((cmenu.hideCallback)?function(){cmenu.hideCallback.call(cmenu);}:null)); }
 				if (cmenu.shadow) { cmenu.shadowObj[cmenu.hideTransition](cmenu.hideSpeed); }
 			}
@@ -258,10 +263,16 @@
 
 	// This actually adds the .contextMenu() function to the jQuery namespace
 	$.fn.contextMenu = function(menu,options) {
+                //this.. body
 		var cmenu = $.contextMenu.create(menu,options,this);
 		return this.each(function(){
 			$(this).bind('mousedown keydown',function(){cmenu.hide();}); // If right-clicked somewhere else in the document, hide this menu
+                        if (options.otherBodies)
+                            $(options.otherBodies).bind('mousedown keydown',function(){cmenu.hide();}); // If right-clicked somewhere else in another body, hide this menu
+                        
                         $(this).bind('contextmenu',function(e){cmenu.show(this,e);return false;});
+                        if (options.scrollRemove)
+                            $(options.scrollRemove).bind('scroll',function(){cmenu.hide();})
 		});
 	};
 })(jQuery);

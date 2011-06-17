@@ -191,6 +191,7 @@ div.noterow {
     padding: 10px;
     padding-right: 6px;
     background: white;
+    cursor:pointer;
 }
 
 div.noterow:hover {
@@ -230,7 +231,7 @@ div.abstract {
 }
 
 abbr.notetime {
-    min-width: 70px;
+    min-width: 50px;
     color: #aaa;
     text-align : right;
     padding-right:5px;
@@ -245,14 +246,12 @@ abbr.notetime {
 }*/
 
 /* noterow icons */
-div.published, div.shared, div.webnoteicon, div#index div.pinned, div#index div.unpinned, div.syncicon {
+div.statusicon, div.statusicon-clickable {
     display:inline;
-    position: relative;
-    left: 1px;
-    top: 2px;
     width: 12px;
     height: 12px;
     margin-right: 5px;
+    margin-top: 2px;
     float:right;
     cursor:pointer;
     border-radius: 3px;
@@ -268,15 +267,20 @@ div.syncicon            {
     width: 16px;
     height: 16px;
     cursor:default;
-    margin-right: 10px;
+    margin-right: 0px;
+    margin-top: 0px;
 }
 
-div.noterowdeleted div.published:hover, div.noterowdeleted div.shared:hover, div.noterowdeleted div.webnoteicon:hover, div.noterowdeleted div.pinned:hover, div.noterowdeleted div.unpinned:hover {
+div.noterowdeleted div.statusicon, div.noterowdeleted div.statusicon-clickable  {
+    cursor: pointer;
+}
+
+div.noterowdeleted div.statusicon-clickable:hover {
     -webkit-box-shadow: none !important;
     background-color: transparent !important;
 }
 
-div.published:hover, div.shared:hover, div.webnoteicon:hover, div#index div.pinned:hover, div#index div.unpinned:hover {
+div.statusicon-clickable:hover {
     -webkit-box-shadow: 0 0px 6px rgba(255,255,255,0.9);
     background-color: rgba(255,255,255,0.9);    
 }

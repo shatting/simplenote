@@ -683,10 +683,25 @@ function fillIndex() {
                 if (i<15 && note.content != undefined)
                     indexFillNote(note);
             }
-            $("div.noterow").contextMenu(noteRowCMfn, {theme:'gloss',
-                                                      offsetX:0,
-                                                      offsetY:0,
-                                                      direction:'down'});
+            $("div.noterow").contextMenu(noteRowCMfn, {
+                                                      theme:'gloss',
+                                                      offsetX: 0,
+                                                      offsetY: 0,
+                                                      direction:'down',
+                                                      showSpeed: 10,
+                                                      onBeforeShow:function() {                                                          
+                                                          $(this.target).addClass("selectednote");
+                                                      },
+                                                      hideSpeed:10,
+                                                      onBeforeHide:function() {                                                          
+                                                          if (isTab && snEditor && snEditor.note)
+                                                                $(this.target).not("#" + snEditor.note.key).removeClass("selectednote");
+                                                          else
+                                                                $(this.target).removeClass("selectednote");
+                                                      },
+                                                      otherBodies: isTab && snEditor?$(snEditor.codeMirror.editor.container):null,
+                                                      scrollRemove: "div#notes"
+                                              });
 
             checkInView();
         } else
@@ -712,7 +727,7 @@ function noteRowCMfn(contextmenu) {
     if (!istrash) {
         i[chrome.i18n.getMessage("trash_tooltip","")] = {
             onclick: function() {
-                _gaq.push(['_trackEvent', 'popup', 'cm', 'trash']);
+                _gaq.push(['_trackEvent', 'popup', 'cm', 'trash']);                
                 chrome.extension.sendRequest({action : "update", key : $(this).attr("id"), deleted : 1},
                     function() {
                         snEditor.hideIfNotInIndex();
@@ -796,8 +811,9 @@ function indexAddNote(mode, note){
     // assemble noterow html string
     if (mode!= "replace")
         html = "<div class='noterow' id='" + note.key  + "' >";
-
-    // date abbr
+    // #syncicon
+    html+=          "<div id='" + note.key + "syncicon' class='syncicon statusicon' title='" + chrome.i18n.getMessage("syncnote_tooltip") + "' " + (note._syncNote?"":"style='display:none;'") + ">&nbsp;</div>";
+    // #time abbr
     if (localStorage.option_showdate == "true") {
         if (localStorage.option_sortby == "createdate") {
             date = convertDate(note.createdate);
@@ -807,16 +823,15 @@ function indexAddNote(mode, note){
             prefix = chrome.i18n.getMessage("modified");;
         }
 
-        html+=      "<abbr class='notetime' id='" + note.key + "time' title='" + ISODateString(date) + "'>" + prefix + localeDateString(date) + "</abbr>";
+        html+=          "<abbr id='" + note.key + "time' class='notetime' title='" + ISODateString(date) + "'>" + prefix + localeDateString(date) + "</abbr>";
     }
-    // pin/shared/published
-    //if (note.deleted == 0) {
-        html+=      "<div class='" + (note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + "' id='" + note.key + "pin'>&nbsp;</div>";
+        // #pin
+        html+=          "<div id='" + note.key + "pin' class='" + (note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + " statusicon-clickable'>&nbsp;</div>";
+        // #published
         if (note.publishkey != undefined)
-            html+=      "<div title='" + chrome.i18n.getMessage("published_tooltip") + "' class='published' id='" + note.key + "published'>&nbsp;</div>";
-
+            html+=      "<div id='" + note.key + "published' title='" + chrome.i18n.getMessage("published_tooltip") + "' class='published statusicon-clickable'>&nbsp;</div>";
+        // #shared
         if (note.systemtags.indexOf("shared") >= 0) {
-
 
             $.each(note.tags, function (i,tag) {
                 if (validateEmail(tag)) {
@@ -824,18 +839,17 @@ function indexAddNote(mode, note){
                 }
             });
             if (shareds.length > 0)
-                html+= "<div class='shared' id='" + note.key + "shared' title='" + chrome.i18n.getMessage("sharer_tooltip") + " " + shareds.join(", ") + "'>&nbsp;</div>";
+                html+=  "<div id='" + note.key + "shared' class='shared statusicon-clickable' title='" + chrome.i18n.getMessage("sharer_tooltip") + " " + shareds.join(", ") + "'>&nbsp;</div>";
             else
-                html+= "<div class='shared' id='" + note.key + "shared' title='" + chrome.i18n.getMessage("sharee_tooltip") + "'>&nbsp;</div>";
+                html+=  "<div id='" + note.key + "shared' class='shared statusicon-clickable' title='" + chrome.i18n.getMessage("sharee_tooltip") + "'>&nbsp;</div>";
         }
-    //} else {
-        // sync note        
-            html+="<div class='syncicon' id='" + note.key + "syncicon' title='" + chrome.i18n.getMessage("syncnote_tooltip") + "'>&nbsp;</div>";
-        //}
-    // note heading div
-    html+=          "<div class='noteheading' id='" + note.key + "heading'></div>";
-    // note abstract div
-    html+=          "<div class='abstract' id='" + note.key + "abstract'>&nbsp;<br>&nbsp;</div>";
+    
+        
+        
+    // #heading
+    html+=              "<div id='" + note.key + "heading' class='noteheading'></div>";
+    // #abstract
+    html+=              "<div id='" + note.key + "abstract' class='abstract'>&nbsp;<br>&nbsp;</div>";
 
     if (mode!="replace")
         html+="</div>";
@@ -865,8 +879,6 @@ function indexAddNote(mode, note){
     
     $noterow.attr("pinned",note.systemtags.indexOf("pinned")>=0?"true":"false");
     $noterow.attr("shared",note.systemtags.indexOf("shared")>=0?"true":"false");
-    if (!note._syncNote)
-        $notesync.hide();
     
     // bind timeago for time abbr
     $notetime.unbind();
@@ -1017,7 +1029,7 @@ function indexFillNoteReqComplete(note) {
         var wnm = note.content.match(webnotereg);
         if (wnm && $("#" + note.key + "webnoteicon").length == 0) {
             var url = wnm[1];
-            $("<div class='webnoteicon' id='" + note.key + "webnoteicon'>&nbsp;</div>").insertBefore($noteheading);
+            $("<div class='webnoteicon statusicon-clickable' id='" + note.key + "webnoteicon'>&nbsp;</div>").insertBefore($noteheading);
             $noteabstract.prepend("[" + url + "]<br>");
             if (note.deleted == 0) {
                 $("#" + note.key + "webnoteicon").attr("title",chrome.i18n.getMessage("webnote_icon",url));
@@ -1524,10 +1536,12 @@ SNEditor.prototype.makeContextMenu = function() {
         },
         {
             theme:'gloss',
-            offsetX:isTab?200:0,
-            offsetY:20,
-            direction:'down'
-        }
+            offsetX: isTab?406:6,
+            offsetY: 38,
+            direction:'down',
+            otherBodies: $(popup),
+            scrollRemove: "#cmiframe"
+        }        
     );
 }
 
