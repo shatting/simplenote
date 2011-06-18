@@ -335,21 +335,23 @@ function readyListener() {
                 log("---------------- popup opened ---------------------");
                 if (background.popouttab) {
                     log("--> deferring to tab");
+                    window.close();
+
                     chrome.tabs.update(background.popouttab.id, {
                         selected:true,
                         pinned:localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true"
                     }, function() {
-                        window.close();
                         return;
                     });
                 } else if (localStorage.option_alwaystab == "true") {
                     log("--> no tab, but alwaystab -> creating tab");
+                    window.close();
+
                     chrome.tabs.create({
                         url:chrome.extension.getURL("/popup.html"),
                         pinned: localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true"
                     }, function(tab) {
                         background.popouttab = tab;
-                        window.close();
                     });
                 } else
                     log("--> no tab, opening popup");
@@ -363,10 +365,10 @@ function readyListener() {
                 
                 _gaq.push(['_trackEvent', 'popup', 'ready', 'no_email_or_password']);
 
-                log("(ready): no email or password");
+                log("(ready): no email or password");                
                 displayStatusMessage(chrome.i18n.getMessage("welcometext", [signUpLink, optionsLink]));
 
-            } else if (localStorage.credentialsValid != "true") {
+            } else if (localStorage.credentialsValid != undefined && localStorage.credentialsValid != "true") {
 
                 _gaq.push(['_trackEvent', 'popup', 'ready', 'credentails_not_valid']);
 
@@ -375,7 +377,7 @@ function readyListener() {
 
             } else {
                 
-                _gaq.push(['_trackEvent', 'popup', 'ready', 'credentials_valid']);
+                _gaq.push(['_trackEvent', 'popup', 'ready']);
                 
                 var directlyShowNote = localStorage.lastopennote_key != undefined && localStorage.lastopennote_key != "" && localStorage.lastopennote_open == "true" && localStorage.option_opentonote == "true";
 
@@ -404,12 +406,15 @@ function readyListener() {
                     });
                 },1000);
 
+                $("body").show("fast");
+
                 if (directlyShowNote) {
                     log("(ready): sending request for open to note");
                     chrome.extension.sendRequest({
                         action:"note",
                         key:localStorage.lastopennote_key
                     }, function(note) {
+                        $("#note").show();
                         if (note)
                             snEditor.setNote(note,{
                                 duration:0,
@@ -417,8 +422,6 @@ function readyListener() {
                             });
                     });
                 }
-
-                $("#note").hide();
 
                 fillTags(true);
                 // bind ADD button
@@ -481,16 +484,31 @@ function readyListener() {
                             isnewnote: true,
                             focus: true
                         });
-                    } else if (event.which == 27)
+                    } else if (event.which == 27) {
                         $("#q_clear").click();
-                    else
+                        $(this).blur();
+                        event.stopPropagation();
+                    } else
                         fillIndex();
 
+                }).focus(function() {
+                    $("#toolbar").children().not(this).not("#q_clear").hide();
+                    $(this).animate({width:"350px"},{duration: 200});
+                }).blur(function(event) {
+                    if (clearclicked) {
+                        clearclicked = false;
+                        return
+                    }
+                    console.log(event)
+                    $(this).animate({width:"197px"},{duration: 200, complete: function() {$("#toolbar").children().not(this).not("#q_clear").show();}});
                 });
-
-                $("#q_clear").click(function(event) {
+                var clearclicked = false;
+                $("#q_clear").bind("mousedown",function(event) {
+                    console.log(event)
+                    clearclicked = true;
                     $('#q').val("");
                     $("#q_clear").hide();
+                    event.stopPropagation();
                     fillIndex();
                 });
 
@@ -558,7 +576,7 @@ function readyListener() {
             ga.src = 'https://ssl.google-analytics.com/ga.js';
         var s = document.getElementsByTagName('script')[0];s.parentNode.insertBefore(ga, s);
     },10);
-
+    //window.open(chrome.extension.getURL("options.html"),"gc-popout-window","width =348,height=654");
     log("(ready):done");
 }
 
@@ -593,6 +611,7 @@ function displayStatusMessage(message) {
     $('#toolbar').hide();
     $('#statusbar').hide();
     $('#note').hide();
+    $("body").show();
     
     $('#notes').html(message);
     $('body').css("background","#fff");
@@ -672,6 +691,9 @@ function fillIndex() {
     } else
         $("#q_clear").hide();
 
+
+    $("#index").show();
+
     chrome.extension.sendRequest(req, function(notes) {
         log("fillIndex(async):request complete, building index");
         var note;
@@ -731,7 +753,7 @@ function noteRowCMfn(contextmenu) {
         i[chrome.i18n.getMessage("trash_tooltip","")] = {
             onclick: function() {
                 _gaq.push(['_trackEvent', 'popup', 'cm', 'trash']);                
-                chrome.extension.sendRequest({action : "update", key : $(this).attr("id"), deleted : 1},
+                chrome.extension.sendRequest({action : "update", key : $(this).attr("id"), deleted: 1},
                     function() {
                         snEditor.hideIfNotInIndex();
                         checkInView();
@@ -1391,7 +1413,7 @@ SNEditor.prototype.initialize = function() {
 //  ---------------------------------------
 SNEditor.prototype.saveCaretScroll = function() {
     log("SNEditor.saveCaretScroll");
-    if (localStorage.option_remembercaret != undefined && localStorage.option_remembercaret == "false" || !this.note)
+    if (!this.note)
         return;
 
     var caretScroll = this.codeMirror.cursorPosition();
@@ -1808,9 +1830,9 @@ SNEditor.prototype.trashNote = function() {
         return;
     var that = this;
     log("SNEditor.trashNote");
-    chrome.extension.sendRequest({action : "update", key : this.note.key, deleted : 1},
+    chrome.extension.sendRequest({action : "update", key : this.note.key, deleted: 1},
             function() {
-                    that.hideIfNotInIndex();
+                    //that.hideIfNotInIndex();
             });
 }
 

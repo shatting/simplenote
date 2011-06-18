@@ -271,7 +271,18 @@
                                 e.preventDefault();
                             }
                             break;
+                        case 27: // esc
+                            var i_input = getInputValue();
+                            var suggestions_open = $(":visible",results_holder).length > 0;
 
+                            if (suggestions_open) {
+                                results_holder.hide();
+                                e.preventDefault();
+                            } else if (i_input != "") {
+                                e.preventDefault();                            
+                                input.val("");
+                            }
+                            break;
                         default:
                             if(opts.showResultList){
                                 if(opts.selectionLimit && $("li.as-selection-item", item_holder).length >= opts.selectionLimit){

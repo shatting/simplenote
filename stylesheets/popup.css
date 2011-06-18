@@ -6,6 +6,7 @@ body {
   width: 0px;
   overflow: hidden;
   background: #4F4F59;
+  display: none;
   background-image: url(/images/texture.png);  
 }
 
@@ -17,7 +18,9 @@ div#index {
     bottom: 2px;
     left:2px;
     right:2px;    
-    min-width: 380px;    
+    min-width: 396px;
+    max-width:396px;
+    display:none;
 }
 
 div#note {
@@ -30,7 +33,7 @@ div#note {
     padding: 2px;
 
     background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));        
-    
+    display:none;
     ''border-radius: 3px;
 }
 
