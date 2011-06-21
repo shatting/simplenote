@@ -198,8 +198,7 @@ div.noterow {
 }
 
 div.noterow:hover {
-    background: #4F92EB -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
-    -webkit-box-shadow: 0 0px 6px rgba(0,80,128,0.5);    
+    background: #4F92EB -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));     
 }
 div.noterow:hover div.noteheading { color: #fff}
 div.noterow:hover div.abstract { color: #ccc}
@@ -212,7 +211,9 @@ div.unread {
 div.selectednote {
     background: #4F92EB -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
 }
-
+div.selectednote div.noteheading { color: #fff}
+div.selectednote div.abstract { color: #ccc}
+div.selectednote abbr.notetime { color: #ddd}
 
 /* noterow children */
 
@@ -258,14 +259,28 @@ div.statusicon, div.statusicon-clickable {
     float:right;
     cursor:pointer;
     border-radius: 3px;
+    background: transparent;
+    background-repeat: no-repeat;
 }
 
-div#index div.pinned    { background: transparent url(/images/pinned.png) no-repeat;   }
-div#index div.unpinned  { background: transparent url(/images/unpinned.png) no-repeat; }
-div.published           { background: transparent url(/images/published.png) no-repeat;}
-div.shared              { background: transparent url(/images/shared.png) no-repeat;   }
-div.webnoteicon         { background: transparent url(/images/webnote.png) no-repeat;  }
-div.syncicon            {
+div#index div.pinned    { background-image: url(/images/pinned.png);   }
+div#index div.unpinned  { background-image: url(/images/unpinned.png); }
+
+div.selectednote div.published { background-image: url(/images/published_inv.png);  }
+div.selectednote div.published:hover { background-image: url(/images/published.png);  }
+div.published           { background-image: url(/images/published.png);}
+
+div.selectednote div.shared { background-image: url(/images/shared_inv.png);  }
+div.selectednote div.shared:hover { background-image: url(/images/shared.png);  }
+div.shared              { background-image: url(/images/shared.png);   }
+
+div.selectednote div.webnoteicon { background-image: url(/images/webnote_inv.png);  }
+div.selectednote div.webnoteicon:hover { background-image: url(/images/webnote.png);  }
+div.webnoteicon { background-image: url(/images/webnote.png);  }
+
+
+div.selectednote div.syncicon { background-image: url(/images/sync_16_inv.png);  }
+div.syncicon {
     background: transparent url(/images/sync_16.png) no-repeat;
     width: 16px;
     height: 16px;
