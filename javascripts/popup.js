@@ -254,7 +254,17 @@ function noteRowCurrentlyVisible(key) {
 
 // shortcuts
 $(document).keydown(shorcuts);
-function shorcuts(event) {
+function shorcuts(event) {   
+
+    if ($("#q").is(":focus")) {
+        switch(event.keyCode) {
+            case 27: // esc
+                $("#q").blur();
+                event.preventDefault();
+                return;
+            break
+        }
+    }
 
     if (event.altKey && !event.ctrlKey && !event.shiftKey)
         switch(event.keyCode) {
@@ -437,7 +447,7 @@ function readyListener() {
 
                         if (directlyShowNote) {
                             log("(ready): sending request for open to note");
-                            chrome.extension.sendRequest({ action:"note", key:localStorage.lastopennote_key },
+                            chrome.extension.sendRequest({action:"note", key:localStorage.lastopennote_key},
                                 function(note) {
                                     try {
                                         if (note)
@@ -523,19 +533,18 @@ function readyListener() {
                             $("#toolbar").children().not(this).not("#q_clear").hide();
                             $(this).animate({width:"350px"},{duration: 200});
                         }).blur(function(event) {
-                            if (clearclicked) {
-                                clearclicked = false;
-                                return
-                            }
-                            console.log(event)
+//                            if (clearclicked) {
+//                                clearclicked = false;
+//                                return
+//                            }
                             $(this).animate({width:"197px"},{duration: 200, complete: function() {$("#toolbar").children().not(this).not("#q_clear").show();}});
                         });
-                        var clearclicked = false;
+//                        var clearclicked = false;
                         $("#q_clear").bind("mousedown",function(event) {
-                            console.log(event)
-                            clearclicked = true;
+//                            clearclicked = true;
                             $('#q').val("");
                             $("#q_clear").hide();
+                            $("#q").blur()
                             event.stopPropagation();
                             fillIndex();
                         });
@@ -1166,7 +1175,6 @@ function slideEditor(callback, duration) {
         $('div#note').animate({left: dimensions.focus.note_left + "px"}, {duration: duration, easing: slideEasing});
         $('body').animate({width : dimensions.focus.body_width + "px"}, {duration: duration, easing: slideEasing,
            complete: function() {
-                //$("#index").hide();
                 if (callback) callback();
             }
         });
@@ -1195,7 +1203,6 @@ function slideIndex(callback, duration) {
 
         $('body').animate({width : dimensions.def.body_width + "px"}, {duration: 0.85*duration, easing: slideEasing,
             complete: function() {
-                //$("#note").hide();
                 if (callback) callback();
             }
         });

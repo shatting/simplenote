@@ -151,14 +151,16 @@
                     } else if(input_focus){
                         $("li.as-selection-item", item_holder).removeClass("blur");
                         if($(this).val() != ""){
-                            //results_ul.css("width",item_holder.outerWidth());
-                            results_holder.show();
+                            //console.log("focus:input_focus")
+                            //results_holder.show();
                         }
                     }
                     input_focus = true;
                     return true;
                 }).blur(function(){
-                    $(".as-selection-item",item_holder).css("border-color","")
+                    //$(".as-selection-item",item_holder).css("border-color","")
+                    $("li.as-selection-item", item_holder).addClass("blur").removeClass("selected");
+                    results_holder.hide();
 
                     if($(this).val() == "" && values_array.length == 0){
 
@@ -166,9 +168,6 @@
                         adjustInputWidth();
 
                     } else if(input_focus){
-
-                        $("li.as-selection-item", item_holder).addClass("blur").removeClass("selected");
-                        results_holder.hide();
 
                         var i_input = getInputValue();
 
@@ -208,8 +207,7 @@
                                 if(org_li.prev().hasClass("selected")){ // delete
 
                                     removeListItem();
-                                    opts.selectionRemoved.call(this, org_li.prev());
-                                    opts.onChange.call(this,"removed");
+
                                 } else if (org_li.prev().length > 0) { // select
                                     opts.selectionClick.call(this, org_li.prev());
                                     org_li.prev().addClass("selected");
@@ -474,24 +472,23 @@
 
                     values_array.push(data[opts.selectedValuesProp]);
 
-                    var item = $('<li class="as-selection-item" id="as-selection-'+num+'"></li>').click(function(){
+                    var item = $('<li class="as-selection-item" id="as-selection-'+num+'" title=""></li>').click(function(){
                         opts.selectionClick.call(this, $(this));
+                        input_focus = true;
+                        input.blur();
                         close.click();
-                        input_focus = false;
                         input.val(data[opts.selectedValuesProp]);
                         adjustInputWidth();
-                    //item_holder.children().removeClass("selected");
-                    //$(this).addClass("selected");
+                        input.focus();
+                        //item_holder.children().removeClass("selected");
+                        //$(this).addClass("selected");
                     }).mousedown(function(){
                         input_focus = false;
                     });
 
                     var close = $('<a class="as-close">&times;</a>').click(function(){
 
-                        removeListItem(data[opts.selectedValuesProp]);
-                        
-                        opts.selectionRemoved.call(this, item);
-                        opts.onChange.call(this,"removed");
+                        removeListItem(item,data[opts.selectedValuesProp]);
                         
                         input_focus = true;
                         input.focus();
@@ -501,8 +498,8 @@
                     org_li.before(item.html(data[opts.selectedItemProp]).prepend(close));
 
                     if (!initial_value) {
-                        opts.selectionAdded.call(this, org_li.prev());
-                        opts.onChange.call(this,"added");
+                        opts.selectionAdded.call(item, item);
+                        opts.onChange.call(input,"added");
                     }
 
                     org_li.prev().hover(function(elem) {
@@ -514,11 +511,16 @@
                     results_holder.hide();
                 }
 
-                function removeListItem(value) {
-                    if (!value)
+                function removeListItem(item,value) {
+                    if (!value && !item) {
+                        item = org_li.prev();
                         values_array.splice(values_array.length-1,1);
-                    else
+                    } else
                         values_array.splice(values_array.indexOf(value),1);
+
+                    opts.selectionRemoved.call(item, item);
+                    opts.onChange.call(input,"removed");
+
                 }
 
                 function adjustInputWidth() {
@@ -558,8 +560,8 @@
                             var elm_top = top.top-ul_top + ul_st;
                             var elm_height = start.outerHeight();
 
-                            //                                                    console.log("windowheight=%s, scrollheight=%s, ul_top=%s, ul_height=%s",$(window).height(),ul.get(0).scrollHeight,ul_top,ul_height)
-                            //                                                    console.log("elm_top=%s, ul_st=%s",elm_top,ul_st)
+//                          console.log("windowheight=%s, scrollheight=%s, ul_top=%s, ul_height=%s",$(window).height(),ul.get(0).scrollHeight,ul_top,ul_height)
+//                          console.log("elm_top=%s, ul_st=%s",elm_top,ul_st)
                             if (elm_top + elm_height < ul_st || elm_top > ul_st + ul_height) // not in sight
                                 ul.scrollTop(elm_top-0.5*ul_height)
                             else if (elm_top < ul_st + 1/4*ul_height)
