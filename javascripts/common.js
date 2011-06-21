@@ -2,9 +2,14 @@
 // Simplenote common functions.
 // ------------------------------------------------------------------------------------------------
 
+var version;
+var webnoteregstr = "^SYNCPADWEBNOTE\\[(.*),(\\d+px),(\\d+px),(\\d+px)?,(\\d+px)?\\]$";
+var webnotereg = new RegExp(webnoteregstr,"m");
+
+
 // debug switches
 var debugFlags = {
-    general     : false,
+    general     : true,
     popup       : true,
     popup2BG    : true,
     BG          : true,
@@ -205,9 +210,6 @@ RegExp.escape = function(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 }
 
-var webnoteregstr = "^SYNCPADWEBNOTE\\[(.*),(\\d+px),(\\d+px),(\\d+px)?,(\\d+px)?\\]$";
-var webnotereg = new RegExp(webnoteregstr,"m");
-
 function get_manifest(callback) {
   var xhr = new XMLHttpRequest();
   xhr.onload = function () {
@@ -398,11 +400,37 @@ function setCBval(sel, bool) {
         $(sel).removeAttr("checked");
 }
 
+get_manifest(function(mf) {
+    version = mf.version;
+});
+
 function exceptionCaught(e) {
+    if (!version)
+        get_manifest(function(mf) {
+            version = mf.version;
+    });
+    
+    var funname = filename = line = "";
+    if (e.stack) {
+        where = e.stack.match(/at (.*) \(chrome-extension:\/\/.*\/javascripts\/(.*):(\d+):\d+\)/);
+        funname = where[1];
+        filename = where[2];
+        line = where[3];
+    }
+    var versionstr = 'exception_' + version;
+    var filepos = filename + ":" + line + ":" + funname;
+    var message;
+    
     if (e.message)
-        _gaq.push(['_trackEvent', 'exceptions', e.message.replace(" ","_")]);
+        message = e.message;
     else if (typeof e == "string")
-        _gaq.push(['_trackEvent', 'exceptions', e.replace(" ","_")]);
+        message = e;
     else
-        _gaq.push(['_trackEvent', 'exceptions', e]);
+        message = e;
+
+    var beacon = ['_trackEvent',versionstr,filepos,message];
+
+    console.log(beacon.join(","));
+    
+    _gaq.push(beacon);
 }
