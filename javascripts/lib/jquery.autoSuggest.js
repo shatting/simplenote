@@ -476,6 +476,10 @@
 
                     var item = $('<li class="as-selection-item" id="as-selection-'+num+'"></li>').click(function(){
                         opts.selectionClick.call(this, $(this));
+                        close.click();
+                        input_focus = false;
+                        input.val(data[opts.selectedValuesProp]);
+                        adjustInputWidth();
                     //item_holder.children().removeClass("selected");
                     //$(this).addClass("selected");
                     }).mousedown(function(){
