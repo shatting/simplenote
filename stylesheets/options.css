@@ -148,7 +148,7 @@ input#email, input#password {
 }
 
 #loginmessage{
-  text-align: left;
+  text-align: center;
 }
 
 #status {

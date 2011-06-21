@@ -123,6 +123,8 @@
 //            "windowId":1
 //        }
 
+var SM = new SimplenoteSM();
+
 function CMitem(options, parentCMitem) {
 
     if (parentCMitem) {
@@ -203,6 +205,9 @@ function getNoteHeading(key,maxlength) {
 
     var note = SimplenoteLS.getNote(key);
 
+    if(note.content == undefined)
+        return "(unloaded note)";
+
     if(note.content == "")
         return "(empty note)";
 
@@ -230,155 +235,163 @@ var SimplenoteCM = {
 
     populate: function() {
 
-        this.log("populate()");
+        try {
+            this.log("populate()");
 
-        chrome.contextMenus.removeAll();
+            chrome.contextMenus.removeAll();
 
-        this.append_root = null;
-        this.create_root = null;
-        this.append_pinned_root = null;
-        
-        if (!localStorage.option_email || (localStorage.option_contextmenu != undefined && localStorage.option_contextmenu == "false"))
-            return;
+            this.append_root = null;
+            this.create_root = null;
+            this.append_pinned_root = null;
 
-        this.cascading = localStorage.option_contextmenu_cascading == "true";
-        this.cascading_pinned = localStorage.option_contextmenu_cascading_pinned == "true";
+            if (!SM.haveLogin() || !SM.credentialsValid || (localStorage.option_contextmenu != undefined && localStorage.option_contextmenu == "false"))
+                return;
 
-        var title, lastopen_key = localStorage.lastopennote_key;
+            this.cascading = localStorage.option_contextmenu_cascading == "true";
+            this.cascading_pinned = localStorage.option_contextmenu_cascading_pinned == "true";
 
-        new CMitem({title:chrome.i18n.getMessage("cm_new_webnote"), contexts:["all"], onclick: function(info, tab) {
-            SimplenoteBG.handleRequest({action: "webnotes", request: {action: "new"}});
-        }});
+            var title, lastopen_key = localStorage.lastopennote_key;
 
-        new CMitem({type:"separator", contexts:["all"]});
+            new CMitem({title:chrome.i18n.getMessage("cm_new_webnote"), contexts:["all"], onclick: function(info, tab) {
+                SimplenoteBG.handleRequest({action: "webnotes", request: {action: "new"}});
+            }});
 
-        // create
-        if (this.cascading)
-            this.create_root = new CMitem({title:chrome.i18n.getMessage("cm_create_note"), contexts:["selection","page","image","link"]});
-        
-        new CMitem({title:this.getCMtitle("cm_create_note","cm_using_selection"), contexts:["selection"],onclick: function(info, tab){
-                        _gaq.push(['_trackEvent', 'ContextMenu', 'create_selection']);
-                        SimplenoteCM.createNoteFromBG({content:info.selectionText + "\n" + "[Source: " + tab.url + "]\n"});
+            new CMitem({type:"separator", contexts:["all"]});
+
+            // create
+            if (this.cascading)
+                this.create_root = new CMitem({title:chrome.i18n.getMessage("cm_create_note"), contexts:["selection","page","image","link"]});
+
+            new CMitem({title:this.getCMtitle("cm_create_note","cm_using_selection"), contexts:["selection"],onclick: function(info, tab){
+                            _gaq.push(['_trackEvent', 'ContextMenu', 'create_selection']);
+                            SimplenoteCM.createNoteFromBG({content:info.selectionText + "\n" + "[Source: " + tab.url + "]\n"});
+                        }}, this.create_root);
+            new CMitem({title:this.getCMtitle("cm_create_note","cm_using_page_url"), contexts:["page"], onclick: function(info, tab){
+                            _gaq.push(['_trackEvent', 'ContextMenu', 'create_url']);
+                            SimplenoteCM.createNoteFromBG({content:info.pageUrl});
+                        }}, this.create_root);
+            new CMitem({title:this.getCMtitle("cm_create_note","cm_using_link_url"), contexts:["link"], onclick: function(info, tab){
+                        _gaq.push(['_trackEvent', 'ContextMenu', 'create_link_url']);
+                        SimplenoteCM.createNoteFromBG({content:info.linkUrl});
                     }}, this.create_root);
-        new CMitem({title:this.getCMtitle("cm_create_note","cm_using_page_url"), contexts:["page"], onclick: function(info, tab){
-                        _gaq.push(['_trackEvent', 'ContextMenu', 'create_url']);
-                        SimplenoteCM.createNoteFromBG({content:info.pageUrl});
+            new CMitem({title:this.getCMtitle("cm_create_note","cm_using_image_url"), contexts:["image"], onclick: function(info, tab){
+                        _gaq.push(['_trackEvent', 'ContextMenu', 'create_image_url']);
+                        SimplenoteCM.createNoteFromBG({content:info.srcUrl});
                     }}, this.create_root);
-        new CMitem({title:this.getCMtitle("cm_create_note","cm_using_link_url"), contexts:["link"], onclick: function(info, tab){
-                    _gaq.push(['_trackEvent', 'ContextMenu', 'create_link_url']);
-                    SimplenoteCM.createNoteFromBG({content:info.linkUrl});
-                }}, this.create_root);
-        new CMitem({title:this.getCMtitle("cm_create_note","cm_using_image_url"), contexts:["image"], onclick: function(info, tab){
-                    _gaq.push(['_trackEvent', 'ContextMenu', 'create_image_url']);
-                    SimplenoteCM.createNoteFromBG({content:info.srcUrl});
-                }}, this.create_root);
 
-        // append last open
-        if (lastopen_key) {
-            var lastopen = SimplenoteLS.getNote(lastopen_key);
-            if (lastopen && lastopen.deleted != 1) {
-                if (!this.cascading)
+            // append last open
+            if (lastopen_key) {
+                var lastopen = SimplenoteLS.getNote(lastopen_key);
+                if (lastopen && lastopen.deleted != 1) {
+                    if (!this.cascading)
+                        new CMitem({type:"separator", contexts:["all"]});
+
+                    title = getNoteHeading(lastopen_key,25);
+
+                    if (this.cascading)
+                        this.append_root = new CMitem({title:chrome.i18n.getMessage("cm_append_to",title), contexts:["selection","page","image","link"]});
+
+                    new CMitem({title:this.getCMtitle("cm_append_to","cm_using_selection", title), contexts:["selection"], onclick: function(info, tab){
+                            _gaq.push(['_trackEvent', 'ContextMenu', 'append_selection']);
+                            SimplenoteCM.appendToNoteFromBG(info.selectionText + "\n" + "[Source: " + tab.url + "]", lastopen_key);
+                        }}, this.append_root);
+                    new CMitem({title:this.getCMtitle("cm_append_to","cm_using_page_url", title), contexts:["page"], onclick: function(info, tab){
+                            _gaq.push(['_trackEvent', 'ContextMenu', 'append_url']);
+                            SimplenoteCM.appendToNoteFromBG(info.pageUrl, lastopen_key);
+                        }}, this.append_root);
+                    new CMitem({title:this.getCMtitle("cm_append_to","cm_using_link_url", title), contexts:["link"],  onclick: function(info, tab){
+                            _gaq.push(['_trackEvent', 'ContextMenu', 'append_link_url']);
+                            SimplenoteCM.appendToNoteFromBG(info.linkUrl, lastopen_key);
+                        }}, this.append_root);
+                    new CMitem({title:this.getCMtitle("cm_append_to","cm_using_image_url", title), contexts:["image"], onclick: function(info, tab){
+                            _gaq.push(['_trackEvent', 'ContextMenu', 'append_image_url']);
+                            SimplenoteCM.appendToNoteFromBG(info.srcUrl, lastopen_key);
+                        }}, this.append_root);
+                }
+            }
+
+            var pinned = SimplenoteLS.getNotes({deleted:0,sort:"alpha",systemtag:"pinned"});
+            if (pinned.length>0) {
+
+                if (!this.cascading && (pinned.length > 1 || lastopen_key != pinned[0].key) )
                     new CMitem({type:"separator", contexts:["all"]});
 
-                title = getNoteHeading(lastopen_key,25);
+                if (this.cascading_pinned)
+                    this.append_pinned_root = new CMitem({title:chrome.i18n.getMessage("cm_append_to_pinned"), contexts:["selection","page","image","link"]});
 
-                if (this.cascading)
-                    this.append_root = new CMitem({title:chrome.i18n.getMessage("cm_append_to",title), contexts:["selection","page","image","link"]});
+                for (var i in pinned) {
+                    if (lastopen_key == pinned[i].key)
+                        continue;
 
-                new CMitem({title:this.getCMtitle("cm_append_to","cm_using_selection", title), contexts:["selection"], onclick: function(info, tab){
-                        _gaq.push(['_trackEvent', 'ContextMenu', 'append_selection']);
-                        SimplenoteCM.appendToNoteFromBG(info.selectionText + "\n" + "[Source: " + tab.url + "]", lastopen_key);
-                    }}, this.append_root);
-                new CMitem({title:this.getCMtitle("cm_append_to","cm_using_page_url", title), contexts:["page"], onclick: function(info, tab){
-                        _gaq.push(['_trackEvent', 'ContextMenu', 'append_url']);
-                        SimplenoteCM.appendToNoteFromBG(info.pageUrl, lastopen_key);
-                    }}, this.append_root);
-                new CMitem({title:this.getCMtitle("cm_append_to","cm_using_link_url", title), contexts:["link"],  onclick: function(info, tab){
-                        _gaq.push(['_trackEvent', 'ContextMenu', 'append_link_url']);
-                        SimplenoteCM.appendToNoteFromBG(info.linkUrl, lastopen_key);
-                    }}, this.append_root);
-                new CMitem({title:this.getCMtitle("cm_append_to","cm_using_image_url", title), contexts:["image"], onclick: function(info, tab){
-                        _gaq.push(['_trackEvent', 'ContextMenu', 'append_image_url']);
-                        SimplenoteCM.appendToNoteFromBG(info.srcUrl, lastopen_key);
-                    }}, this.append_root);
+                    SimplenoteDB.getNote(pinned[i].key, function(note) {
+
+                        title = getNoteHeading(note.key,25);
+
+                        if (SimplenoteCM.cascading_pinned)
+                            var pinnedCM = new CMitem({title:title, contexts:["all"]}, SimplenoteCM.append_pinned_root);
+
+                        new CMitem({title:SimplenoteCM.getCMtitle("cm_append_to","cm_using_selection", title, true), contexts:["selection"], onclick: function(info, tab){
+                                _gaq.push(['_trackEvent', 'ContextMenu', 'append_selection']);
+                                SimplenoteCM.appendToNoteFromBG(info.selectionText + "\n" + "[Source: " + tab.url + "]", note.key, true);
+                            }}, pinnedCM);
+                        new CMitem({title:SimplenoteCM.getCMtitle("cm_append_to","cm_using_page_url", title, true), contexts:["page"], onclick: function(info, tab){
+                                _gaq.push(['_trackEvent', 'ContextMenu', 'append_url']);
+                                SimplenoteCM.appendToNoteFromBG(info.pageUrl, note.key, true);
+                            }}, pinnedCM);
+                        new CMitem({title:SimplenoteCM.getCMtitle("cm_append_to","cm_using_link_url", title, true), contexts:["link"],  onclick: function(info, tab){
+                                _gaq.push(['_trackEvent', 'ContextMenu', 'append_link_url']);
+                                SimplenoteCM.appendToNoteFromBG(info.linkUrl, note.key, true);
+                            }}, pinnedCM);
+                        new CMitem({title:SimplenoteCM.getCMtitle("cm_append_to","cm_using_image_url", title, true), contexts:["image"], onclick: function(info, tab){
+                                _gaq.push(['_trackEvent', 'ContextMenu', 'append_image_url']);
+                                SimplenoteCM.appendToNoteFromBG(info.srcUrl, note.key, true);
+                            }}, pinnedCM);
+                    });
+
+                }
             }
-        }
-                
-        var pinned = SimplenoteLS.getNotes({deleted:0,sort:"alpha",systemtag:"pinned"});
-        if (pinned.length>0) {
-            
-            if (!this.cascading && (pinned.length > 1 || lastopen_key != pinned[0].key) )
-                new CMitem({type:"separator", contexts:["all"]});
-
-            if (this.cascading_pinned)
-                this.append_pinned_root = new CMitem({title:chrome.i18n.getMessage("cm_append_to_pinned"), contexts:["selection","page","image","link"]});
-
-            for (var i in pinned) {
-                if (lastopen_key == pinned[i].key)
-                    continue;
-                
-                SimplenoteDB.getNote(pinned[i].key, function(note) {
-
-                    title = getNoteHeading(note.key,25);
-
-                    if (SimplenoteCM.cascading_pinned)
-                        var pinnedCM = new CMitem({title:title, contexts:["all"]}, SimplenoteCM.append_pinned_root);
-
-                    new CMitem({title:SimplenoteCM.getCMtitle("cm_append_to","cm_using_selection", title, true), contexts:["selection"], onclick: function(info, tab){
-                            _gaq.push(['_trackEvent', 'ContextMenu', 'append_selection']);
-                            SimplenoteCM.appendToNoteFromBG(info.selectionText + "\n" + "[Source: " + tab.url + "]", note.key, true);
-                        }}, pinnedCM);
-                    new CMitem({title:SimplenoteCM.getCMtitle("cm_append_to","cm_using_page_url", title, true), contexts:["page"], onclick: function(info, tab){
-                            _gaq.push(['_trackEvent', 'ContextMenu', 'append_url']);
-                            SimplenoteCM.appendToNoteFromBG(info.pageUrl, note.key, true);
-                        }}, pinnedCM);
-                    new CMitem({title:SimplenoteCM.getCMtitle("cm_append_to","cm_using_link_url", title, true), contexts:["link"],  onclick: function(info, tab){
-                            _gaq.push(['_trackEvent', 'ContextMenu', 'append_link_url']);
-                            SimplenoteCM.appendToNoteFromBG(info.linkUrl, note.key, true);
-                        }}, pinnedCM);
-                    new CMitem({title:SimplenoteCM.getCMtitle("cm_append_to","cm_using_image_url", title, true), contexts:["image"], onclick: function(info, tab){
-                            _gaq.push(['_trackEvent', 'ContextMenu', 'append_image_url']);
-                            SimplenoteCM.appendToNoteFromBG(info.srcUrl, note.key, true);
-                        }}, pinnedCM);
-                });
-
-            }
+        } catch (e) {
+            exceptionCaught(e);
         }
 
     },
 
     updateLastOpen: function() {
 
-        this.log("updateLastOpen()");
-
-        if (!localStorage.lastopennote_key) {
-            if (this.append_root)
-                this.append_root.remove();
-            else
-                this.populate();
-            
-            this.append_root = null;
-            return;
-        }
-        
-        var title = getNoteHeading(localStorage.lastopennote_key,25);
-        if (!title)
-            return;
-        
-        if (!this.append_root) {
-            this.populate();
-            return;
-        }
-
-        var needPop = false;
         try {
-            if (this.append_root)
-                this.append_root.update({title:chrome.i18n.getMessage("cm_append_to",title)});
+            this.log("updateLastOpen()");
+
+            if (!localStorage.lastopennote_key) {
+                if (this.append_root)
+                    this.append_root.remove();
+                else
+                    this.populate();
+
+                this.append_root = null;
+                return;
+            }
+
+            var title = getNoteHeading(localStorage.lastopennote_key,25);
+            if (!title)
+                return;
+
+            if (!this.append_root) {
+                this.populate();
+                return;
+            }
+
+            var needPop = false;
+            try {
+                if (this.append_root)
+                    this.append_root.update({title:chrome.i18n.getMessage("cm_append_to",title)});
+            } catch (e) {
+                needPop = true;
+            }
+            if (needPop)
+                this.populate();
         } catch (e) {
-            needPop = true;
+            exceptionCaught(e);
         }
-        if (needPop)
-            this.populate();
     },
 
     getCMtitle: function(mainId, subId, title, pinned) {
@@ -392,24 +405,36 @@ var SimplenoteCM = {
         SimplenoteCM.signalProcessing();
 
         SimplenoteDB.getNote(key,function(oldnote) {
-            oldnote.content += "\n" + string + "\n";
-            oldnote.source = "cm";
-            SimplenoteDB.updateNote(oldnote, function(note) {
-                if (note) {
-                    localStorage.lastopennote_open = "true";
+            if (oldnote.content) {
+                oldnote.content += "\n" + string + "\n";
+                oldnote.source = "cm";
+                SimplenoteDB.updateNote(oldnote, function(note) {
+                    try {
+                        if (note) {
+                            localStorage.lastopennote_open = "true";
 
-                    var lines = note.content.split("\n");
-                    var caretScroll = {line:"lastline", character: lines[lines.length-1].length};
-                    localStorage[note.key+"_caret"] = JSON.stringify(caretScroll);
-                    if (setLastOpen) {
-                        localStorage.lastopennote_key = note.key;
-                        SimplenoteCM.updateLastOpen();
+                            if (note.content) {
+                                var lines = note.content.split("\n");
+                                var caretScroll = {line:"lastline", character: lines[lines.length-1].length};
+                                localStorage[note.key+"_caret"] = JSON.stringify(caretScroll);
+                            } else {
+                                localStorage[note.key+"_caret"] = JSON.stringify({line:"lastline", character:1});
+                            }
+                            if (setLastOpen) {
+                                localStorage.lastopennote_key = note.key;
+                                SimplenoteCM.updateLastOpen();
+                            }
+                            SimplenoteCM.signalSuccess();
+                        } else
+                            SimplenoteCM.signalError()
+                    } catch(e) {
+                        exceptionCaught(e);
                     }
-                    SimplenoteCM.signalSuccess();
-                } else
-                    SimplenoteCM.signalError()
 
-            });
+                });
+            } else {
+                SimplenoteBG.signalError();
+            }
         });
     },
 
@@ -428,7 +453,7 @@ var SimplenoteCM = {
 
     signalProcessing: function() {
         chrome.browserAction.setBadgeText({text:"..."});
-        chrome.browserAction.setBadgeBackgroundColor({color:[255,0,0,128]});
+        chrome.browserAction.setBadgeBackgroundColor({color:[0,255,255,128]});
     },
 
     signalSuccess: function() {

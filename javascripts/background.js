@@ -2,6 +2,8 @@ var _gaq = _gaq || [];
 _gaq.push(['_setAccount', 'UA-22573090-2']);
 _gaq.push(['_trackPageview']);
 
+var SM = new SimplenoteSM();
+
 var SimplenoteBG = {
 
     webnotesID : undefined,
@@ -13,8 +15,8 @@ var SimplenoteBG = {
     },
 
     backgroundSync: function(fullSync, callbackComplete, callbackPartial) {
-        if (localStorage.option_email == undefined || localStorage.option_password == undefined) {
-            this.log("backgroundSync: no credentials, exiting..");
+        if (!SM.haveLogin() || !SM.credentialsValid) {
+            this.log("backgroundSync: no credentials or or invalid ones, exiting..");
             return;
         }
 
@@ -28,164 +30,161 @@ var SimplenoteBG = {
         if (!fullSync && !SimplenoteDB.hadSync())
             fullSync = true;
 
-        this.log("backgroundSync: starting..");
-        this.log("backgroundSync: offlinemode: " + SimplenoteDB.isOffline());
-        this.log("backgroundSync: fullsync: " + fullSync);
-
+        this.log("backgroundSync: starting [offline=" + SimplenoteDB.isOffline() + ", full=" + fullSync + "]");
+        
         this.handleRequest({action:"login"}, {}, function(successObj) {
-            if (successObj.reason == "offlinemode") {
-                SimplenoteBG.log("backgroundSync: sync aborted, offlinemode.");                
-                uiEvent("offlinechanged", {status:true});
-            } else if (successObj.success) {
-                SimplenoteBG.log("backgroundSync: login request completed, requesting sync. fullSync=" + fullSync);
-                SimplenoteDB.sync(fullSync, function(successObj) {                    
-                    if (callbackComplete)
-                        callbackComplete(successObj);                    
-                }, callbackPartial);
-            } else {
-                SimplenoteBG.log("backgroundSync: login request failed.");
+            try {
+                if (successObj.reason == "offlinemode") {
+                    SimplenoteBG.log("backgroundSync: sync aborted, offlinemode.");
+                    uiEvent("offlinechanged", {status:true});
+                } else if (successObj.success) {
+                    SimplenoteBG.log("backgroundSync: login request completed [reason=" + successObj.reason + "], requesting sync.");
+                    SimplenoteDB.sync(fullSync, function(successObj) {
+                        if (callbackComplete)
+                            callbackComplete(successObj);
+                    }, callbackPartial);
+                } else {
+                    SimplenoteBG.log("backgroundSync: login request failed.");
+                }
+            } catch (e) {
+                exceptionCaught(e);
             }
         });
     },
 
     handleRequest: function(request, sender, sendResponse) {    
 
-        // need to use SimplenoteBG. here because its not called in object context
-        SimplenoteBG.log("request: " + request.action);        
-        var callbacks;
-        
-        if (request.action == "webnotes") {
-            if (SimplenoteBG.webnotesID != undefined) {
-                chrome.extension.sendRequest(SimplenoteBG.webnotesID,request.request);
-                if (sendResponse)
-                    sendResponse(true);
-            } else {                
-                if (confirm("The Webnotes plugin is not installed or disabled.\n\nGo to download page now?"))
-                    openURLinTab("https://chrome.google.com/webstore/detail/ajfdaicinlekajkfjoomjmoikoeghimd");
-                if (sendResponse)
-                    sendResponse(false);
-            }
-        } else if (request.action == "userchanged") {
-            _gaq.push(['_trackEvent', 'background', 'request','userchanged']);
-            SimplenoteLS._reset();
-            SimplenoteDB._reset();
-            SimplenoteBG.backgroundSync(true, function(successObj) {
-                SimplenoteBG.log("handleRequest:userchanged sync done.");
-                SimplenoteBG.handleRequest({action:"cm_populate"});
-                                
-                if (sendResponse)
-                    sendResponse(successObj);
-            });
-        } else if (request.action == "fillcontents") {
-            SimplenoteDB.fillContents(sendResponse);
-        } else if (request.action === "login") {
+        try {
+            // need to use SimplenoteBG. here because its not called in object context
+            SimplenoteBG.log("request: " + request.action);
+            var callbacks;
 
-            callbacks = {
-                success:   function(credentials) {
-
-                    if (credentials) {
-                        SimplenoteDB.offline(false); // callback cause of token returns no credentials                    
-                        localStorage.token = credentials.token;
-                        localStorage.tokenTime = credentials.tokenTime;
-                        
-                        localStorage.credentialsValid = "true";
-
-                    }
-                    sendResponse({success:true, reason:credentials?"success":"token"});
-                },
-                loginInvalid:     function() {
-                    SimplenoteDB.offline(false);
-                    
-                    localStorage.credentialsValid = "false";
-
-                    sendResponse({success:false, reason:"logininvalid"});
-                },
-                timeout: function() {
-
-                    SimplenoteDB.offline(true);
-
-                    if (localStorage.token && localStorage.credentialsValid) // offline mode despite token older than 24hrs
-                        sendResponse({success:true, reason:"offlinemode"})
-                    else
-                        sendResponse({
-                            success:false,
-                            message:"Network timeout, please try again later or check your internet connection.",
-                            reason:"timeout"
-                        });
+            if (request.action == "webnotes") {
+                if (SimplenoteBG.webnotesID != undefined) {
+                    chrome.extension.sendRequest(SimplenoteBG.webnotesID,request.request);
+                    if (sendResponse)
+                        sendResponse(true);
+                } else {
+                    if (confirm("The Webnotes plugin is not installed or disabled.\n\nGo to download page now?"))
+                        openURLinTab("https://chrome.google.com/webstore/detail/ajfdaicinlekajkfjoomjmoikoeghimd");
+                    if (sendResponse)
+                        sendResponse(false);
                 }
-            };
+            } else if (request.action == "userchanged") {
+                _gaq.push(['_trackEvent', 'background', 'request','userchanged']);
+                SimplenoteLS._reset();
+                SimplenoteDB._reset();
+                SimplenoteBG.backgroundSync(true, function(successObj) {
+                    SimplenoteBG.log("handleRequest:userchanged sync done.");
+                    SimplenoteBG.handleRequest({action:"cm_populate"});
 
-            var credentials = {
-                email: localStorage.option_email,
-                password: localStorage.option_password
+                    if (sendResponse)
+                        sendResponse(successObj);
+                });
+            } else if (request.action == "fillcontents") {
+                SimplenoteDB.fillContents(sendResponse);
+            } else if (request.action === "login") {
+
+                callbacks = {
+                    success:   function(credentials) {
+
+                        if (credentials) { // callback cause of token returns no credentials
+                            SimplenoteDB.offline(false);
+                            SM.tokenAcquired(credentials);
+                        }
+                        sendResponse({success:true, reason:credentials?"success":"token"});
+                    },
+                    loginInvalid:     function() {
+                        SimplenoteDB.offline(false);
+
+                        SM.credentialsValid = "false";
+
+                        sendResponse({success:false, reason:"logininvalid"});
+                    },
+                    timeout: function() {
+
+                        SimplenoteDB.offline(true);
+
+                        if (SM.credentialsValid) // offline mode despite token older than 24hrs
+                            sendResponse({success:true, reason:"offlinemode"})
+                        else
+                            sendResponse({
+                                success:false,
+                                message:"Network timeout, please try again later or check your internet connection.",
+                                reason:"timeout"
+                            });
+                    }
                 };
-            if (localStorage.token) {
-                credentials.token = localStorage.token;
-                credentials.tokenTime = new Date(localStorage.tokenTime);
-            }
 
-            SimplenoteAPI2.login(credentials, callbacks);
-        } else if (request.action === "sync") {
-            SimplenoteBG.backgroundSync(request.fullsync, sendResponse);
-        } else if (request.action === "note") {
-            SimplenoteDB.getNote(request.key,sendResponse);
-        } else if (request.action === "getnotes") {
-            sendResponse(SimplenoteLS.getNotes(request));
-        } else if (request.action === "delete") {
-            if (SimplenoteDB.isOffline()) {
-                alert("Offline note delete not supported. Please try again when online!");
-                sendResponse(false);
-            } else
-                SimplenoteDB.deleteNote(request.key, sendResponse);
-        } else if (request.action === "update") {
-            SimplenoteDB.updateNote(request, sendResponse);
-        } else if (request.action === "create") {
-            SimplenoteDB.createNote(request, sendResponse);
-        } else if (request.action === "tags") {
-            sendResponse(SimplenoteLS.getTags(request.options));
-        } else if (request.action === "isoffline") {
-            sendResponse(SimplenoteDB.isOffline());
-        } else if (request.action === "emptytrash") {
-            if (SimplenoteDB.isOffline()) {
-                alert("Offline trash empty not supported. Please try again when online!");
-                sendResponse(false);
-            } else
-                SimplenoteDB.emptyTrash(sendResponse);
-        } else if (request.action == "cm_populate") {
-            SimplenoteCM.populate();
-        } else if (request.action == "cm_updatelastopen") {
-            SimplenoteCM.updateLastOpen();
-        } 
+                SimplenoteAPI2.login(SM.getCredentials(), callbacks);
+            } else if (request.action === "sync") {
+                SimplenoteBG.backgroundSync(request.fullsync, sendResponse);
+            } else if (request.action === "note") {
+                SimplenoteDB.getNote(request.key,sendResponse);
+            } else if (request.action === "getnotes") {
+                sendResponse(SimplenoteLS.getNotes(request));
+            } else if (request.action === "delete") {
+                if (SimplenoteDB.isOffline()) {
+                    alert("Offline note delete not supported. Please try again when online!");
+                    sendResponse(false);
+                } else
+                    SimplenoteDB.deleteNote(request.key, sendResponse);
+            } else if (request.action === "update") {
+                SimplenoteDB.updateNote(request, sendResponse);
+            } else if (request.action === "create") {
+                SimplenoteDB.createNote(request, sendResponse);
+            } else if (request.action === "tags") {
+                sendResponse(SimplenoteLS.getTags(request.options));
+            } else if (request.action === "isoffline") {
+                sendResponse(SimplenoteDB.isOffline());
+            } else if (request.action === "emptytrash") {
+                if (SimplenoteDB.isOffline()) {
+                    alert("Offline trash empty not supported. Please try again when online!");
+                    sendResponse(false);
+                } else
+                    SimplenoteDB.emptyTrash(sendResponse);
+            } else if (request.action == "cm_populate") {
+                SimplenoteCM.populate();
+            } else if (request.action == "cm_updatelastopen") {
+                SimplenoteCM.updateLastOpen();
+            }
+        } catch (e) {
+            exceptionCaught(e);
+        }
     },
     
     saveNote : undefined,
 
     popupClosed: function() {
-        
-        this.log("popupClosed()");
 
-        if (this.saveNote) {
+        try {
+            this.log("popupClosed()");
 
-            if (this.saveNote.key && this.saveNote.key != "")
-                SimplenoteDB.updateNote(this.saveNote, function(note) {
-                    localStorage.lastopennote_key = note.key;
-                    localStorage.lastopennote_open = "true";
-                    SimplenoteBG.handleRequest({action:"cm_updatelastopen"});
-                    SimplenoteBG.saveNote = undefined;
-                    SimplenoteBG.checkRefreshs();
-                    SimplenoteBG.log("popupClosed: update success.");
-                });
-            else
-                SimplenoteDB.createNote(this.saveNote, function(note) {
-                    localStorage.lastopennote_key = note.key;
-                    localStorage.lastopennote_open = "true";
-                    SimplenoteBG.handleRequest({action:"cm_updatelastopen"});
-                    SimplenoteBG.saveNote = undefined;
-                    SimplenoteBG.checkRefreshs();
-                    SimplenoteBG.log("popupClosed: create success.");
-                });
-        } else
-            this.checkRefreshs();
+            if (this.saveNote) {
+
+                if (this.saveNote.key && this.saveNote.key != "")
+                    SimplenoteDB.updateNote(this.saveNote, function(note) {
+                        localStorage.lastopennote_key = note.key;
+                        localStorage.lastopennote_open = "true";
+                        SimplenoteBG.needCMRefresh = true;
+                        SimplenoteBG.saveNote = undefined;
+                        SimplenoteBG.checkRefreshs();
+                        SimplenoteBG.log("popupClosed: update success.");
+                    });
+                else
+                    SimplenoteDB.createNote(this.saveNote, function(note) {
+                        localStorage.lastopennote_key = note.key;
+                        localStorage.lastopennote_open = "true";
+                        SimplenoteBG.needCMRefresh = true;
+                        SimplenoteBG.saveNote = undefined;
+                        SimplenoteBG.checkRefreshs();
+                        SimplenoteBG.log("popupClosed: create success.");
+                    });
+            } else
+                this.checkRefreshs();
+        } catch (e) {
+            exceptionCaught(e);
+        }
     },
     
     needLastOpenRefresh : false,
@@ -221,12 +220,12 @@ $(document).ready(function() {
     _gaq.push(['_trackEvent', 'settings', 'alwaystab', localStorage.option_alwaystab]);
 
     setTimeout(function() {
-        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        var ga = document.createElement('script');ga.type = 'text/javascript';ga.async = true;
         if (debugFlags.GA)
             ga.src = 'https://ssl.google-analytics.com/u/ga_debug.js';
         else
             ga.src = 'https://ssl.google-analytics.com/ga.js';
-        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+        var s = document.getElementsByTagName('script')[0];s.parentNode.insertBefore(ga, s);
     },10);
 
     SimplenoteBG.log("(ready) done");
@@ -263,7 +262,7 @@ chrome.extension.onRequestExternal.addListener(
                     response(false);
                 }
             } else if (request.action == "have_credentials") {
-                if (localStorage.option_email == undefined || localStorage.option_password == undefined) {
+                if (!SM.haveLogin() || !SM.credentialsValid) {
                     var q=confirm("Not logged in to Simplenote.\n\nGo to options page?");
                     if (q)
                         chrome.tabs.create({url:"options.html"});

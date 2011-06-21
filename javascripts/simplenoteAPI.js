@@ -47,8 +47,10 @@ var SimplenoteAPI2 = {
      *  @throws exception if not logged in or token expired
      */
     authURLadd : function() {
-        if (!this.isLoggedIn())
+        if (!this.isLoggedIn()) {
+            console.log(this)
             throw "not logged in or token expired"
+        }
         return "?email=" + escape(this.credentials.email) + "&auth=" + this.credentials.token;
     },
     /*
@@ -94,7 +96,7 @@ var SimplenoteAPI2 = {
         } else { //B
             if (!credentials) //B0
                 haveToken = isTokenValid(this.credentials);
-            else if (this.credentials.email == credentials.email) { //B1
+            else if (this.credentials.email == credentials.email && this.credentials.password == credentials.password) { //B1
                 if (!credentials.token) //B11
                     haveToken = isTokenValid(this.credentials);
                 else { //B12
@@ -389,7 +391,7 @@ var SimplenoteAPI2 = {
         if (!callbacks) callbacks = {};
         if (!note || !note.key) {
             console.log(note);
-            throw "SimplenoteAPI2::update:note or note.content empty, or note.deleted or note.key missing.";
+            throw "SimplenoteAPI2::update:note or note.key missing.";
         }
         jQuery.ajax({
             type: "POST",
