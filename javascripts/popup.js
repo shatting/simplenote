@@ -1,6 +1,10 @@
 var background;
 var popup = this;
 
+var times = {
+    popup: (new Date())-start,    
+}
+
 // amount of vertical viewport size to add for preloading notes in index
 var preLoadFactor = 1/2;
 var currentView = "index";
@@ -354,6 +358,8 @@ function shorcuts(event) {
 //  ---------------------------------------
 $(document).ready(readyListener);
 function readyListener() {
+    
+    times.ready = (new Date())-start;
 
     try {
 
@@ -420,6 +426,7 @@ function readyListener() {
                     displayStatusMessage("Login for email '" + SM.email + "' failed, please check your Simplenote email address and password on the " + optionsLink + "!");
 
                 } else {
+                        times.startsetup = (new Date())-start;
 
                         _gaq.push(['_trackEvent', 'popup', 'ready']);
 
@@ -609,6 +616,9 @@ function readyListener() {
                             log("(ready, delayed + async): sync request complete");
                         });
                     },1000);
+
+                    times.endsetup = (new Date())-start;
+
                 }
                         
             } catch (e) {
@@ -794,6 +804,10 @@ function fillIndex() {
 
                 snEditor.hideIfNotInIndex();
 
+                times.endfillindex= (new Date())-start;
+
+                printTimes();
+
                 log("fillIndex(async):done");
             } catch (e) {
                 exceptionCaught(e);
@@ -802,8 +816,12 @@ function fillIndex() {
         });
     } catch (e) {
         exceptionCaught(e);
-    }
+    }    
+}
 
+function printTimes() {
+    for(var i in times)
+        console.log(i + ": " + times[i]);
 }
 
 function noteRowCMfn(contextmenu) {
