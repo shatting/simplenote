@@ -8,6 +8,7 @@ var SimplenoteBG = {
 
     webnotesID : undefined,
     webnotesVersion : undefined,
+    tab : undefined,
 
     log : function(s) {
         if (debugFlags.BG)
@@ -200,12 +201,38 @@ var SimplenoteBG = {
 
         this.needLastOpenRefresh = false;
         this.needCMRefresh = false;
+    },
+
+    setOpenTab: function(tab) {
+        if (tab != undefined)
+            this.tab = tab;
+        
+        if (this.tab)
+            chrome.browserAction.setTitle({title:chrome.i18n.getMessage("ba_go_to_syncpad_tab")});
+        else
+            chrome.browserAction.setTitle({title:chrome.i18n.getMessage("ba_open_syncpad_tab")});
+        
+        chrome.browserAction.setPopup({popup:""});
+    },
+
+    setOpenPopup : function(deleteTab) {
+        if (deleteTab)
+            delete this.tab;
+
+        if (localStorage.option_alwaystab == "true" || this.tab) {
+            this.setOpenTab();
+        } else {
+            chrome.browserAction.setTitle({title:chrome.i18n.getMessage("ba_open_syncpad")});
+            chrome.browserAction.setPopup({popup:"/popup.html"});
+        }
     }
 }
 
 // sync on browser start
 window.onload = function() {
-    try {
+    try {        
+        SimplenoteBG.setOpenPopup()
+
         SimplenoteCM.populate();
         SimplenoteBG.backgroundSync(true);        
     } catch (e) {
@@ -231,6 +258,30 @@ window.onload = function() {
     SimplenoteBG.log("(ready) done");
 
 }
+
+chrome.browserAction.onClicked.addListener(function(tab) {
+    var pinned = localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true";
+    
+    if (SimplenoteBG.tab) {
+        SimplenoteBG.log("--> deferring to tab");
+
+        chrome.tabs.update(SimplenoteBG.tab.id, {
+            selected:true,
+            pinned: pinned
+        }, function() {
+            return;
+        });
+    } else {
+        SimplenoteBG.log("--> no tab -> creating tab");
+
+        chrome.tabs.create({
+            url:chrome.extension.getURL("/popup.html?tab=true"),
+            pinned: pinned
+        }, function(tab) {
+            SimplenoteBG.tab = tab;
+        });
+    }
+});
 
 chrome.extension.onRequest.addListener(SimplenoteBG.handleRequest);
 

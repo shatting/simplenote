@@ -1,4 +1,5 @@
 {
+    "description":          { "message": "Easy to use, yet powerful plaintext notepad for Chrome. Synchronizes with all your Chrome installations, Devices and PCs."},
     "signup":               { "message": "signup", "description": "signup link text" },
     "options_page":         { "message": "options page", "description": "options page link text" },
     "welcometext":          { "message": "Please $1 for a Simplenote account and/or enter your credentials on the $2.", "description": "welcome text" },
@@ -63,5 +64,8 @@
     "editorcm_search_selection": { "message": "Search for selection ($1)"},
     "webnote_icon":         { "message": "Click to visit this webnote at $1" },
     "syncnote_tooltip":     { "message": "This note has not yet been uploaded to the server." },
-    "cm_new_webnote":       { "message": "New Webnote" }
+    "cm_new_webnote":       { "message": "New Webnote" },
+    "ba_open_syncpad":      { "message": "Open Syncpad"},
+    "ba_open_syncpad_tab":  { "message": "Open Syncpad tab" },
+    "ba_go_to_syncpad_tab": { "message": "Go to Syncpad tab" }
 }        

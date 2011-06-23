@@ -1,4 +1,5 @@
 {
+    "description":          { "message": "Einfache Textnotizen für Chrome. Synchronisiert automatisch mit der Cloud."},
     "signup":               { "message": "erstellen", "description": "signup link text" },
     "options_page":         { "message": "Optionen", "description": "options page link text" },
     "welcometext":          { "message": "Bitte $1 sie einen Simplenote Account und/oder geben Sie ihre Anmeldeinformationen in den $2 ein.", "description": "welcome text" },
@@ -62,5 +63,8 @@
     "editorcm_search_selection": { "message": "Nach Auswahl suchen ($1)"},
     "webnote_icon":         { "message": "Klicken um Webnote auf '$1' zu besuchen" },
     "syncnote_tooltip":     { "message": "Diese Notiz wurde noch nicht zum Server hochgeladen" },
-    "cm_new_webnote":       { "message": "Neue Webnote" }
+    "cm_new_webnote":       { "message": "Neue Webnote" },
+    "ba_open_syncpad":      { "message": "Syncpad öffnen"},
+    "ba_open_syncpad_tab":  { "message": "Syncpad öffnen (Tab)" },
+    "ba_go_to_syncpad_tab": { "message": "Zum Syncpad Tab wechseln" }
 }

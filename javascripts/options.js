@@ -147,13 +147,16 @@ function save_options() {
       $('#contextmenu_cascading_lbl').css('color', '');
       $('#contextmenu_cascading_pinned_lbl').css('color', '');
   }
-
-  localStorage.option_alwaystab = getCBval('#alwaystab');
+  var bg = chrome.extension.getBackgroundPage();
+  if (localStorage.option_alwaystab == "true" != getCBval('#alwaystab')) {
+      localStorage.option_alwaystab = getCBval('#alwaystab');
+      if (bg)
+          bg.SimplenoteBG.setOpenPopup();
+  }
 
   if ((localStorage.option_pinnedtab == "true") != getCBval('#pinnedtab')) {
-      var bg = chrome.extension.getBackgroundPage();
-      if (bg && bg.popouttab) {
-        chrome.tabs.update(bg.popouttab.id, {pinned:getCBval('#pinnedtab')});
+      if (bg && bg.SimplenoteBG.tab) {
+        chrome.tabs.update(bg.SimplenoteBG.tab.id, {pinned:getCBval('#pinnedtab')});
       }
   }
   localStorage.option_pinnedtab = getCBval('#pinnedtab');
@@ -328,8 +331,8 @@ function reset_clicked() {
 
 function closeTabAnd(after) {
     var bg = chrome.extension.getBackgroundPage();
-    if (bg && bg.popouttab) {
-        chrome.tabs.remove(bg.popouttab.id, after);
+    if (bg && bg.SimplenoteBG.tab) {
+        chrome.tabs.remove(bg.SimplenoteBG.tab.id, after);
     } else {
         after();
     }

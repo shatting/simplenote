@@ -397,8 +397,10 @@ var SimplenoteLS = {
             this.log("addToSyncList:"+key);
             keys.push(key);
             this._setVal(this.syncKeysKey,keys);
-            uiEvent("synclistchanged", {added:key});
+            uiEvent("synclistchanged", {added:key});            
         }
+        if (keys.length > 0)
+            chrome.browserAction.setIcon({path: "/images/icon_24_sync.png"});
     },
 
     removeFromSyncList : function(key) {
@@ -411,8 +413,10 @@ var SimplenoteLS = {
                 this._delVal(this.syncKeysKey);
             else
                 this._setVal(this.syncKeysKey,keys);
-            uiEvent("synclistchanged", {removed:key});
+            uiEvent("synclistchanged", {removed:key});            
         }
+        if (keys.length == 0)
+            chrome.browserAction.setIcon({path: "/images/icon_24.png"});        
     },
 
 //    sanitizeSyncList : function() {

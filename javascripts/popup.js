@@ -101,7 +101,7 @@ function unloadListener() {
         snEditor.saveCaretScroll();
 
         if (isTab)
-            delete background.popouttab;
+            background.SimplenoteBG.setOpenPopup(true);
 
         background.setTimeout("SimplenoteBG.popupClosed()", 10);
     } catch(e) {
@@ -374,272 +374,243 @@ function readyListener() {
             setTimeout("readyListener()",1000);
             return;
         }
+        var m = location.href.match(/\?.*tab\=(true|false).*/);        
+        isTab = m != undefined && m[1] == "true";
 
-        chrome.tabs.getCurrent(function(tab) {
-            try {
-                if (tab) {
-                    log("---------------- tab opened ---------------------");
-                    background.popouttab = tab;
-                    isTab = true;
+        if (isTab) {
+            log("---------------- tab opened ---------------------");
+            chrome.tabs.getCurrent(function (tab) {
+                background.SimplenoteBG.setOpenTab(tab);
+            })
+        } else {
+            log("---------------- popup opened ---------------------");
+        }
+
+        var signUpLink =  "<a href='https://simple-note.appspot.com/create/'>" + chrome.i18n.getMessage("signup") + "</a>";
+        var optionsLink = "<a href='options.html'>" + chrome.i18n.getMessage("options_page") + "</a>";
+
+        if ( !SM.haveLogin() ) {
+
+            _gaq.push(['_trackEvent', 'popup', 'ready', 'no_email_or_password']);
+
+            log("(ready): no email or password");
+            displayStatusMessage(chrome.i18n.getMessage("welcometext", [signUpLink, optionsLink]));
+
+        } else if ( !SM.credentialsValid ) {
+
+            _gaq.push(['_trackEvent', 'popup', 'ready', 'credentails_not_valid']);
+
+            log("(ready): credentials not valid");
+            displayStatusMessage("Login for email '" + SM.email + "' failed, please check your Simplenote email address and password on the " + optionsLink + "!");
+
+        } else {
+                times.startsetup = (new Date())-start;
+
+                _gaq.push(['_trackEvent', 'popup', 'ready']);
+
+                var directlyShowNote = localStorage.lastopennote_key != undefined && localStorage.lastopennote_key != "" && localStorage.lastopennote_open == "true" && localStorage.option_opentonote == "true";
+
+                $("body").show();
+
+                if (!isTab) {
+                    if (!directlyShowNote) {
+                        $("body").css("width", dimensions.def.body_width + "px");
+                        $("body").css("height", dimensions.def.body_height + "px");
+                    } else {
+                        $("#note").show();
+
+                        $("body").css("width", dimensions.focus.body_width + "px");
+                        $("body").css("height", dimensions.focus.body_height + "px");
+                    }
                 } else {
-                    log("---------------- popup opened ---------------------");
-                    if (background.popouttab) {
-                        log("--> deferring to tab");
-                        window.close();
-
-                        chrome.tabs.update(background.popouttab.id, {
-                            selected:true,
-                            pinned:localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true"
-                        }, function() {
-                            return;
-                        });
-                    } else if (localStorage.option_alwaystab == "true") {
-                        log("--> no tab, but alwaystab -> creating tab");
-                        window.close();
-
-                        chrome.tabs.create({
-                            url:chrome.extension.getURL("/popup.html"),
-                            pinned: localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true"
-                        }, function(tab) {
-                            background.popouttab = tab;
-                        });
-                    } else
-                        log("--> no tab, opening popup");
-
+                    $("#note").show();
                 }
 
-                var signUpLink =  "<a href='https://simple-note.appspot.com/create/'>" + chrome.i18n.getMessage("signup") + "</a>";
-                var optionsLink = "<a href='options.html'>" + chrome.i18n.getMessage("options_page") + "</a>";
+                popupi18n();
 
-                if ( !SM.haveLogin() ) {
+                snEditor = new SNEditor();
 
-                    _gaq.push(['_trackEvent', 'popup', 'ready', 'no_email_or_password']);
-
-                    log("(ready): no email or password");
-                    displayStatusMessage(chrome.i18n.getMessage("welcometext", [signUpLink, optionsLink]));
-
-                } else if ( !SM.credentialsValid ) {
-
-                    _gaq.push(['_trackEvent', 'popup', 'ready', 'credentails_not_valid']);
-
-                    log("(ready): credentials not valid");
-                    displayStatusMessage("Login for email '" + SM.email + "' failed, please check your Simplenote email address and password on the " + optionsLink + "!");
-
-                } else {
-                        times.startsetup = (new Date())-start;
-
-                        _gaq.push(['_trackEvent', 'popup', 'ready']);
-
-                        var directlyShowNote = localStorage.lastopennote_key != undefined && localStorage.lastopennote_key != "" && localStorage.lastopennote_open == "true" && localStorage.option_opentonote == "true";
-
-                        $("body").show();
-                        
-                        if (!isTab) {
-                            if (!directlyShowNote) {
-                                $("body").css("width", dimensions.def.body_width + "px");
-                                $("body").css("height", dimensions.def.body_height + "px");
-                            } else {
-                                $("#note").show();
-
-                                $("body").css("width", dimensions.focus.body_width + "px");
-                                $("body").css("height", dimensions.focus.body_height + "px");
+                if (directlyShowNote) {
+                    log("(ready): sending request for open to note");
+                    chrome.extension.sendRequest({action:"note", key:localStorage.lastopennote_key},
+                        function(note) {
+                            try {
+                                if (note)
+                                    snEditor.setNote(note,{
+                                        duration:0,
+                                        focus: true
+                                    });
+                            } catch (e) {
+                                exceptionCaught(e);
                             }
-                        } else {
-                            $("#note").show();
-                        }
+                        });
+                }
 
-                        popupi18n();
+                fillTags(true);
+                // bind ADD button
+                $('div#index div#toolbar div#add').click(function(event) {
 
-                        snEditor = new SNEditor();
-
-                        if (directlyShowNote) {
-                            log("(ready): sending request for open to note");
-                            chrome.extension.sendRequest({action:"note", key:localStorage.lastopennote_key},
-                                function(note) {
-                                    try {
-                                        if (note)
-                                            snEditor.setNote(note,{
-                                                duration:0,
-                                                focus: true
-                                            });
-                                    } catch (e) {
-                                        exceptionCaught(e);
-                                    }
-                                });
-                        }
-
-                        fillTags(true);
-                        // bind ADD button
-                        $('div#index div#toolbar div#add').click(function(event) {
-
-                            if (event.shiftKey) {
-                                _gaq.push(['_trackEvent', 'popup', 'addwebnoteclicked']);
-                                chrome.extension.sendRequest({
-                                    action: "webnotes",
-                                    request: {
-                                        action: "new"
-                                    }
-                                }, function(ok) {
-                                    if (ok)
-                                        popup.close();
-                                });
-                            } else {
-                                _gaq.push(['_trackEvent', 'popup', 'addclicked']);
-                                snEditor.setNote();
+                    if (event.shiftKey) {
+                        _gaq.push(['_trackEvent', 'popup', 'addwebnoteclicked']);
+                        chrome.extension.sendRequest({
+                            action: "webnotes",
+                            request: {
+                                action: "new"
                             }
-
+                        }, function(ok) {
+                            if (ok)
+                                popup.close();
                         });
+                    } else {
+                        _gaq.push(['_trackEvent', 'popup', 'addclicked']);
+                        snEditor.setNote();
+                    }
 
-                        // bind ADD WEBNOTE button
-                        $('div#index div#toolbar div#add_webnote').click(function(event) {
-                            _gaq.push(['_trackEvent', 'popup', 'addwebnoteclicked']);
-                            chrome.extension.sendRequest({
-                                action: "webnotes",
-                                request: {
-                                    action: "new"
-                                }
-                            }, function(ok) {
-                                if (ok)
-                                    popup.close();
-                            });
+                });
+
+                // bind ADD WEBNOTE button
+                $('div#index div#toolbar div#add_webnote').click(function(event) {
+                    _gaq.push(['_trackEvent', 'popup', 'addwebnoteclicked']);
+                    chrome.extension.sendRequest({
+                        action: "webnotes",
+                        request: {
+                            action: "new"
+                        }
+                    }, function(ok) {
+                        if (ok)
+                            popup.close();
+                    });
+                });
+
+                // bind SYNC div
+                $("#sync").click( function() {
+                    _gaq.push(['_trackEvent', 'popup', 'syncclicked']);
+                    chrome.extension.sendRequest({
+                        action: "sync",
+                        fullsync:true
+                    });
+                })
+                $("#snlink").click( function(event) {
+                    _gaq.push(['_trackEvent', 'popup', 'snlinkclicked']);
+                    openURLinTab("https://simple-note.appspot.com/",event.ctrlKey || event.altKey);
+                })
+
+                // bind SEARCH field
+                $('#q').bind("keyup", function(event) {
+                    if (event.which == 13) {
+                        snEditor.setNote({
+                            content:$(this).val() + "\n",
+                            tags:[],
+                            systemtags:[],
+                            key:""
+                        },{
+                            isnewnote: true,
+                            focus: true
                         });
+                    } else if (event.which == 27) {
+                        $("#q_clear").click();
+                        $(this).blur();
+                        event.stopPropagation();
+                    } else
+                        fillIndex();
 
-                        // bind SYNC div
-                        $("#sync").click( function() {
-                            _gaq.push(['_trackEvent', 'popup', 'syncclicked']);
-                            chrome.extension.sendRequest({
-                                action: "sync",
-                                fullsync:true
-                            });
-                        })
-                        $("#snlink").click( function(event) {
-                            _gaq.push(['_trackEvent', 'popup', 'snlinkclicked']);
-                            openURLinTab("https://simple-note.appspot.com/",event.ctrlKey || event.altKey);
-                        })
-
-                        // bind SEARCH field
-                        $('#q').bind("keyup", function(event) {
-                            if (event.which == 13) {
-                                snEditor.setNote({
-                                    content:$(this).val() + "\n",
-                                    tags:[],
-                                    systemtags:[],
-                                    key:""
-                                },{
-                                    isnewnote: true,
-                                    focus: true
-                                });
-                            } else if (event.which == 27) {
-                                $("#q_clear").click();
-                                $(this).blur();
-                                event.stopPropagation();
-                            } else
-                                fillIndex();
-
-                        }).focus(function() {
-                            $("#toolbar").children().not(this).not("#q_clear").hide();
-                            $(this).animate({width:"350px"},{duration: 200});
-                        }).blur(function(event) {
+                }).focus(function() {
+                    $("#toolbar").children().not(this).not("#q_clear").hide();
+                    $(this).animate({width:"350px"},{duration: 200});
+                }).blur(function(event) {
 //                            if (clearclicked) {
 //                                clearclicked = false;
 //                                return
 //                            }
-                            $(this).animate({width:"197px"},{duration: 200, complete: function() {$("#toolbar").children().not(this).not("#q_clear").show();}});
-                        });
+                    $(this).animate({width:"197px"},{duration: 200, complete: function() {$("#toolbar").children().not(this).not("#q_clear").show();}});
+                });
 //                        var clearclicked = false;
-                        $("#q_clear").bind("mousedown",function(event) {
+                $("#q_clear").bind("mousedown",function(event) {
 //                            clearclicked = true;
-                            $('#q').val("");
-                            $("#q_clear").hide();
-                            $("#q").blur()
-                            event.stopPropagation();
-                            fillIndex();
-                        });
+                    $('#q').val("");
+                    $("#q_clear").hide();
+                    $("#q").blur()
+                    event.stopPropagation();
+                    fillIndex();
+                });
 
-                        $.timeago.settings.strings= {
-                            prefixAgo: null,
-                            prefixFromNow: null,
-                            suffixAgo: "",
-                            suffixFromNow: "from now",
-                            seconds:    chrome.i18n.getMessage("seconds"),
-                            minute:     chrome.i18n.getMessage("minute"),
-                            minutes:    chrome.i18n.getMessage("minutes"),
-                            hour:       chrome.i18n.getMessage("hour"),
-                            hours:      chrome.i18n.getMessage("hours"),
-                            day:        chrome.i18n.getMessage("day"),
-                            days:       chrome.i18n.getMessage("days"),
-                            month:      chrome.i18n.getMessage("month"),
-                            months:     chrome.i18n.getMessage("months"),
-                            year:       chrome.i18n.getMessage("year"),
-                            years:      chrome.i18n.getMessage("years"),
-                            numbers: []
-                        }
-
-                        if (localStorage.option_color_index)
-                            $("body").css("background-color",localStorage.option_color_index);
-
-                        //$("div#note").resizable();
-                        if (isTab) {
-                            //$("div#note").css("left","421px");
-                            //$("#container").splitter();
-
-        //                    $("div#slider").show();
-        //                    $("div#note").css("left","421px");
-        //
-        //                    $("div#note").resizable({handles: {"w": $("div#slider").get(0)},
-        //                            resize: function(event, ui)
-        //                            {
-        //                                var left = ui.position.left;
-        //                                $('div#index').css("width", (left-24)+"px");
-        //                                $('div#slider').css("left", (left-22)+"px");
-        //                            },
-        //                            stop: function(event, ui)
-        //                            {
-        //                                var left = ui.position.left;
-        //                                $('div#index').css("width", (left-24)+"px");
-        //                                $('div#slider').css("left", (left-22)+"px");
-        //                            }
-        //                    });
-        //                    console.log(cssprop("div#note","left"))
-        //                    console.log($("div#index").css("right"))
-                            //$("div#index").css("width",cssprop("div#note","left")-4)
-                        }
-
-                    setTimeout(function() {
-                        log("(ready, delayed): requesting full sync.");
-                        chrome.extension.onRequest.addListener(uiEventListener);
-
-                        chrome.extension.sendRequest({
-                            action: "sync",
-                            fullsync:true
-                        }, function() {
-                            log("(ready, delayed + async): sync request complete");
-                        });
-                    },1000);
-
-                    times.endsetup = (new Date())-start;
-
+                $.timeago.settings.strings= {
+                    prefixAgo: null,
+                    prefixFromNow: null,
+                    suffixAgo: "",
+                    suffixFromNow: "from now",
+                    seconds:    chrome.i18n.getMessage("seconds"),
+                    minute:     chrome.i18n.getMessage("minute"),
+                    minutes:    chrome.i18n.getMessage("minutes"),
+                    hour:       chrome.i18n.getMessage("hour"),
+                    hours:      chrome.i18n.getMessage("hours"),
+                    day:        chrome.i18n.getMessage("day"),
+                    days:       chrome.i18n.getMessage("days"),
+                    month:      chrome.i18n.getMessage("month"),
+                    months:     chrome.i18n.getMessage("months"),
+                    year:       chrome.i18n.getMessage("year"),
+                    years:      chrome.i18n.getMessage("years"),
+                    numbers: []
                 }
-                        
-            } catch (e) {
-                exceptionCaught(e);
-            }
-        });
-    } catch(e) {
+
+                if (localStorage.option_color_index)
+                    $("body").css("background-color",localStorage.option_color_index);
+
+                //$("div#note").resizable();
+                if (isTab) {
+                    //$("div#note").css("left","421px");
+                    //$("#container").splitter();
+
+//                    $("div#slider").show();
+//                    $("div#note").css("left","421px");
+//
+//                    $("div#note").resizable({handles: {"w": $("div#slider").get(0)},
+//                            resize: function(event, ui)
+//                            {
+//                                var left = ui.position.left;
+//                                $('div#index').css("width", (left-24)+"px");
+//                                $('div#slider').css("left", (left-22)+"px");
+//                            },
+//                            stop: function(event, ui)
+//                            {
+//                                var left = ui.position.left;
+//                                $('div#index').css("width", (left-24)+"px");
+//                                $('div#slider').css("left", (left-22)+"px");
+//                            }
+//                    });
+//                    console.log(cssprop("div#note","left"))
+//                    console.log($("div#index").css("right"))
+                    //$("div#index").css("width",cssprop("div#note","left")-4)
+                }
+
+            setTimeout(function() {
+                log("(ready, delayed): requesting full sync.");
+                chrome.extension.onRequest.addListener(uiEventListener);
+
+                chrome.extension.sendRequest({
+                    action: "sync",
+                    fullsync:true
+                }, function() {
+                    log("(ready, delayed + async): sync request complete");
+                });
+            },1000);
+
+            times.endsetup = (new Date())-start;
+
+        }
+   
+        setTimeout(function() {
+            var ga = document.createElement('script');ga.type = 'text/javascript';ga.async = true;
+            if (debugFlags.GA)
+                ga.src = 'https://ssl.google-analytics.com/u/ga_debug.js';
+            else
+                ga.src = 'https://ssl.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0];s.parentNode.insertBefore(ga, s);
+        },10);
+    
+    } catch (e) {
         exceptionCaught(e);
     }
-    log("(ready):setting up ga");
-
-    setTimeout(function() {
-        var ga = document.createElement('script');ga.type = 'text/javascript';ga.async = true;
-        if (debugFlags.GA)
-            ga.src = 'https://ssl.google-analytics.com/u/ga_debug.js';
-        else
-            ga.src = 'https://ssl.google-analytics.com/ga.js';
-        var s = document.getElementsByTagName('script')[0];s.parentNode.insertBefore(ga, s);
-    },10);
-    
-    log("(ready):done");
 }
 
 function popupi18n() {
@@ -1489,8 +1460,8 @@ SNEditor.prototype.initialize = function() {
         if (!isTab)
             $('div#note #popout').click(function(event) {
                 _gaq.push(['_trackEvent', 'popup', 'popoutclicked']);
-                chrome.tabs.create({url:chrome.extension.getURL("/popup.html"), pinned:localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true"}, function(tab) {
-                    background.popouttab = tab;
+                chrome.tabs.create({url:chrome.extension.getURL("/popup.html?tab=true"), pinned:localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true"}, function(tab) {
+                    background.SimplenoteBG.setOpenTab(tab);
                 });
             });
         else {
