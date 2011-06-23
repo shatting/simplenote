@@ -160,7 +160,7 @@ function uiEventListener(eventData, sender, sendResponse) {
 //            console.log(eventData.oldnote)
 //            console.log(eventData.newnote)
             if (deleted) {
-                log("EventListener:noteupdated:deleted");
+                log("EventListener:noteupdated: deleted");
                 if (noteRowCurrentlyVisible(eventData.newnote.key)) {
                     $('div.noterow#' + eventData.newnote.key).attr("deleteanimation","true");
                     $('div.noterow#' + eventData.newnote.key).hide("slow", function() {$(this).remove();});
@@ -173,15 +173,18 @@ function uiEventListener(eventData, sender, sendResponse) {
                     snEditor.needCMRefresh("pinned");
 
                 fillTags(false);
+                snEditor.hideIfNotInIndex();
             } else if (undeleted) {
-                log("EventListener:noteupdated:undeleted");
+                log("EventListener:noteupdated: undeleted");
                 if (noteRowCurrentlyVisible(eventData.newnote.key)) {
+                    $('div.noterow#' + eventData.newnote.key).attr("deleteanimation","true");
                     $('div.noterow#' + eventData.newnote.key).hide("slow", function() {$(this).remove();});
                 }
                 if (eventData.newnote.systemtags.indexOf("pinned")>=0)
                     snEditor.needCMRefresh("pinned");
 
                 fillTags(false);
+                snEditor.hideIfNotInIndex();
             } else if (eventData.changes.changed.indexOf("tags")>=0) {
                 log("EventListener:noteupdated:tags");
                 fillTags(true);
@@ -242,11 +245,11 @@ function uiEventListener(eventData, sender, sendResponse) {
             log("EventListener:notedeleted:" + eventData.key);
             $('div.noterow#' + eventData.key).remove();
             fillTags(false);
+            snEditor.hideIfNotInIndex();
         } else {
             log("EventListener:");
             log(eventData);
         }        
-        snEditor.hideIfNotInIndex();
     } catch (e) {
         exceptionCaught(e);
     }
@@ -805,11 +808,7 @@ function noteRowCMfn(contextmenu) {
         i[chrome.i18n.getMessage("trash_tooltip","")] = {
             onclick: function() {
                 _gaq.push(['_trackEvent', 'popup', 'cm', 'trash']);                
-                chrome.extension.sendRequest({action : "update", key : $(this).attr("id"), deleted: 1},
-                    function() {
-                        snEditor.hideIfNotInIndex();
-                        checkInView();
-                    });
+                noteOps.trashNote($(this).attr("id"));
             },
             icon: "/images/trash.png"
         };
@@ -834,11 +833,7 @@ function noteRowCMfn(contextmenu) {
         i[chrome.i18n.getMessage("recover_from_trash")] = {
             onclick: function() {
                 _gaq.push(['_trackEvent', 'popup', 'cm', 'recover_trash']);
-                chrome.extension.sendRequest({action : "update", key : $(this).attr("id"), deleted : 0},
-                    function() {
-                        snEditor.hideIfNotInIndex();
-                        checkInView();
-                    });
+                noteOps.untrashNote($(this).attr("id"));
             },
             icon: "/images/untrash.png"
         };
@@ -871,6 +866,24 @@ function noteRowCMfn(contextmenu) {
             
 }
 
+var noteOps = {
+
+    trashNote: function(key) {
+        chrome.extension.sendRequest({action : "update", key : key, deleted: 1},
+            function() {
+                snEditor.hideIfNotInIndex();
+                checkInView();
+            });
+    },
+
+    untrashNote: function(key) {
+        chrome.extension.sendRequest({action : "update", key : key, deleted : 0},
+            function() {
+                snEditor.hideIfNotInIndex();
+                checkInView();
+            });
+    }
+}
 /*
  * Appends/prepends/replaces a noterow div in the index pane.
  *
@@ -1095,7 +1108,7 @@ function indexFillNoteReqComplete(note) {
             } else {
                 $noterow.attr("title", chrome.i18n.getMessage("click_to_undelete"));
                 $noterow.bind("click",note.key,function(event) {
-                    chrome.extension.sendRequest({action : "update", key : event.data, deleted : 0});
+                    noteOps.untrashNote(event.data);
                 });
             }
 
@@ -1115,6 +1128,8 @@ function indexFillNoteReqComplete(note) {
             }
 
             checkInView();
+            if ($noterow.index()<=$(".selectednote").index())
+                scrollSelectedIntoView();
         } catch (e) {
             exceptionCaught(e);
         }
@@ -1575,20 +1590,22 @@ SNEditor.prototype.hideIfNotInIndex = function () {
         else
             return this.id;
     }).get();
-    var that = this;
-
+    
     if (!this.note || (this.note.key != "" && keys.indexOf(this.note.key)<0)) {
         if (keys.length > 0)
             chrome.extension.sendRequest({action:"note", key:keys[0]}, function(note) {
-                if (note.deleted != 1)
-                    that.setNote(note,{focus:false});
-                else
+                if (note.deleted != 1) {
+                    
+                    //that.setNote(note,{focus:false});
+                } else
                     $("div#note").hide();
                 });
         else
             $("div#note").hide();
     } else if (this.note)
         this.show();
+
+    scrollSelectedIntoView();
 }
 
 //  ---------------------------------------
@@ -1734,7 +1751,8 @@ SNEditor.prototype.setNote = function(note, options) {
         if (note.key && note.key != "") {
             $("div.noterow#"+ note.key).addClass("selectednote");
             chrome.extension.sendRequest({action:"cm_updatelastopen"});
-        }
+            scrollSelectedIntoView();
+        }        
     }
 }
 
@@ -1898,12 +1916,9 @@ SNEditor.prototype.setupTags = function() {
 SNEditor.prototype.trashNote = function() {
     if (!this.note || this.note.key == "")
         return;
-    var that = this;
     log("SNEditor.trashNote");
-    chrome.extension.sendRequest({action : "update", key : this.note.key, deleted: 1},
-            function() {
-                    //that.hideIfNotInIndex();
-            });
+
+    noteOps.trashNote(this.note.key);
 }
 
 SNEditor.prototype.saveTimerInit = function() {
@@ -2075,25 +2090,26 @@ function checkInView() {
     }
 }
 
-//function isInView($noterow) {
-//    $notes = $("#notes");
-//    viewportSize   = {height: $notes.height(), width:$notes.width()};
-//    viewportOffset = {top: $notes.scrollTop(), left:$notes.scrollLeft()};
-//
-//    elementSize   = {
-//        height: $noterow.height(),
-//        width: $noterow.width()
-//    },
-//    elementOffset = $noterow.offset();
-//
-//    //log("checkInView:elementSize=[" + elementSize.height + "," + elementSize.width + "], elementOffset=[" + elementOffset.left + "," + elementOffset.top + "]");
-//
-//    return elementOffset.top <= viewportOffset.top + viewportSize.height*(1 + preLoadFactor) &&
-//        elementOffset.left + elementSize.width >= viewportOffset.left &&
-//        elementOffset.left <= viewportOffset.left + viewportSize.width;
-//
-////            console.log(i + ": loaded " + loaded + ", inview=" + inview);
-////            console.log(elementOffset);
-////            console.log(elementOffset);
-//
-//}
+function scrollSelectedIntoView() {
+    var $noterow = $(".selectednote");
+    if ($noterow.length == 1 && noteRowCurrentlyVisible($noterow.attr("id"))) {
+        var $notes = $("#notes");
+     
+        var relativeOffset = $noterow.offset().top - $notes.offset().top + $notes.scrollTop();
+        var viewportHeight = $notes.innerHeight() - cssprop($notes,"margin-bottom");
+
+        //log("scrollSelectedIntoView:[" + $notes.scrollTop() + " < "+ relativeOffset + " < " + (relativeOffset + $noterow.height()) + " < " + ($notes.scrollTop() + viewportHeight) + "]");
+
+        var isAbove = relativeOffset < $notes.scrollTop();
+        var isBelow = relativeOffset + $noterow.height() > $notes.scrollTop() + viewportHeight;
+
+        if (isAbove || isBelow) {
+            var scrollTo = relativeOffset - 0.5*$notes.height() + 0.5*$noterow.height();
+            //log("scrollSelectedIntoView:" + scrollTo )
+            $("#notes").scrollTop(scrollTo);
+        }
+    }
+
+}
+
+
