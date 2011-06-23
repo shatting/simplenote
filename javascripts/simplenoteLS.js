@@ -429,10 +429,10 @@ var SimplenoteLS = {
 
     _reset : function () {
         $.each(this.getKeys(), function (i,e) {
-            this._delVal(e);
+            SimplenoteLS._delVal(e);
         });
         $.each(this.getSyncKeys(), function (i,e) {
-            this._delVal(e);
+            SimplenoteLS._delVal(e);
         });
         this._delVal(this.keysKey);
         this._delVal(this.syncKeysKey);

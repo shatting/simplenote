@@ -266,7 +266,8 @@ function shorcuts(event) {
     if ($("#q").is(":focus")) {
         switch(event.keyCode) {
             case 27: // esc
-                $("#q").blur();
+                log("esc")
+                $("#q_clear").mousedown();
                 event.preventDefault();
                 return;
             break
@@ -328,11 +329,11 @@ function shorcuts(event) {
                 case 83: //alt-s
                     snEditor.searchForSelection();break;
                 case 86: //alt-v
-                    snEditor.insertUrl();break;
+                    if (!isTab) snEditor.insertUrl();break;
                 case 66: //alt-b
                     $('div#note #backtoindex').click();break;
                 case 82: //alt-r
-                    $('div#note #revert').click();break;
+                    if (!isTab) $('div#note #revert').click();break;
                 case 79: //alt-o
                     if (!isTab) $('div#note #popout').click();break;
                 case 80: //alt-p
@@ -342,12 +343,12 @@ function shorcuts(event) {
                     $("div#note #wraptoggle").click();
                     break;
                 case 84: //alt-t
-                    $("#tagsauto").focus();
-                    event.stopPropagation();
+                    event.preventDefault();
+                    $("#tagsauto").focus();                    
                     break;
                 case 69: //alt-e
+                    event.preventDefault();
                     snEditor.focus();
-                    event.stopPropagation();
                     break;
             }
         if (event.altKey && !event.shiftKey && event.ctrlKey)
@@ -510,31 +511,38 @@ function readyListener() {
                             isnewnote: true,
                             focus: true
                         });
-                    } else if (event.which == 27) {
-                        $("#q_clear").click();
-                        $(this).blur();
-                        event.stopPropagation();
+                    } else if (event.which == 27) {                        
+                        //event.stopPropagation();
                     } else
                         fillIndex();
 
                 }).focus(function() {
+                    log("focus")
                     $("#toolbar").children().not(this).not("#q_clear").hide();
-                    $(this).animate({width:"350px"},{duration: 200});
+                    $(this).animate({width:"350px"},{duration: 200, complete: function() {$("#q_clear").show();}});
                 }).blur(function(event) {
 //                            if (clearclicked) {
 //                                clearclicked = false;
 //                                return
 //                            }
-                    $(this).animate({width:"197px"},{duration: 200, complete: function() {$("#toolbar").children().not(this).not("#q_clear").show();}});
+                    log("blur")
+                    $(this).animate({width:"197px"},{duration: 200, complete: function() {
+                            $("#toolbar").children().not(this).not("#q_clear").show();
+                            if ($("#q").val().trim() == "")
+                                $("#q_clear").hide();
+                        }});
                 });
 //                        var clearclicked = false;
                 $("#q_clear").bind("mousedown",function(event) {
 //                            clearclicked = true;
+                    log("mousedown")
                     $('#q').val("");
                     $("#q_clear").hide();
                     $("#q").blur()
                     event.stopPropagation();
+                    $("body").focus();
                     fillIndex();
+                    
                 });
 
                 $.timeago.settings.strings= {
@@ -727,10 +735,10 @@ function fillIndex() {
 
         log("fillIndex: " + JSON.stringify(req));
 
-        if ($("#q").val() != "") {
-            $("#q_clear").show();
-        } else
-            $("#q_clear").hide();
+//        if ($("#q").val() != "") {
+//            $("#q_clear").show();
+//        } else
+//            $("#q_clear").hide();
 
         $("#index").show();
 

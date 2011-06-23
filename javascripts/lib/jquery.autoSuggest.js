@@ -189,15 +189,17 @@
                     lastKeyPressCode = e.keyCode;
 
                     $(".as-selection-item",item_holder).css("border-color","")
+                    if (e.keyCode != 8)
+                        item_holder.children().removeClass("selected");
 
                     switch(e.keyCode) {
                         case 38: // up
                             e.preventDefault();
-                            moveSuggestionsSelection("up");
+                            moveSuggestionsSelection("up");                            
                             break;
                         case 40: // down
                             e.preventDefault();
-                            moveSuggestionsSelection("down");
+                            moveSuggestionsSelection("down");                            
                             break;
                         case 8:  // delete
                             if(input.val() == ""){ // select or delete previous
@@ -256,13 +258,13 @@
                                 else
                                     showSuggestions(true);
                             }
-
+                            break;
                         case 13: // return
 
                             tab_press = false;
                             var active = $("li.active:first", results_holder);
                             if(active.length > 0){
-                                active.click();
+                                active.mousedown();
                                 results_holder.hide();
                             }
                             if(opts.neverSubmit || active.length > 0){
@@ -309,7 +311,7 @@
                     opts.onChange.call(this,"edited");
 
                 }).bind("keyup", function() {
-                    
+                    adjustInputWidth();
                 });
 
                 function getInputValue() {
@@ -400,7 +402,7 @@
 
                         if((query == "" || data_string.indexOf(query) >= 0) && values_array.indexOf(data[num][opts.selectedValuesProp]) == -1) {
 
-                            var formatted = $('<li class="as-result-item" id="as-result-item-'+num+'"></li>').click(function(){
+                            var formatted = $('<li class="as-result-item" id="as-result-item-'+num+'"></li>').mousedown(function(){
                                 var raw_data = $(this).data("data");
                                 var number = raw_data.num;
                                 if($("#as-selection-"+number, item_holder).length <= 0 && !tab_press){
@@ -412,7 +414,6 @@
                                     results_holder.hide();
                                 }
                                 tab_press = false;
-                            }).mousedown(function(){
                                 input_focus = false;
                             }).mouseover(function(){
                                 $("li", results_ul).removeClass("active");
