@@ -220,7 +220,9 @@ function get_manifest(callback) {
 }
 
 // jquery ":focus" selector
-jQuery.expr[':'].focus = function( elem ) {return elem === document.activeElement && ( elem.type || elem.href );};
+if (jQuery) {
+    jQuery.expr[':'].focus = function( elem ) {return elem === document.activeElement && ( elem.type || elem.href );};
+}
 
 function arrayEqual(arr1,arr2) {
     if (arr1.length != arr2.length)

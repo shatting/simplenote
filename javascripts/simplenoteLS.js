@@ -2,9 +2,9 @@
 // Simplenote localStorage Database.
 // ------------------------------------------------------------------------------------------------
 
-$.storage = new $.store("localStorage",{
-    "json":$.store.serializers.json
-});
+//$.storage = new $.store("localStorage",{
+//    "json":$.store.serializers.json
+//});
 
 var SimplenoteLS = {
     keysKey         : "_keys",
@@ -33,9 +33,9 @@ var SimplenoteLS = {
     indexTime : function(newIndexTime) {
         if (newIndexTime) {
             this.log("indexTime:setting new indexTime:" + convertDate(newIndexTime) );
-            localStorage[this.indexTimeKey] = newIndexTime;
+            this._setVal(this.indexTimeKey,newIndexTime);
         } else
-            return localStorage[this.indexTimeKey];
+            return this._getVal(this.indexTimeKey);
     },
 
     haveNote : function(key) {
@@ -59,8 +59,8 @@ var SimplenoteLS = {
         var keys = this.getKeys();
         keys.push(note.key);
 
-        $.storage.set(this.keysKey,keys);
-        $.storage.set(note.key,note);       
+        this._setVal(this.keysKey,keys);
+        this._setVal(note.key,note);
             
         uiEvent("noteadded", {note:this.addCustomFields(note)});
     },
@@ -112,7 +112,7 @@ var SimplenoteLS = {
             haveStored = true;
             if (source=="local")
                 inputNote.systemtags.sort();
-            $.storage.set(inputNote.key,inputNote);
+            this._setVal(inputNote.key,inputNote);
         } else if (source == "updateresponse" || source == "index") {
             onlyLocalContent = inputNote.content == undefined && storedNote.content != undefined;
             if (changed.hadChanges) {
@@ -123,7 +123,7 @@ var SimplenoteLS = {
                     inputNote.content = storedNote.content;
                 }
                 haveStored = true;
-                $.storage.set(inputNote.key,inputNote);
+                this._setVal(inputNote.key,inputNote);
             }
         }
 
@@ -144,7 +144,7 @@ var SimplenoteLS = {
     },
 
     getNote : function(key) {
-        return this.addCustomFields($.storage.get(key));
+        return this.addCustomFields(this._getVal(key));
     },
     /*
      *     options:
@@ -178,7 +178,7 @@ var SimplenoteLS = {
         // filter with options
         for (var i = 0; i<keys.length;i++) {
             add = true;
-            note = $.storage.get(keys[i]);
+            note = this._getVal(keys[i]);
             if (!options) {
                 notes.push(note);
                 continue;
@@ -291,8 +291,8 @@ var SimplenoteLS = {
 
         if (keys.indexOf(key)>=0) {
             keys.splice(keys.indexOf(key),1);
-            $.storage.set(this.keysKey,keys);
-            $.storage.del(key);
+            this._setVal(this.keysKey,keys);
+            this._delVal(key);
 
             uiEvent("notedeleted", {key: key});
             this.log("delNote:deleting " + key);
@@ -301,14 +301,14 @@ var SimplenoteLS = {
     },
 
     getKeys : function() {
-        var keys = $.storage.get(this.keysKey);
+        var keys = this._getVal(this.keysKey);
         if (!keys)
             keys = [];
         return keys;
     },
 
     getSyncKeys : function() {
-        var keys = $.storage.get(this.syncKeysKey);
+        var keys = this._getVal(this.syncKeysKey);
         if (!keys)
             keys = [];
         return keys;
@@ -330,7 +330,7 @@ var SimplenoteLS = {
         var thissystemtags;
         var thistagfound;
         $.each(keys,function(keyindex,key) {
-            thisnote = $.storage.get(key);
+            thisnote = SimplenoteLS._getVal(key);
             if (thisnote.deleted != 1) {
                 predeftags[0].count++;
                 thistags = thisnote.tags;
@@ -396,7 +396,7 @@ var SimplenoteLS = {
         if (keys.indexOf(key)<0) {
             this.log("addToSyncList:"+key);
             keys.push(key);
-            $.storage.set(this.syncKeysKey,keys);
+            this._setVal(this.syncKeysKey,keys);
             uiEvent("synclistchanged", {added:key});
         }
     },
@@ -408,9 +408,9 @@ var SimplenoteLS = {
             this.log("removeFromSyncList:"+key);
             keys.splice(keys.indexOf(key),1);
             if (keys.length == 0)
-                $.storage.del(this.syncKeysKey)
+                this._delVal(this.syncKeysKey);
             else
-                $.storage.set(this.syncKeysKey,keys);
+                this._setVal(this.syncKeysKey,keys);
             uiEvent("synclistchanged", {removed:key});
         }
     },
@@ -425,14 +425,14 @@ var SimplenoteLS = {
 
     _reset : function () {
         $.each(this.getKeys(), function (i,e) {
-            $.storage.del(e);
+            this._delVal(e);
         });
         $.each(this.getSyncKeys(), function (i,e) {
-            $.storage.del(e);
+            this._delVal(e);
         });
-        $.storage.del(this.keysKey);
-        $.storage.del(this.syncKeysKey);
-        $.storage.del(this.indexTimeKey);
+        this._delVal(this.keysKey);
+        this._delVal(this.syncKeysKey);
+        this._delVal(this.indexTimeKey);
     },
 
     _maintain: function () {
@@ -443,7 +443,7 @@ var SimplenoteLS = {
                 SimplenoteLS.log("maintain:removed invalid key:" + e);
             return keep;
         });
-        $.storage.set(this.keysKey,keys);
+        this._setVal(this.keysKey,keys);
 
 //    },
 //
@@ -482,6 +482,22 @@ var SimplenoteLS = {
 //
 //        }
 
+    },
+
+    _getVal: function(key) {
+        var raw = localStorage[key];
+        if (raw != undefined)
+            return JSON.parse(raw);
+        else
+            return undefined;
+    },
+
+    _setVal: function(key,val) {
+        localStorage[key] = JSON.stringify(val);
+    },
+
+    _delVal: function(key) {
+        delete localStorage[key];
     }
 
 }

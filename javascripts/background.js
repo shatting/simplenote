@@ -204,7 +204,7 @@ var SimplenoteBG = {
 }
 
 // sync on browser start
-$(document).ready(function() {
+window.onload = function() {
     try {
         SimplenoteCM.populate();
         SimplenoteBG.backgroundSync(true);        
@@ -230,7 +230,7 @@ $(document).ready(function() {
 
     SimplenoteBG.log("(ready) done");
 
-});
+}
 
 chrome.extension.onRequest.addListener(SimplenoteBG.handleRequest);
 
