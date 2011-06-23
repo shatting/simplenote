@@ -213,9 +213,29 @@ var SimplenoteLS = {
             }
             if (!add) continue;
 
-            if (wordexps)
-                for (var j=0; j<wordexps.length; j++)
-                    add &= note.content.match(wordexps[j]) != undefined;
+//            if (wordexps)
+//                for (var j=0; j<wordexps.length; j++)
+//                    add &= note.content.match(wordexps[j]) != undefined;
+//
+            if (options.contentquery && options.contentquery !="") {
+                note.score = note.content.score(options.contentquery);
+                add &= note.score > 0;
+            }
+                
+//              displayResults: function(scores) {
+//			var self = this;
+//			this.list.children('li').hide();
+//			$.each(scores, function(i, score) { self.rows[score[1]].show(); });
+//		},
+//
+//		getScores: function(term) {
+//			var scores = [];
+//			for (var i=0; i < this.cache_length; i++) {
+//				var score = this.cache[i].score(term);
+//				if (score > 0) { scores.push([score, i]); }
+//			}
+//			return scores.sort(function(a, b) { return b[0] - a[0]; });
+//		}
 
             if (!add) continue;
 
@@ -241,7 +261,12 @@ var SimplenoteLS = {
         if (options.sortdirection == undefined)
             options.sortdirection = 1;
 
-        if (options.sort == undefined || options.sort == "modifydate")
+        if (options.contentquery && options.contentquery !="") {
+            notes.sort(function(note1,note2) {
+                return note2.score - note1.score;
+            });
+            notes = notes.map(function(note) { delete note.score; return note;});
+        } else if (options.sort == undefined || options.sort == "modifydate")
             notes.sort(function(note1,note2) {
                 return options.sortdirection*(note2.modifydate-note1.modifydate);
             });

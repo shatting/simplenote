@@ -591,7 +591,7 @@ function readyListener() {
 //                    });
 //                    console.log(cssprop("div#note","left"))
 //                    console.log($("div#index").css("right"))
-                    //$("div#index").css("width",cssprop("div#note","left")-4)
+                    $("div#index").css("width",cssprop("div#note","left")-4)
                 }
 
             setTimeout(function() {
