@@ -187,18 +187,22 @@ div#statusbar {
 
 div.noterow {
     ''background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));
-    ''-webkit-box-shadow: 0 0px 2px rgba(0,80,128,0.5);    
     margin-right: 2px;
     margin-bottom: 1px;
     margin-top: 0px;
-    padding: 10px;
+    padding: 9px;
     padding-right: 6px;
     background: white;
     cursor:pointer;
+    border: 1px solid white;
+    ''-webkit-box-shadow: 0 0px 2px rgba(255,255,255,1);
+    -webkit-transition: all 70ms ease-in-out;
 }
 
 div.noterow:hover {
-    background: #4F92EB -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));     
+    ''background: #4F92EB -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
+    background: #4F92EB;
+    border: 1px solid #5CA0FF;
 }
 div.noterow:hover div.noteheading { color: #fff}
 div.noterow:hover div.abstract { color: #ccc}
@@ -210,10 +214,17 @@ div.unread {
 
 div.selectednote {
     background: #4F92EB -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
+    ''background: #4F92EB;
+
+    border: 1px solid #5CA0FF;
 }
 div.selectednote div.noteheading { color: #fff}
 div.selectednote div.abstract { color: #ccc}
 div.selectednote abbr.notetime { color: #ddd}
+
+div.fullhit {       
+    border: 1px dashed green;
+}
 
 /* noterow children */
 
@@ -224,6 +235,7 @@ div.noteheading, div.abstract {
     width: auto;
     margin-right: 0px;
     white-space: nowrap;
+    -webkit-transition: all 70ms ease-in-out;
 }
 
 div.noteheading { color:#111;}
@@ -232,6 +244,7 @@ div.noterowdeleted div.noteheading { color:#666;}
 div.abstract {
   color: #999;
   font-size: 10px;
+  -webkit-transition: all 70ms ease-in-out;
 }
 
 abbr.notetime {
@@ -242,6 +255,7 @@ abbr.notetime {
     cursor: pointer;
     float: right;
     cursor: help;
+    -webkit-transition: all 70ms ease-in-out;
 }
 
 /*div.noterowdeleted:hover {

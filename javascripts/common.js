@@ -9,7 +9,7 @@ var webnotereg = new RegExp(webnoteregstr,"m");
 
 // debug switches
 var debugFlags = {
-    general     : true,
+    general     : false,
     popup       : true,
     popup2BG    : true,
     BG          : true,

@@ -742,6 +742,8 @@ function fillIndex() {
 
         $("#index").show();
 
+        var maxFill = $('#q').val()==""?15:1000;
+
         chrome.extension.sendRequest(req, function(notes) {
             try {
                 log("fillIndex(async):request complete, building index");
@@ -754,7 +756,7 @@ function fillIndex() {
                     for(var i = 0; i < notes.length; i ++ ) {
                         note = notes[i];
                         indexAddNote("append",note);
-                        if (i<15 && note.content != undefined)
+                        if (i<maxFill && note.content != undefined)
                             indexFillNote(note);
                     }
                     $("div.noterow").contextMenu(noteRowCMfn, {
@@ -1082,7 +1084,13 @@ function indexFillNoteReqComplete(note) {
             $('#' + note.key + 'loader').remove();
             $noteheading.removeAttr("align"); // from loader
             // set actual heading
-            $noteheading.html(htmlEncode(lines[0] != undefined?lines[0].trim():" ",100)); // dont need more than 100 chars
+            var html = htmlEncode(lines[0] != undefined?lines[0].trim():" ",100);
+            if (note.score != undefined) {
+                //html = note.score + " - " + html;
+                if (note.score >= 1)
+                    $noterow.addClass("fullhit")
+            }
+            $noteheading.html(html); // dont need more than 100 chars
             // deleted note css style
             if (note.deleted == 1) {
                 $noterow.addClass("noterowdeleted"); // for undelete image on hover
@@ -1098,10 +1106,6 @@ function indexFillNoteReqComplete(note) {
             $noteabstract.html(htmlEncode(abstractlines,100).join("<br/>"));
 
             $noterow.unbind("click");
-            // add dblclick binding
-            //$noterow.css("height",$noterow.height());
-            //$noterow.data('origheight',$noterow.height());
-            //$noterow.dblclick(maximize);
 
             // add click binding
             if (note.deleted == 0) {
@@ -1213,7 +1217,7 @@ function slideIndex(callback, duration) {
         $('div#note').animate({left: dimensions.def.note_left + "px"}, {duration:duration, easing: slideEasing});
         $('div#index').animate({left: dimensions.def.index_left + "px", right: dimensions.def.index_right + "px"}, {duration: duration, easing: slideEasing});
 
-        $('body').animate({width : dimensions.def.body_width + "px"}, {duration: 0.85*duration, easing: slideEasing,
+        $('body').animate({width : dimensions.def.body_width + "px"}, {duration: duration, easing: slideEasing,
             complete: function() {
                 if (callback) callback();
             }
@@ -1613,7 +1617,8 @@ SNEditor.prototype.hideIfNotInIndex = function () {
     } else if (this.note)
         this.show();
 
-    scrollSelectedIntoView();
+    if ($('#q').val() == "")
+        scrollSelectedIntoView();
 }
 
 //  ---------------------------------------

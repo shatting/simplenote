@@ -163,23 +163,31 @@ var SimplenoteLS = {
         var notes = [];
         var add;
         var note;
+        var words;
         var wordexps;
         var regex, notregex;
+        var getall = false;
 
-        if (options && options.contentquery && options.contentquery != "") {
-            wordexps = options.contentquery.split(" ").map(function(word) {return new RegExp(RegExp.escape(word),'gi');});
+        if (!options) {
+            options={};
+            getall = true;
         }
-        if (options && typeof options.regex == "string")
+
+        if (options.contentquery && options.contentquery != "") {
+            words = options.contentquery.split(" ").filter(function(w) { return w != ""});
+            wordexps = words.map(function(word) {return new RegExp(RegExp.escape(word),'gi');});
+        }
+        if (typeof options.regex == "string")
             regex = new RegExp(options.regex,"m");
 
-        if (options && typeof options.notregex == "string")
+        if (typeof options.notregex == "string")
             notregex = new RegExp(options.notregex,"m");
 
         // filter with options
         for (var i = 0; i<keys.length;i++) {
             add = true;
             note = this._getVal(keys[i]);
-            if (!options) {
+            if (getall) {
                 notes.push(note);
                 continue;
             }
@@ -218,7 +226,11 @@ var SimplenoteLS = {
 //                    add &= note.content.match(wordexps[j]) != undefined;
 //
             if (options.contentquery && options.contentquery !="") {
-                note.score = note.content.score(options.contentquery);
+                note.score = 0;
+                for (var j=0; j<words.length; j++)
+                    note.score += note.content.score(words[j]);
+                for (var j=0; j<wordexps.length; j++)
+                    note.score += note.content.match(wordexps[j]) != undefined ? 1:0;
                 add &= note.score > 0;
             }
                 
@@ -255,9 +267,6 @@ var SimplenoteLS = {
         }
 
         // sort with options
-        if (!options)
-            options={};
-
         if (options.sortdirection == undefined)
             options.sortdirection = 1;
 
@@ -265,7 +274,7 @@ var SimplenoteLS = {
             notes.sort(function(note1,note2) {
                 return note2.score - note1.score;
             });
-            notes = notes.map(function(note) { delete note.score; return note;});
+            //notes = notes.map(function(note) { delete note.score; return note;});
         } else if (options.sort == undefined || options.sort == "modifydate")
             notes.sort(function(note1,note2) {
                 return options.sortdirection*(note2.modifydate-note1.modifydate);
@@ -295,18 +304,19 @@ var SimplenoteLS = {
 
         // get pinned on top
         //   since chromes array sort isnt stable, we have to stabilize it
-        for (i=0; i<notes.length; i++)
-            notes[i].index = i;
-        notes.sort(function(n1,n2) {
-            var d = (n2.systemtags.indexOf("pinned")>=0?1:0) - (n1.systemtags.indexOf("pinned")>=0?1:0);
-            if (d==0) // stabilize
-                return n1.index - n2.index;
-            else
-                return d;
-        });
-        for (i=0; i<notes.length; i++)
-            delete notes[i].index;
-
+        if (options.contentquery == undefined || options.contentquery =="") {
+            for (i=0; i<notes.length; i++)
+                notes[i].index = i;
+            notes.sort(function(n1,n2) {
+                var d = (n2.systemtags.indexOf("pinned")>=0?1:0) - (n1.systemtags.indexOf("pinned")>=0?1:0);
+                if (d==0) // stabilize
+                    return n1.index - n2.index;
+                else
+                    return d;
+            });
+            for (i=0; i<notes.length; i++)
+                delete notes[i].index;
+        }
 
         return notes;
     },
