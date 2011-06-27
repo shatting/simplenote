@@ -19,7 +19,7 @@ var SimplenoteDB = {
     offline : function(isOffline) {
 
         if(isOffline==undefined)
-            throw("SimplenoteDB.offline: please query via .isOffline()");        
+            throw new Error("please query via .isOffline()");        
 
         if (isOffline != SimplenoteDB._isOffline) {
             SimplenoteDB.log("offline:mode change to offline=" + isOffline);
@@ -309,7 +309,7 @@ var SimplenoteDB = {
             // get local note version
             var note = SimplenoteLS.getNote(data.key);
             if (!note)
-                throw "unknown or missing note, cannot update";
+                throw new Error("unknown or missing note, cannot update");
 
             delete data.action;
             var isTrashAction = data.deleted == 1 && note.deleted == 0;

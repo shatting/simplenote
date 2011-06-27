@@ -27,7 +27,7 @@ SimplenoteSM.prototype = {
     
     tokenAcquired: function(credentials) {
         localStorage.token = credentials.token;
-        localStorage.tokenTime = credentials.tokenTime;
+        localStorage.tokenTime = credentials.tokenTime.getTime();
 
         localStorage.credentialsValid = "true";
     },

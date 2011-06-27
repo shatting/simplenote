@@ -2,7 +2,7 @@
 // Simplenote common functions.
 // ------------------------------------------------------------------------------------------------
 
-var version;
+var syncpadManifest;
 var webnoteregstr = "^SYNCPADWEBNOTE\\[(.*),(\\d+px),(\\d+px),(\\d+px)?,(\\d+px)?\\]$";
 var webnotereg = new RegExp(webnoteregstr,"m");
 
@@ -178,10 +178,10 @@ function mergeobj(obj1,obj2){
 
 function uiEvent(name,data) {
     if (name == undefined)
-        throw "uiEvent must have name supplied"
+        throw new Error("must have name supplied");
 
     if (data == undefined || data.name)
-        throw "uiEvent data must not be empty and must not have name field"
+        throw new Error("data must not be empty and must not have name field");
 
     data.name = name;
     chrome.extension.sendRequest(data);
@@ -215,7 +215,7 @@ function get_manifest(callback) {
   xhr.onload = function () {
     callback(JSON.parse(xhr.responseText));
   };
-  xhr.open('GET', '../manifest.json', true);
+  xhr.open('GET', chrome.extension.getURL("/manifest.json"), false);
   xhr.send(null);
 }
 
@@ -394,7 +394,7 @@ function setCBval(sel, bool) {
         bool = false;
         
     if (typeof bool != "boolean")
-        throw "setCBval wants booleans or 'true', 'false'"
+        throw new Error("setCBval wants booleans or 'true', 'false'");
 
     if (bool)
         $(sel).attr("checked","checked");
@@ -403,36 +403,39 @@ function setCBval(sel, bool) {
 }
 
 get_manifest(function(mf) {
-    version = mf.version;
+    syncpadManifest = mf;
 });
 
-function exceptionCaught(e) {
-    if (!version)
+function exceptionCaught(e,src,line) {
+    if (!syncpadManifest)
         get_manifest(function(mf) {
-            version = mf.version;
+            syncpadManifest = mf;
     });
     
-    var funname = filename = line = "";
-    if (e.stack) {
+    var funname = filename = message = filepos = "";
+    if (src != undefined) {
+        filepos = src.match(/chrome-extension:\/\/.*\/javascripts\/(.*)/);
+        filepos = filepos[1];
+        message = line + ":" + e;
+    } else if (e.stack) {
         where = e.stack.match(/at (.*) \(chrome-extension:\/\/.*\/javascripts\/(.*):(\d+):\d+\)/);
         funname = where[1];
         filename = where[2];
         line = where[3];
+        
+        filepos = filename;
+        message = line + ":" + funname + ":" + e.message;
     }
-    var versionstr = 'exception_' + version;
-    var filepos = filename + ":" + line + ":" + funname;
-    var message;
     
-    if (e.message)
-        message = e.message;
-    else if (typeof e == "string")
-        message = e;
-    else
-        message = e;
-
-    var beacon = ['_trackEvent',versionstr,filepos,message];
-
-    console.log(beacon.join(","));
+    var beacon = ['_trackEvent', 'exception_' + syncpadManifest.version, filepos, message];
+    
+    logGeneral(beacon.join(","),"EXC");
+    if (e.stack)
+        logGeneral(e.stack,"EXC");
     
     _gaq.push(beacon);
 }
+
+window.onerror = function(msg,src,line) {
+    exceptionCaught(msg, src, line);
+};

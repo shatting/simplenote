@@ -47,11 +47,11 @@ var SimplenoteLS = {
 
         if (!note || !note.key) {
             console.log(note);
-            throw "cannot add empty note or note without key"
+            throw new Error("cannot add empty note or note without key");
         }
         if (this.haveNote(note.key)) {
             console.log(note);
-            throw "cannot add note, note already in LS"
+            throw new Error("cannot add note, note already in LS");
         }
         this.log("addNote, note: ");
         this.log(note);
@@ -70,14 +70,14 @@ var SimplenoteLS = {
 
         if (!inputNote || !inputNote.key) {
             console.log(inputNote);
-            throw "cannot update with undefined note or note without key"
+            throw new Error("cannot update with undefined note or note without key");
         }
 
         var storedNote = this.getNote(inputNote.key);
 
         if (!storedNote) {
             console.log(inputNote);
-            throw "cannot update note, note not in LS"
+            throw new Error("cannot update note, note not in LS");
         }
 
         // simplenote api bug: publishing does not increase syncnum
@@ -226,12 +226,16 @@ var SimplenoteLS = {
 //                    add &= note.content.match(wordexps[j]) != undefined;
 //
             if (options.contentquery && options.contentquery !="") {
-                note.score = 0;
-                for (var j=0; j<words.length; j++)
-                    note.score += note.content.score(words[j]);
-                for (var j=0; j<wordexps.length; j++)
-                    note.score += note.content.match(wordexps[j]) != undefined ? 1:0;
-                add &= note.score > 0;
+                if (note.content == undefined)
+                    add = false;
+                else {
+                    note.score = 0;
+                    for (var j=0; j<words.length; j++)
+                        note.score += note.content.score(words[j]);
+                    for (var j=0; j<wordexps.length; j++)
+                        note.score += note.content.match(wordexps[j]) != undefined ? 1:0;
+                    add &= note.score > 0;
+                }
             }
                 
 //              displayResults: function(scores) {
@@ -425,7 +429,7 @@ var SimplenoteLS = {
 
     addToSyncList : function(key) {
         if (key == undefined || key instanceof Object)
-            throw "cannot add undefined key or entire note to synclist"
+            throw new Error("cannot add undefined key or entire note to synclist");
 
         var keys = this.getSyncKeys();
         if (keys.indexOf(key)<0) {

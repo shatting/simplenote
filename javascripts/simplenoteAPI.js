@@ -11,10 +11,9 @@ function isTokenValid(credentials) {
     if (!credentials.token)
         return false;
 
-    var now = new Date();
-    var diff = (now-credentials.tokenTime)/(1000*60*60);
+    var diff = ((new Date())-credentials.tokenTime)/(1000*60*60);
 
-    if (diff<24)
+    if (diff<12)
         return diff;
     else
         return false;
@@ -48,8 +47,7 @@ var SimplenoteAPI2 = {
      */
     authURLadd : function() {
         if (!this.isLoggedIn()) {
-            console.log(this)
-            throw "not logged in or token expired"
+            throw new Error("not logged in or token expired");            
         }
         return "?email=" + escape(this.credentials.email) + "&auth=" + this.credentials.token;
     },
@@ -90,7 +88,7 @@ var SimplenoteAPI2 = {
         // precond: this.credentials either full set (email+pass+token) or undefined
         if (!this.credentials) { //A
             if (!credentials) //A1
-                throw "email and (password or token) required for login";
+                throw new Error("email and (password or token) required for login");
             haveToken = isTokenValid(credentials);
             this.credentials = credentials; //A21&A22(save email+password to this, rest is overwritten)
         } else { //B
@@ -257,7 +255,7 @@ var SimplenoteAPI2 = {
     retrieve: function(key, callbacks) {
         if (!callbacks) callbacks = {};
         if (!key)
-            throw "SimplenoteAPI2::retrieve:key missing.";
+            throw new Error("key missing");
         jQuery.ajax({
             url: this.root2 + "data/" + key + this.authURLadd(),
             dataType: "json",
@@ -346,7 +344,7 @@ var SimplenoteAPI2 = {
         if (!callbacks)
             callbacks = {};
         if (!key)
-            throw "SimplenoteAPI2::destroy:note key missing.";
+            throw new Error("key missing");
 
         jQuery.ajax({
             type: "DELETE",
@@ -391,7 +389,7 @@ var SimplenoteAPI2 = {
         if (!callbacks) callbacks = {};
         if (!note || !note.key) {
             console.log(note);
-            throw "SimplenoteAPI2::update:note or note.key missing.";
+            throw new Error("note or note.key missing");
         }
         jQuery.ajax({
             type: "POST",
@@ -436,7 +434,7 @@ var SimplenoteAPI2 = {
         if (!callbacks) callbacks = {};
 
         if (!note || !note.content)
-            throw "SimplenoteAPI2::create:note or note.content missing.";
+            throw new Error("note or note.content missing");
 
         jQuery.ajax({
             type: "POST",
@@ -473,7 +471,7 @@ var SimplenoteAPI2 = {
         if (!callbacks) callbacks = {};
 
         if (!tag || !tag.name)
-            throw "SimplenoteAPI2::TagCreate:tag or tag.name missing.";
+            throw new Error("tag or tag.name missing");
 
         if (!tag.index)
             tag.index = -1;
@@ -517,7 +515,7 @@ var SimplenoteAPI2 = {
         if (!callbacks) callbacks = {};
 
         if (!tag || !tag.name)
-            throw "SimplenoteAPI2::TagUpdate:tag or tag.name missing.";
+            throw new Error("tag or tag.name missing");
 
         (function(thistag) {
             jQuery.ajax({
@@ -556,7 +554,7 @@ var SimplenoteAPI2 = {
         if (!callbacks)
             callbacks = {};
         if (!name)
-            throw "SimplenoteAPI2::deleteTag:name missing.";
+            throw new Error("name missing");
 
         (function(thisname) {
             jQuery.ajax({

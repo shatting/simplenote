@@ -221,9 +221,9 @@ var SimplenoteBG = {
 
         if (localStorage.option_alwaystab == "true" || this.tab) {
             this.setOpenTab();
-        } else {
-            chrome.browserAction.setTitle({title:chrome.i18n.getMessage("ba_open_syncpad")});
+        } else {            
             chrome.browserAction.setPopup({popup:"/popup.html"});
+            chrome.browserAction.setTitle({title:chrome.i18n.getMessage("ba_open_syncpad")});            
         }
     }
 }
@@ -231,10 +231,10 @@ var SimplenoteBG = {
 // sync on browser start
 window.onload = function() {
     try {        
-        SimplenoteBG.setOpenPopup()
-
         SimplenoteCM.populate();
-        SimplenoteBG.backgroundSync(true);        
+        SimplenoteBG.backgroundSync(true);
+        
+        SimplenoteBG.setOpenPopup()
     } catch (e) {
         exceptionCaught(e)
     }
@@ -258,30 +258,6 @@ window.onload = function() {
     SimplenoteBG.log("(ready) done");
 
 }
-
-chrome.browserAction.onClicked.addListener(function(tab) {
-    var pinned = localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true";
-    
-    if (SimplenoteBG.tab) {
-        SimplenoteBG.log("--> deferring to tab");
-
-        chrome.tabs.update(SimplenoteBG.tab.id, {
-            selected:true,
-            pinned: pinned
-        }, function() {
-            return;
-        });
-    } else {
-        SimplenoteBG.log("--> no tab -> creating tab");
-
-        chrome.tabs.create({
-            url:chrome.extension.getURL("/popup.html?tab=true"),
-            pinned: pinned
-        }, function(tab) {
-            SimplenoteBG.tab = tab;
-        });
-    }
-});
 
 chrome.extension.onRequest.addListener(SimplenoteBG.handleRequest);
 
@@ -326,3 +302,27 @@ chrome.extension.onRequestExternal.addListener(
         }
     }
 );
+      
+chrome.browserAction.onClicked.addListener(function(tab) {
+    var pinned = localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true";
+    
+    if (SimplenoteBG.tab) {
+        SimplenoteBG.log("--> deferring to tab");
+
+        chrome.tabs.update(SimplenoteBG.tab.id, {
+            selected:true,
+            pinned: pinned
+        }, function() {
+            return;
+        });
+    } else {
+        SimplenoteBG.log("--> no tab -> creating tab");
+
+        chrome.tabs.create({
+            url:chrome.extension.getURL("/popup.html?tab=true"),
+            pinned: pinned
+        }, function(tab) {
+            SimplenoteBG.tab = tab;
+        });
+    }
+});
