@@ -17,7 +17,7 @@ var extData = {
         API         : true,
         CM          : true,
         Timestamp   : true,
-        GA          : true
+        GA          : false
     },
     
     chromeVersion : undefined
