@@ -239,8 +239,7 @@ var SimplenoteBG = {
 $(document).ready(function() {
     try {        
         SimplenoteCM.populate();
-        SimplenoteBG.backgroundSync(true);
-        
+        SimplenoteBG.backgroundSync(true);     
         SimplenoteBG.setOpenPopup()
     } catch (e) {
         exceptionCaught(e)

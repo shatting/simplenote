@@ -5,7 +5,7 @@
 var extData = {
     syncpadManifest : undefined,
     
-    webnoteregstr : "^SYNCPADWENOTE\\[(.*),(\\d+px),(\\d+px),(\\d+px)?,(\\d+px)?\\]$",
+    webnoteregstr : "^SYNCPADWEBNOTE\\[(.*),(\\d+px),(\\d+px),(\\d+px)?,(\\d+px)?\\]$",
     
     debugFlags : {
         general     : false,
@@ -459,7 +459,7 @@ _gaq.push(['_setCustomVar',
       1,                    // This custom var is set to slot #1.  Required parameter.
       'Chrome Version',     // The name acts as a kind of category for the user activity.  Required parameter.
       extData.chromeVersion,        // This value of the custom variable.  Required parameter.
-      2                     // Sets the scope to session-level.  Optional parameter.
+      1                     // Sets the scope to session-level.  Optional parameter.
    ]);
    
    
@@ -469,16 +469,8 @@ get_manifest(function(mf) {
       2,                    // This custom var is set to slot #1.  Required parameter.
       'Syncpad Version',     // The name acts as a kind of category for the user activity.  Required parameter.
       mf.version,        // This value of the custom variable.  Required parameter.
-      2                     // Sets the scope to session-level.  Optional parameter.
+      1                     // Sets the scope to session-level.  Optional parameter.
    ]);
 });
-
-
-_gaq.push(['_setCustomVar',
-      3,                    // This custom var is set to slot #1.  Required parameter.
-      'Option Always Tab',    // The name acts as a kind of category for the user activity.  Required parameter.
-      localStorage.option_alwaystab,           // This value of the custom variable.  Required parameter.
-      2                     // Sets the scope to session-level.  Optional parameter.
-   ]);
     
 _gaq.push(['_trackPageview']);
