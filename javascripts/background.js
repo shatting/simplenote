@@ -207,6 +207,12 @@ var SimplenoteBG = {
         if (tab != undefined)
             this.tab = tab;
         
+        if (chrome.browserAction == undefined) {
+            setTimeout("SimplenoteBG.setOpenTab();",1000);
+            _gaq.push(['_trackEvent', 'background', 'setOpenTab deferred']);
+            return;
+        }
+            
         if (this.tab)
             chrome.browserAction.setTitle({title:chrome.i18n.getMessage("ba_go_to_syncpad_tab")});
         else
@@ -221,15 +227,20 @@ var SimplenoteBG = {
 
         if (localStorage.option_alwaystab == "true" || this.tab) {
             this.setOpenTab();
-        } else {            
-            chrome.browserAction.setPopup({popup:"/popup.html"});
-            chrome.browserAction.setTitle({title:chrome.i18n.getMessage("ba_open_syncpad")});            
+        } else {
+            if (chrome.browserAction == undefined) {
+                setTimeout("SimplenoteBG.setOpenPopup();",1000);
+                _gaq.push(['_trackEvent', 'background', 'setOpenPopup deferred']);
+            } else {
+                chrome.browserAction.setPopup({popup:"/popup.html"});
+                chrome.browserAction.setTitle({title:chrome.i18n.getMessage("ba_open_syncpad")});            
+            }
         }
     }
 }
 
 // sync on browser start
-window.onload = function() {
+$(document).ready(function() {
     try {        
         SimplenoteCM.populate();
         SimplenoteBG.backgroundSync(true);
@@ -257,7 +268,7 @@ window.onload = function() {
 
     SimplenoteBG.log("(ready) done");
 
-}
+});
 
 chrome.extension.onRequest.addListener(SimplenoteBG.handleRequest);
 
