@@ -457,7 +457,7 @@ var _gaq = _gaq || [];
 _gaq.push(['_setAccount', 'UA-22573090-2']);
 _gaq.push(['_setCustomVar', 
       1,                    // This custom var is set to slot #1.  Required parameter.
-      'Chrome Version',     // The name acts as a kind of category for the user activity.  Required parameter.
+      'Chrome Version (user)',     // The name acts as a kind of category for the user activity.  Required parameter.
       extData.chromeVersion,        // This value of the custom variable.  Required parameter.
       1                     // Sets the scope to session-level.  Optional parameter.
    ]);
@@ -472,5 +472,19 @@ get_manifest(function(mf) {
       1                     // Sets the scope to session-level.  Optional parameter.
    ]);
 });
+
+_gaq.push(['_setCustomVar', 
+      3,                    // This custom var is set to slot #1.  Required parameter.
+      'Chrome Version (session)',     // The name acts as a kind of category for the user activity.  Required parameter.
+      extData.chromeVersion,        // This value of the custom variable.  Required parameter.
+      2                     // Sets the scope to session-level.  Optional parameter.
+   ]);
+   
+_gaq.push(['_setCustomVar', 
+      4,                    // This custom var is set to slot #1.  Required parameter.
+      'Chrome Version (page)',     // The name acts as a kind of category for the user activity.  Required parameter.
+      extData.chromeVersion,        // This value of the custom variable.  Required parameter.
+      3                    // Sets the scope to session-level.  Optional parameter.
+   ]);
     
 _gaq.push(['_trackPageview']);
