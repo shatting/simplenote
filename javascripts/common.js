@@ -2,30 +2,34 @@
 // Simplenote common functions.
 // ------------------------------------------------------------------------------------------------
 
-var syncpadManifest;
-var webnoteregstr = "^SYNCPADWEBNOTE\\[(.*),(\\d+px),(\\d+px),(\\d+px)?,(\\d+px)?\\]$";
-var webnotereg = new RegExp(webnoteregstr,"m");
-
-
-// debug switches
-var debugFlags = {
-    general     : false,
-    popup       : true,
-    popup2BG    : true,
-    BG          : true,
-    DB          : true,
-    LS          : true,
-    API         : true,
-    CM          : true,
-    Timestamp   : true,
-    GA          : false
+var extData = {
+    syncpadManifest : undefined,
+    
+    webnoteregstr : "^SYNCPADWENOTE\\[(.*),(\\d+px),(\\d+px),(\\d+px)?,(\\d+px)?\\]$",
+    
+    debugFlags : {
+        general     : false,
+        popup       : true,
+        popup2BG    : true,
+        BG          : true,
+        DB          : true,
+        LS          : true,
+        API         : true,
+        CM          : true,
+        Timestamp   : true,
+        GA          : true
+    },
+    
+    chromeVersion : undefined
 }
 
+extData.webnotereg = new RegExp(extData.webnoteregstr,"m")
+
 function logGeneral(s,prefix,target) {
-    if (!debugFlags.general)
+    if (!extData.debugFlags.general)
         return;
 
-    if (debugFlags.Timestamp) {
+    if (extData.debugFlags.Timestamp) {
         var t = new Date();
         prefix = t.toTimeString().substr(0,t.toTimeString().indexOf(" "))+ "." + pad(t.getMilliseconds(),3) + " - " + prefix;
     }
@@ -402,14 +406,10 @@ function setCBval(sel, bool) {
         $(sel).removeAttr("checked");
 }
 
-get_manifest(function(mf) {
-    syncpadManifest = mf;
-});
-
 function exceptionCaught(e,src,line) {
-    if (!syncpadManifest)
+    if (!extData.syncpadManifest)
         get_manifest(function(mf) {
-            syncpadManifest = mf;
+            extData.syncpadManifest = mf;
     });
     
     var funname = filename = message = filepos = "";
@@ -427,11 +427,11 @@ function exceptionCaught(e,src,line) {
         message = line + ":" + funname + ":" + e.message;
     }
     
-    var beacon = ['_trackEvent', 'exception_' + syncpadManifest.version, filepos, message];
+    var beacon = ['_trackEvent', 'exception_' + extData.syncpadManifest.version, filepos, message];
     
-    logGeneral(beacon.join(","),"EXC");
+    console.log(beacon.join(","));
     if (e.stack)
-        logGeneral(e.stack,"EXC");
+        console.log(e.stack);
     
     _gaq.push(beacon);
 }
@@ -439,3 +439,46 @@ function exceptionCaught(e,src,line) {
 window.onerror = function(msg,src,line) {
     exceptionCaught(msg, src, line);
 };
+
+function getChromeVersion() {
+    var v = "unknown";
+    if (navigator && navigator.appVersion) {
+        var m = navigator.appVersion.match(/chrome\/([\d+|\.]+)/i);
+        if (m && m.length >= 2)
+            v = m[1];
+        
+    }
+    return v;
+}
+
+extData.chromeVersion = getChromeVersion();
+
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-22573090-2']);
+_gaq.push(['_setCustomVar', 
+      1,                    // This custom var is set to slot #1.  Required parameter.
+      'Chrome Version',     // The name acts as a kind of category for the user activity.  Required parameter.
+      extData.chromeVersion,        // This value of the custom variable.  Required parameter.
+      2                     // Sets the scope to session-level.  Optional parameter.
+   ]);
+   
+   
+get_manifest(function(mf) {
+    extData.syncpadManifest = mf;
+    _gaq.push(['_setCustomVar',
+      2,                    // This custom var is set to slot #1.  Required parameter.
+      'Syncpad Version',     // The name acts as a kind of category for the user activity.  Required parameter.
+      mf.version,        // This value of the custom variable.  Required parameter.
+      2                     // Sets the scope to session-level.  Optional parameter.
+   ]);
+});
+
+
+_gaq.push(['_setCustomVar',
+      3,                    // This custom var is set to slot #1.  Required parameter.
+      'Option Always Tab',    // The name acts as a kind of category for the user activity.  Required parameter.
+      localStorage.option_alwaystab,           // This value of the custom variable.  Required parameter.
+      2                     // Sets the scope to session-level.  Optional parameter.
+   ]);
+    
+_gaq.push(['_trackPageview']);

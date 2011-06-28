@@ -8,7 +8,7 @@ var SimplenoteDB = {
     //cypherReg : /^\-\-SYNCPADAES\-\-\n(.*)\n\-\-SYNCPADAES\-\-$/m,
 
     log : function(s) {
-        if (debugFlags.DB)
+        if (extData.debugFlags.DB)
             logGeneral(s,"SimplenoteDB");
     },
 

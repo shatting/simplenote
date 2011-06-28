@@ -1,4 +1,6 @@
-var extData = {
+var extData = extData || {};
+
+$.extend(extData,{
     background: undefined,
     
     popup : this,
@@ -51,22 +53,18 @@ var extData = {
         "Yanone Kaffeesatz" : '<link href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:300" rel="stylesheet" type="text/css" >',
         "Vollkorn"          : '<link href="http://fonts.googleapis.com/css?family=Vollkorn:regular" rel="stylesheet" type="text/css" >'
     }
-}
+});
 
 //  ---------------------------------------
 
 var snEditor;
 var snSM = new SimplenoteSM();
 
-var _gaq = _gaq || [];
-_gaq.push(['_setAccount', 'UA-22573090-2']);
-_gaq.push(['_trackPageview']);
-
 //  ---------------------------------------
 function log(s) {
-    if (debugFlags.popup)
+    if (extData.debugFlags.popup)
         logGeneral(s,"popup.js",console);
-    if (debugFlags.popup2BG)
+    if (extData.debugFlags.popup2BG)
         logGeneral(s,"popup.js",extData.background.console);
 }
 
@@ -616,7 +614,7 @@ function readyListener() {
    
         setTimeout(function() {
             var ga = document.createElement('script');ga.type = 'text/javascript';ga.async = true;
-            if (debugFlags.GA)
+            if (extData.debugFlags.GA)
                 ga.src = 'https://ssl.google-analytics.com/u/ga_debug.js';
             else
                 ga.src = 'https://ssl.google-analytics.com/ga.js';
@@ -735,7 +733,7 @@ function fillIndex() {
         req     = mergeobj(req, {contentquery : $('#q').val()});
         req     = mergeobj(req, {sort:localStorage.option_sortby, sortdirection:localStorage.option_sortbydirection});
         if ((localStorage.option_hidewebnotes == undefined || localStorage.option_hidewebnotes == "true") && (req.tag == "" || req.tag == "#all#"))
-            req     = mergeobj(req, {notregex: webnoteregstr});
+            req     = mergeobj(req, {notregex: extData.webnoteregstr});
 
         log("fillIndex: " + JSON.stringify(req));
 
@@ -1071,7 +1069,7 @@ function indexFillNoteReqComplete(note) {
             var $noteabstract = $('#' + note.key + "abstract");
 
             var lines = note.content.split("\n").filter(function(line) {
-                return ( line.trim().length > 0 && !line.match(webnotereg))
+                return ( line.trim().length > 0 && !line.match(extData.webnotereg))
                 });
 
             // heading
@@ -1122,7 +1120,7 @@ function indexFillNoteReqComplete(note) {
             }
 
             // webnote icon
-            var wnm = note.content.match(webnotereg);
+            var wnm = note.content.match(extData.webnotereg);
             if (wnm && $("#" + note.key + "webnoteicon").length == 0) {
                 var url = wnm[1];
                 $("<div id='" + note.key + "webnoteicon' class='webnoteicon statusicon-clickable'>&nbsp;</div>").insertBefore($noteheading);

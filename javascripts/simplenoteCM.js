@@ -229,7 +229,7 @@ var SimplenoteCM = {
     cascading: true,
 
     log : function(s) {
-        if (debugFlags.CM)
+        if (extData.debugFlags.CM)
             logGeneral(s,"SimplenoteCM");
     },
 

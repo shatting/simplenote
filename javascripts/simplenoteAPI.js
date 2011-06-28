@@ -26,7 +26,7 @@ $.ajaxSetup({
 var SimplenoteAPI2 = {
 
     log : function(s) {
-        if (debugFlags.API)
+        if (extData.debugFlags.API)
             logGeneral(s,"SimplenoteAPI2");
     },
 

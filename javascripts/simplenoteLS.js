@@ -12,7 +12,7 @@ var SimplenoteLS = {
     indexTimeKey    : "_indexTime",
 
     log : function(s) {
-        if (debugFlags.LS)
+        if (extData.debugFlags.LS)
             logGeneral(s,"SimplenoteLS");
     },
 
@@ -213,7 +213,7 @@ var SimplenoteLS = {
                         add &= note.systemtags.indexOf("shared") >= 0;
                         break;
                     case "#webnote#":
-                        add &= note.content != undefined && note.content.match(webnotereg) != undefined;
+                        add &= note.content != undefined && note.content.match(extData.webnotereg) != undefined;
                         break;
                     default:
                         add &= note.tags != undefined && note.tags.indexOf(options.tag)>=0;
@@ -394,7 +394,7 @@ var SimplenoteLS = {
                     predeftags[4].count++;
                 if (thissystemtags != undefined && thissystemtags.indexOf("published") >= 0)
                     predeftags[3].count++;
-                if (thisnote.content != undefined && thisnote.content.match(webnotereg)) {
+                if (thisnote.content != undefined && thisnote.content.match(extData.webnotereg)) {
                     predeftags[5].count++;
                     predeftags[0].count--;
                 }

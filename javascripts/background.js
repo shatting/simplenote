@@ -1,7 +1,3 @@
-var _gaq = _gaq || [];
-_gaq.push(['_setAccount', 'UA-22573090-2']);
-_gaq.push(['_trackPageview']);
-
 var SM = new SimplenoteSM();
 
 var SimplenoteBG = {
@@ -11,7 +7,7 @@ var SimplenoteBG = {
     tab : undefined,
 
     log : function(s) {
-        if (debugFlags.BG)
+        if (extData.debugFlags.BG)
             logGeneral(s,"background.js");
     },
 
@@ -252,14 +248,10 @@ $(document).ready(function() {
 
     SimplenoteBG.log("(ready) setting up ga");
     // some info about settings
-    _gaq.push(['_trackEvent', 'settings', 'editorfont', localStorage.option_editorfont]);
-    _gaq.push(['_trackEvent', 'settings', 'editorfontsize', localStorage.option_editorfontsize]);
-    _gaq.push(['_trackEvent', 'settings', 'sortby', localStorage.option_sortby]);
-    _gaq.push(['_trackEvent', 'settings', 'alwaystab', localStorage.option_alwaystab]);
-
+    
     setTimeout(function() {
         var ga = document.createElement('script');ga.type = 'text/javascript';ga.async = true;
-        if (debugFlags.GA)
+        if (extData.debugFlags.GA)
             ga.src = 'https://ssl.google-analytics.com/u/ga_debug.js';
         else
             ga.src = 'https://ssl.google-analytics.com/ga.js';

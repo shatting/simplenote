@@ -1,7 +1,3 @@
-var _gaq = _gaq || [];
-_gaq.push(['_setAccount', 'UA-22573090-2']);
-_gaq.push(['_trackPageview']);
-
 var SM = new SimplenoteSM();
 
 $(document).ready(function() {
@@ -92,7 +88,7 @@ $(document).ready(function() {
 
   (function() {
     var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    if (debugFlags.GA)
+    if (extData.debugFlags.GA)
         ga.src = 'https://ssl.google-analytics.com/u/ga_debug.js';
     else
         ga.src = 'https://ssl.google-analytics.com/ga.js';
