@@ -5,7 +5,7 @@
 var extData = {
     syncpadManifest : undefined,
     
-    webnoteregstr : "^SYNCPADWENOTE\\[(.*),(\\d+px),(\\d+px),(\\d+px)?,(\\d+px)?\\]$",
+    webnoteregstr : "^SYNCPADWEBNOTE\\[(.*),(\\d+px),(\\d+px),(\\d+px)?,(\\d+px)?\\]$",
     
     debugFlags : {
         general     : false,
