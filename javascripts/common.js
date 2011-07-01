@@ -17,10 +17,13 @@ var extData = {
         API         : true,
         CM          : true,
         Timestamp   : true,
-        GA          : false
+        GA          : true
+        alertExc    : true
     },
     
-    chromeVersion : undefined
+    chromeVersion : undefined,
+    
+    webnotereg : undefined
 }
 
 extData.webnotereg = new RegExp(extData.webnoteregstr,"m")
@@ -434,6 +437,9 @@ function exceptionCaught(e,src,line) {
         console.log(e.stack);
     
     _gaq.push(beacon);
+    
+    if (extData.debugFlags.gerneral && extData.debugFlags.alertExc)
+        alert(beacon.join(","));
 }
 
 window.onerror = function(msg,src,line) {
@@ -449,6 +455,17 @@ function getChromeVersion() {
         
     }
     return v;
+}
+
+function scheduleGA(ms) {
+    setTimeout(function() {
+        var ga = document.createElement('script');ga.type = 'text/javascript';ga.async = true;
+        if (extData.debugFlags.general && extData.debugFlags.GA)
+            ga.src = 'https://ssl.google-analytics.com/u/ga_debug.js';
+        else
+            ga.src = 'https://ssl.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0];s.parentNode.insertBefore(ga, s);
+    },ms == undefined?100:ms);
 }
 
 extData.chromeVersion = getChromeVersion();
@@ -475,16 +492,11 @@ get_manifest(function(mf) {
 
 _gaq.push(['_setCustomVar', 
       3,                    // This custom var is set to slot #1.  Required parameter.
-      'Chrome Version (session)',     // The name acts as a kind of category for the user activity.  Required parameter.
-      extData.chromeVersion,        // This value of the custom variable.  Required parameter.
+      'Chrome String',     // The name acts as a kind of category for the user activity.  Required parameter.
+      navigator.appVersion,        // This value of the custom variable.  Required parameter.
       2                     // Sets the scope to session-level.  Optional parameter.
    ]);
-   
-_gaq.push(['_setCustomVar', 
-      4,                    // This custom var is set to slot #1.  Required parameter.
-      'Chrome Version (page)',     // The name acts as a kind of category for the user activity.  Required parameter.
-      extData.chromeVersion,        // This value of the custom variable.  Required parameter.
-      3                    // Sets the scope to session-level.  Optional parameter.
-   ]);
     
+_gaq.push(["_setVar",navigator.appVersion.replace(/\./g,",").replace(/ /g,"_")]);
+
 _gaq.push(['_trackPageview']);
