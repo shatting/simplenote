@@ -552,8 +552,9 @@ var Editor = (function(){
     },
 
     checkLine: function(node) {
-      if (node === false || !(node == null || node.parentNode == this.container || node.hackBR))
+      if (node === false || !(node == null || node.parentNode == this.container || node.hackBR)) {
         throw parent.CodeMirror.InvalidLineHandle;
+      }
     },
 
     cursorPosition: function(start) {

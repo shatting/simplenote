@@ -55,42 +55,47 @@ var SimplenoteDB = {
 
         this._reset();
         this._setSyncInProgress(true);
+        
+        try {
+            var syncKeys = SimplenoteLS.getSyncKeys();
+            var note;
 
-        var syncKeys = SimplenoteLS.getSyncKeys();
-        var note;
+            this.log("sync: fullSync = " + fullSync);
 
-        this.log("sync: fullSync = " + fullSync);
+            this.syncCallbackChunk = callbackChunk;
+            this.syncCallbackFinished = callbackFinished;
 
-        this.syncCallbackChunk = callbackChunk;
-        this.syncCallbackFinished = callbackFinished;
+            // push local changes
+            $.each(syncKeys, function(i,key) {
+                note = SimplenoteLS.getNote(key);
+                if (note != undefined) {
+                    if (note.key.match(/creatednote(\d+)/))
+                        SimplenoteDB.createNote(note, undefined, true);
+                    else
+                        SimplenoteDB.updateNote(note, undefined, true);
+                } else
+                    SimplenoteLS.removeFromSyncList(key);
+            });
 
-        // push local changes
-        $.each(syncKeys, function(i,key) {
-            note = SimplenoteLS.getNote(key);
-            if (note != undefined) {
-                if (note.key.match(/creatednote(\d+)/))
-                    SimplenoteDB.createNote(note, undefined, true);
-                else
-                    SimplenoteDB.updateNote(note, undefined, true);
-            } else
-                SimplenoteLS.removeFromSyncList(key);
-        });
-
-        // get index
-        var apioptions = {};
-        if (!fullSync) {
-            var indexTime = SimplenoteLS.indexTime();
-            if (indexTime) {
-                this.log("sync:using lastIndexTime from storage: " + dateAgo(indexTime));
-                apioptions.since = indexTime;
+            // get index
+            var apioptions = {};
+            if (!fullSync) {
+                var indexTime = SimplenoteLS.indexTime();
+                if (indexTime) {
+                    this.log("sync:using lastIndexTime from storage: " + dateAgo(indexTime));
+                    apioptions.since = indexTime;
+                }
             }
+            apioptions.length = 100;
+
+            uiEvent("sync", {status: "started", changes : this._indexKeysChanged});
+
+            this.getIndex(apioptions, fullSync);
+            
+        } catch (e) {
+            this._setSyncInProgress(false);
+            exceptionCaught(e);
         }
-        apioptions.length = 100;
-
-        uiEvent("sync", {status: "started", changes : this._indexKeysChanged});
-
-        this.getIndex(apioptions, fullSync);
-
     },
     
     //  count: 20
@@ -100,11 +105,14 @@ var SimplenoteDB = {
     _gotIndexChunk : function(indexData, havemore, fullSync) {
 
         if (!indexData || typeof(indexData) == "string") {
-            if (this.syncCallbackFinished)
-                this.syncCallbackFinished({success:false, fullSync:fullSync});
+            
             this.log("_gotIndexChunk: error getting index from server.");
             this.offline(true);
             this._setSyncInProgress(false);
+            
+            if (this.syncCallbackFinished)
+                this.syncCallbackFinished({success:false, fullSync:fullSync});
+                        
             uiEvent("sync", {status: "error", changes : this._indexKeysChanged, errorstr: indexData});
         } else {
             var thisHadChanges = false, note;
@@ -304,12 +312,21 @@ var SimplenoteDB = {
 
         this.log("updateNote, syncMode = " + syncmode + " update data:");
         this.log(data);
-
+        
+        if (!data)
+            throw new Error("missing input note, cannot update");
+        
+        if (!data.key)
+            throw new Error("missing input note.key, cannot update");
+        
+        if (data.key == "")
+            throw new Error("empty note.key, cannot update");
+        
         if (!syncmode) {
             // get local note version
             var note = SimplenoteLS.getNote(data.key);
             if (!note)
-                throw new Error("unknown or missing note, cannot update");
+                throw new Error("note not found, cannot update");
 
             delete data.action;
             var isTrashAction = data.deleted == 1 && note.deleted == 0;
@@ -565,6 +582,15 @@ var SimplenoteDB = {
 //        }
 //
 //        return note;
+    },
+
+    listTags: function() {
+        SimplenoteAPI2.tagIndex({length:200},{
+            success:function(tags) {
+                tags.tags.sort(function(t1,t2) {return t1.index - t2.index})
+                for (var i = 0; i<tags.tags.length;i++)
+                    console.log("%i %s (%i)",tags.tags[i].index,tags.tags[i].name,tags.tags[i].version);
+            }});
     }
 }
 

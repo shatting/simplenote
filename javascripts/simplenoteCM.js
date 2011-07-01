@@ -123,8 +123,6 @@
 //            "windowId":1
 //        }
 
-var SM = new SimplenoteSM();
-
 function CMitem(options, parentCMitem) {
 
     if (parentCMitem) {
@@ -204,6 +202,9 @@ function getNoteHeading(key,maxlength) {
         return "last open";
 
     var note = SimplenoteLS.getNote(key);
+    
+    if (!note)
+        return "(unknown note)";
 
     if(note.content == undefined)
         return "(unloaded note)";
@@ -244,7 +245,7 @@ var SimplenoteCM = {
             this.create_root = null;
             this.append_pinned_root = null;
 
-            if (!SM.haveLogin() || !SM.credentialsValid || (localStorage.option_contextmenu != undefined && localStorage.option_contextmenu == "false"))
+            if (!SimplenoteSM.haveLogin() || !SimplenoteSM.credentialsValid() || (localStorage.option_contextmenu != undefined && localStorage.option_contextmenu == "false"))
                 return;
 
             this.cascading = localStorage.option_contextmenu_cascading == "true";
@@ -319,12 +320,17 @@ var SimplenoteCM = {
                 if (this.cascading_pinned)
                     this.append_pinned_root = new CMitem({title:chrome.i18n.getMessage("cm_append_to_pinned"), contexts:["selection","page","image","link"]});
 
-                for (var i in pinned) {
+                for (var i = 0; i < pinned.length;i++) {
+                    if (pinned[i] == undefined || pinned[i].key == undefined)
+                        continue;
                     if (lastopen_key == pinned[i].key)
                         continue;
 
                     SimplenoteDB.getNote(pinned[i].key, function(note) {
-
+                        
+                        if (!note)
+                            return;
+                        
                         title = getNoteHeading(note.key,25);
 
                         if (SimplenoteCM.cascading_pinned)
@@ -439,6 +445,7 @@ var SimplenoteCM = {
     },
 
     createNoteFromBG: function(note) {
+        
         SimplenoteCM.signalProcessing();
         SimplenoteDB.createNote(note, function(note) {
             if (note) {
@@ -452,20 +459,31 @@ var SimplenoteCM = {
     },
 
     signalProcessing: function() {
-        chrome.browserAction.setBadgeText({text:"..."});
-        chrome.browserAction.setBadgeBackgroundColor({color:[0,255,255,128]});
+        try {
+            chrome.browserAction.setBadgeText({text:"..."});
+            chrome.browserAction.setBadgeBackgroundColor({color:[0,255,255,128]});
+        } catch (e) {
+            exceptionCaught(e);
+        }
     },
 
     signalSuccess: function() {
-        chrome.browserAction.setBadgeBackgroundColor({color:[0,255,0,128]});
-        chrome.browserAction.setBadgeText({text:"ok"});
-        setTimeout('chrome.browserAction.setBadgeText({text:""});', 2000);
+        try {
+            chrome.browserAction.setBadgeBackgroundColor({color:[0,255,0,128]});
+            chrome.browserAction.setBadgeText({text:"ok"});
+            setTimeout('chrome.browserAction.setBadgeText({text:""});', 2000);
+        } catch (e) {
+            exceptionCaught(e)
+        }
     },
 
     signalError: function() {
-        chrome.browserAction.setBadgeBackgroundColor({color:[255,0,0,128]});
-        chrome.browserAction.setBadgeText({text:"err"});
-        setTimeout('chrome.browserAction.setBadgeText({text:""});', 4000);
+        try {
+            chrome.browserAction.setBadgeBackgroundColor({color:[255,0,0,128]});
+            chrome.browserAction.setBadgeText({text:"err"});
+            setTimeout('chrome.browserAction.setBadgeText({text:""});', 4000);
+        } catch (e) {
+            exceptionCaught(e)
+        }
     }
 }
-

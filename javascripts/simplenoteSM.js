@@ -1,24 +1,19 @@
 
-function SimplenoteSM() {
-    
-}
+SimplenoteSM = {
 
-SimplenoteSM.prototype = {
-
-    get email() {
+    email : function() {
         return localStorage.option_email;
     },
 
-    get password() {
+    password : function() {
         return localStorage.option_password;
     },
 
-    get credentialsValid() {
-        return localStorage.credentialsValid == "true";
-    },
-
-    set credentialsValid(b) {
-        localStorage.credentialsValid = b == true;
+    credentialsValid : function(b) {
+        if (b != undefined)
+            localStorage.credentialsValid = b == true;
+        else
+            return localStorage.credentialsValid == "true";
     },
 
     haveLogin: function() {
@@ -51,7 +46,7 @@ SimplenoteSM.prototype = {
     },
 
     getCredentials: function() {
-        var credentials = { email: this.email, password: this.password };
+        var credentials = { email: localStorage.option_email, password: localStorage.option_password };
         
         if (localStorage.token) {
             credentials.token = localStorage.token;

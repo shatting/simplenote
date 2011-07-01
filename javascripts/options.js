@@ -1,9 +1,7 @@
-var SM = new SimplenoteSM();
-
 $(document).ready(function() {
 
-  $("#email").val(SM.email != undefined?SM.email:"");
-  $("#password").val(SM.password != undefined?SM.password:"");
+  $("#email").val(SimplenoteSM.email() != undefined?SimplenoteSM.email():"");
+  $("#password").val(SimplenoteSM.password() != undefined?SimplenoteSM.password():"");
   
   $("#abstractlines").val(localStorage.option_abstractlines == undefined?"3":localStorage.option_abstractlines);
 
@@ -36,7 +34,9 @@ $(document).ready(function() {
       $("#editorfontsize").val(localStorage.option_editorfontsize);
   }
 
-  setCBval("#editorfontshadow", localStorage.option_editorfontshadow != undefined && localStorage.option_editorfontshadow == "true");
+  if (localStorage.option_editorfontshadow != undefined) {
+      $("#editorfontshadow").val(localStorage.option_editorfontshadow);
+  }
 
 //  if (localStorage.option_aes_enable!= undefined && localStorage.option_aes_enable == "true")
 //      $("#aes_enable").attr("checked","true");
@@ -80,20 +80,13 @@ $(document).ready(function() {
   $("#save").click(save_clicked);
   $("#clear").click(clear_clicked);
   $("#reset").click(reset_clicked);
-  $("#donate").click(function () { _gaq.push(['_trackEvent', 'Options', 'donate_clicked']); });
+  $("#donate").click(function () {_gaq.push(['_trackEvent', 'Options', 'donate_clicked']);});
 
   get_manifest(function (mf) {
       $("#version").html(mf.version);
   });
 
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    if (extData.debugFlags.GA)
-        ga.src = 'https://ssl.google-analytics.com/u/ga_debug.js';
-    else
-        ga.src = 'https://ssl.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
+  scheduleGA();
 
 });
 
@@ -165,7 +158,7 @@ function save_options() {
   localStorage.option_editorfont = $("#editorfont").val();
   localStorage.option_editorfontsize = $("#editorfontsize").val();
   // font stuff
-  var fontinfo = { size: localStorage.option_editorfontsize + "px", letter_spacing: "0em", word_spacing: "0em", line_height: "1.5"};
+  var fontinfo = {size: localStorage.option_editorfontsize + "px", letter_spacing: "0em", word_spacing: "0em", line_height: "1.5"};
   switch (localStorage.option_editorfont) {
       case "Droid Sans Mono":
         fontinfo.family = "Droid Sans Mono";
@@ -185,7 +178,7 @@ function save_options() {
   }
 
   // font shadow
-  localStorage.option_editorfontshadow  = getCBval('#editorfontshadow');
+  localStorage.option_editorfontshadow  = $('#editorfontshadow').val();
 
   localStorage.option_color_index = $('#color_index').val();
   localStorage.option_color_editor = $('#color_editor').val();
@@ -210,7 +203,7 @@ function save_clicked() {
 
     $("#save").attr("disabled","disabled");
 
-    if (email == SM.email && password == SM.password) {
+    if (email == SimplenoteSM.email() && password == SimplenoteSM.password() && SimplenoteSM.credentialsValid()) {
         $("#loginmessage").html("");
         $("#loginmessage").css("color","black");
         $("#save").removeAttr("disabled");
@@ -235,12 +228,12 @@ function save_clicked() {
 
     _gaq.push(['_trackEvent', 'Options', 'save_clicked']);
 
-    if (email != SM.email && (localStorage._syncKeys)) {
+    if (email != SimplenoteSM.email() && (localStorage._syncKeys)) {
       if (!confirm("You are about to switch your Simplenote login!\n\nThere are notes stored locally that have not been synchronized to the server.\n\nIf you switch accounts now, those changes will be lost.\n\nContinue?")) {
             $("#loginmessage").html("Changes not saved");
             $("#loginmessage").css("color","black");
-            $("#email").val(SM.email);
-            $("#password").val(SM.password);
+            $("#email").val(SimplenoteSM.email());
+            $("#password").val(SimplenoteSM.password());
             $("#save").removeAttr("disabled");
             _gaq.push(['_trackEvent', 'Options', 'save_clicked','synckeyspresent_reverted']);
             return;
@@ -248,7 +241,7 @@ function save_clicked() {
         _gaq.push(['_trackEvent', 'Options', 'save_clicked','synckeyspresent_overridden']);
     }
 
-    SM.setLogin(email,password);
+    SimplenoteSM.setLogin(email,password);
 
     $("#loginmessage").html("Logging in..");
     $("#loginmessage").css("color","black");
@@ -288,7 +281,7 @@ function save_clicked() {
                     }
                 });
             } else {
-                SM.clear();
+                SimplenoteSM.clear();
 
                 if (successObj.reason=="timeout") {
                     _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_timeout']);
@@ -321,6 +314,7 @@ function reset_clicked() {
     
     closeTabAnd(function() {
         localStorage.clear();
+        chrome.extension.getBackgroundPage().location.reload();
         window.location.reload();
     });
 }

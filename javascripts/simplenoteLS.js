@@ -24,9 +24,10 @@ var SimplenoteLS = {
             return note;
         
         if (this.getSyncKeys().indexOf(note.key) >= 0)
-                note._syncNote = true;
+            note._syncNote = true;
         else
             delete note._syncNote;
+        
         return note;
     },
 
@@ -49,6 +50,10 @@ var SimplenoteLS = {
             console.log(note);
             throw new Error("cannot add empty note or note without key");
         }
+        if ( note.key == "") {
+            console.log(note);
+            throw new Error("cannot add note with empty key");
+        }
         if (this.haveNote(note.key)) {
             console.log(note);
             throw new Error("cannot add note, note already in LS");
@@ -70,7 +75,12 @@ var SimplenoteLS = {
 
         if (!inputNote || !inputNote.key) {
             console.log(inputNote);
-            throw new Error("cannot update with undefined note or note without key");
+            throw new Error("cannot update with empty note or note without key");
+        }
+        
+        if (inputNote.key == "") {
+            console.log(inputNote);
+            throw new Error("cannot update note with empty key");
         }
 
         var storedNote = this.getNote(inputNote.key);
@@ -159,7 +169,6 @@ var SimplenoteLS = {
      */
     getNotes: function(options) {
         var keys = this.getKeys();
-        var syncKeys = this.getSyncKeys();
         var notes = [];
         var add;
         var note;
@@ -174,7 +183,7 @@ var SimplenoteLS = {
         }
 
         if (options.contentquery && options.contentquery != "") {
-            words = options.contentquery.split(" ").filter(function(w) { return w != ""});
+            words = options.contentquery.split(" ").filter(function(w) {return w != ""});
             wordexps = words.map(function(word) {return new RegExp(RegExp.escape(word),'gi');});
         }
         if (typeof options.regex == "string")
@@ -187,6 +196,9 @@ var SimplenoteLS = {
         for (var i = 0; i<keys.length;i++) {
             add = true;
             note = this._getVal(keys[i]);
+            if (!note)
+                continue;
+            
             if (getall) {
                 notes.push(note);
                 continue;
@@ -237,21 +249,6 @@ var SimplenoteLS = {
                     add &= note.score > 0;
                 }
             }
-                
-//              displayResults: function(scores) {
-//			var self = this;
-//			this.list.children('li').hide();
-//			$.each(scores, function(i, score) { self.rows[score[1]].show(); });
-//		},
-//
-//		getScores: function(term) {
-//			var scores = [];
-//			for (var i=0; i < this.cache_length; i++) {
-//				var score = this.cache[i].score(term);
-//				if (score > 0) { scores.push([score, i]); }
-//			}
-//			return scores.sort(function(a, b) { return b[0] - a[0]; });
-//		}
 
             if (!add) continue;
 
@@ -481,9 +478,11 @@ var SimplenoteLS = {
     _maintain: function () {
         var keys = this.getKeys();
         keys = keys.filter(function(e) {
-            var keep = e!=null;
-            if (!keep)
+            var keep = e!=null && e!="" && e!=undefined && SimplenoteLS.getNote(e) != undefined;
+            if (!keep) {
                 SimplenoteLS.log("maintain:removed invalid key:" + e);
+                _gaq.push(["_trackEvent","simplenoteLS","key removed"])
+            }
             return keep;
         });
         this._setVal(this.keysKey,keys);

@@ -20,7 +20,7 @@ function isTokenValid(credentials) {
 }
 
 $.ajaxSetup({
-  timeout: emulateOffline?1:3000
+  timeout: emulateOffline?1:5000
 });
 
 var SimplenoteAPI2 = {
@@ -626,15 +626,6 @@ var SimplenoteAPI2 = {
                 }
             }
         });
-    },
-
-    listTags: function() {
-        SimplenoteAPI2.tagIndex({length:200},{
-            success:function(tags) {
-                tags.tags.sort(function(t1,t2) {return t1.index - t2.index})
-                for (var i = 0; i<tags.tags.length;i++)
-                    console.log("%i %s (%i)",tags.tags[i].index,tags.tags[i].name,tags.tags[i].version);
-            }});
     }
 }
 
@@ -694,44 +685,44 @@ var SimplenoteAPI2 = {
  * @cat Plugins/Cookie
  * @author Klaus Hartl/klaus.hartl@stilbuero.de
  */
-jQuery.cookie = function(name, value, options) {
-    if (typeof value != 'undefined') { // name and value given, set cookie
-        options = options || {};
-        if (value === null) {
-            value = '';
-            options.expires = -1;
-        }
-        var expires = '';
-        if (options.expires && (typeof options.expires == 'number' || options.expires.toUTCString)) {
-            var date;
-            if (typeof options.expires == 'number') {
-                date = new Date();
-                date.setTime(date.getTime() + (options.expires * 24 * 60 * 60 * 1000));
-            } else {
-                date = options.expires;
-            }
-            expires = '; expires=' + date.toUTCString(); // use expires attribute, max-age is not supported by IE
-        }
-        // CAUTION: Needed to parenthesize options.path and options.domain
-        // in the following expressions, otherwise they evaluate to undefined
-        // in the packed version for some reason...
-        var path = options.path ? '; path=' + (options.path) : '';
-        var domain = options.domain ? '; domain=' + (options.domain) : '';
-        var secure = options.secure ? '; secure' : '';
-        document.cookie = [name, '=', encodeURIComponent(value), expires, path, domain, secure].join('');
-    } else { // only name given, get cookie
-        var cookieValue = null;
-        if (document.cookie && document.cookie != '') {
-            var cookies = document.cookie.split(';');
-            for (var i = 0; i < cookies.length; i++) {
-                var cookie = jQuery.trim(cookies[i]);
-                // Does this cookie string begin with the name we want?
-                if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-};
+//jQuery.cookie = function(name, value, options) {
+//    if (typeof value != 'undefined') { // name and value given, set cookie
+//        options = options || {};
+//        if (value === null) {
+//            value = '';
+//            options.expires = -1;
+//        }
+//        var expires = '';
+//        if (options.expires && (typeof options.expires == 'number' || options.expires.toUTCString)) {
+//            var date;
+//            if (typeof options.expires == 'number') {
+//                date = new Date();
+//                date.setTime(date.getTime() + (options.expires * 24 * 60 * 60 * 1000));
+//            } else {
+//                date = options.expires;
+//            }
+//            expires = '; expires=' + date.toUTCString(); // use expires attribute, max-age is not supported by IE
+//        }
+//        // CAUTION: Needed to parenthesize options.path and options.domain
+//        // in the following expressions, otherwise they evaluate to undefined
+//        // in the packed version for some reason...
+//        var path = options.path ? '; path=' + (options.path) : '';
+//        var domain = options.domain ? '; domain=' + (options.domain) : '';
+//        var secure = options.secure ? '; secure' : '';
+//        document.cookie = [name, '=', encodeURIComponent(value), expires, path, domain, secure].join('');
+//    } else { // only name given, get cookie
+//        var cookieValue = null;
+//        if (document.cookie && document.cookie != '') {
+//            var cookies = document.cookie.split(';');
+//            for (var i = 0; i < cookies.length; i++) {
+//                var cookie = jQuery.trim(cookies[i]);
+//                // Does this cookie string begin with the name we want?
+//                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+//                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+//                    break;
+//                }
+//            }
+//        }
+//        return cookieValue;
+//    }
+//};
