@@ -79,7 +79,7 @@
                     <select id="editorfont">
                         <option value='Simplenote'>Simplenote</option>
                         <option selected value='Droid Sans Mono'>Droid Sans Mono (Monospace, default)</option>
-                        <option value='"Lucida Console", "Lucida Sans Typewriter", Consolas, "Andale Mono", "Courier New", monospace;'>Browser default Monospace</option>
+                        <option value='"Lucida Console", "Lucida Sans Typewriter", Consolas, "Andale Mono", "Courier New", monospace;'>Browser built-in Monospace</option>
                         <option value='Inconsolata'>Inconsolata (Monospace)</option>
                         <option value='Lekton'>Lekton (Monospace)</option>
                         <option value='Walter Turncoat'>Walter Turncoat</option>
@@ -87,20 +87,36 @@
                         <option value='Vollkorn'>Vollkorn</option>
                     </select>
                     <br>
-                    Editor font size <select id="editorfontsize" style="text-align: right">
-                        <option value="11">11</option>
-                        <option value="12">12</option>
-                        <option selected value="13">13 (default)</option>
-                        <option value="14">14</option>
-                        <option value="15">15</option>
-                        <option value="16">16</option>
-                        <option value="17">17</option>
-                        <option value="18">18</option>
-                        <option value="19">19</option>
-                        <option value="22">22</option>
-                        <option value="24">24</option>
-                    </select> px.
-                    <input type="checkbox" id="editorfontshadow"/><label for="editorfontshadow"> Font shadow</label>
+                    Size <select id="editorfontsize" style="text-align: right">
+                        <option value="9">9 px</option>
+                        <option value="10">10 px</option>
+                        <option value="11">11 px</option>
+                        <option value="12">12 px</option>
+                        <option selected value="13">13 px (def)</option>
+                        <option value="14">14 px</option>
+                        <option value="15">15 px</option>
+                        <option value="16">16 px</option>
+                        <option value="17">17 px</option>
+                        <option value="18">18 px</option>
+                        <option value="19">19 px</option>
+                        <option value="20">20 px</option>                        
+                        <option value="21">21 px</option>
+                        <option value="22">22 px</option>
+                        <option value="23">23 px</option>
+                        <option value="24">24 px</option>
+                        <option value="25">25 px</option>
+                        <option value="26">26 px</option>
+                        <option value="27">27 px</option>                      
+                        <option value="28">28 px</option>
+                        <option value="29">29 px</option>
+                        <option value="30">30 px</option>
+                    </select>
+                    Shadow/Smoothing <select id="editorfontshadow" style="text-align: right" title="Choose 'Font smoothing' or 'Moderate' if the chosen font isnt rendered well in your browser.">
+                        <option selected value="false">None</option>                        
+                        <option value="0px 0px 1px rgba(0, 0, 0, .01)">Font smoothing</option>
+                        <option value="true">Moderate</option>
+                        <option value="1px 1px 5px rgba(0, 0, 0, 0.3)">Strong</option>
+                    </select>                    
                 </div>      
                 <div class="option" style="font-size:16px">
                     <input type="text" class="color" id="color_index" data-text="hidden" style="height:20px;width:40px;"><label for="color_index" > Background</label>

@@ -2,7 +2,8 @@
 <html>
     <head>
       <meta http-equiv='Content-type' content='text/html; charset=utf-8' />
-      <script type="text/javascript" src="javascripts/lib/jquery-1.6.1.min.js"></script>
+      <script type="text/javascript" src="javascripts/lib/head.load.min.js"></script>      
+<!--      <script type="text/javascript" src="javascripts/lib/jquery-1.6.1.min.js"></script>
       <script type="text/javascript" src="javascripts/lib/quicksilver.js"></script>
       <script type="text/javascript" src="javascripts/lib/webtoolkit.base64.js"></script>
       <script type="text/javascript" src="javascripts/common.js"></script>
@@ -11,6 +12,24 @@
       <script type="text/javascript" src="javascripts/simplenoteLS.js"></script>
       <script type="text/javascript" src="javascripts/simplenoteCM.js"></script>
       <script type="text/javascript" src="javascripts/simplenoteDB.js"></script>
-      <script type="text/javascript" src="javascripts/background.js"></script>
+      <script type="text/javascript" src="javascripts/background.js"></script>-->
     </head>
+    <body>
+        <script type="text/javascript">
+          head.js(  "javascripts/lib/jquery-1.6.1.min.js",
+                    "javascripts/lib/quicksilver.js",
+                    "javascripts/lib/webtoolkit.base64.js",
+                    "javascripts/common.js",
+                    "javascripts/simplenoteSM.js",
+                    "javascripts/simplenoteAPI.js",
+                    "javascripts/simplenoteLS.js",
+                    "javascripts/simplenoteCM.js",
+                    "javascripts/simplenoteDB.js",
+                    "javascripts/simplenoteBG.js",
+                    function() {
+                        SimplenoteBG.startup();
+                    }
+          );                
+        </script>
+    </body>
 </html>
