@@ -23,8 +23,17 @@ var SimpleParser = Editor.Parser = (function() {
         };
         return urlinfo;
     }
+    
+    function noteLinkLookAhead(source,consume) {
+      for (var i = 0; i<config.headings.length; i++) {
+          var title = config.headings[i].title;
+          var match = source.lookAheadRegex(new RegExp("^#" + RegExp.escape(title),"i"),consume);          
+          if (match)
+              return match;
+      }      
+    }
+    
     function normal(source, setState) {
-      var ch = source.peek();
       var url;
       if (source.endOfLine()) {
           source.next();
@@ -37,19 +46,17 @@ var SimpleParser = Editor.Parser = (function() {
           return "sn-link";
       }
       
-      for (var i = 0; i<config.headings.length; i++) {
-          var title = config.headings[i].title;
-          var notelink = source.lookAheadRegex(new RegExp("^" + RegExp.escape(title),"i"),true);
-          if (notelink) {              
-              return "sn-notelink";
-          }
+      var notelink = noteLinkLookAhead(source,true);
+      if (notelink) {              
+            return "sn-notelink";
       }
       
       while(!url && !source.endOfLine()) {
-        source.nextWhileMatches(/[^h\n\s]/);
+        source.nextWhileMatches(/[^h\n\s#]/);
         if (!source.endOfLine()) {
             url = source.lookAheadRegex(urlRe, false);
-            if (url)
+            notelink = noteLinkLookAhead(source, false);
+            if (url || notelink)
                 return "text";
             else {
                 source.next();                
@@ -96,3 +103,7 @@ var SimpleParser = Editor.Parser = (function() {
   }
   return {make: parseSimple, configure:configure};
 })();
+
+RegExp.escape = function(text) {
+    return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+}

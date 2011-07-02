@@ -1475,16 +1475,16 @@ SNEditor.prototype.initialize = function() {
     
         $(".sn-notelink",$editbox).die();
         $(".sn-notelink",$editbox).live("click",function(event) {
-           var title = this.textContent.trim();
-           chrome.extension.sendRequest({action:"getnotes", deleted: 0}, function(notes) {
-                var titles = headings(notes,true).filter(function(h) { return h.title == title; });
+           var title = this.textContent.trim().substr(1);           
+            snHelpers.getHeadings(true,function(headings) {              
+                var titles = headings.filter(function(h) { return h.title == title; });
                 if (titles.length == 1) {
                     if (extData.isTab && snEditor.note)
                             snEditor.saveCaretScroll();
 
                     snEditor.setNote(titles[0]);                
-                }
-            })          
+                }            
+            });
         });
         
         // bind ctrl link disable
@@ -1732,10 +1732,9 @@ SNEditor.prototype.setNote = function(note, options) {
         this.needCMRefresh("lastopen");
     }
 
-    // set content
-    
-    chrome.extension.sendRequest({action:"getnotes", deleted: 0}, function(notes) {
-        that.codeMirror.setParser("SimpleParser", {headings: headings(notes)});
+    // set content    
+    snHelpers.getHeadings(false,function(headings) {
+        that.codeMirror.setParser("SimpleParser", {headings: headings});
         //console.log(headings(notes))
         that.codeMirror.setCode(inputcontent);
     })
@@ -2161,6 +2160,12 @@ var snHelpers = {
     printTimes: function() {
         for(var i in extData.times)
             log(i + ": " + extData.times[i]);
+    },
+    
+    getHeadings: function(full, callback) {
+        chrome.extension.sendRequest({action:"getnotes", deleted: 0}, function(notes) {
+            callback(headings(notes,full));
+        });        
     }
 }
 
