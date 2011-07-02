@@ -10,19 +10,20 @@ var SimpleParser = Editor.Parser = (function() {
     var urlRe = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)\.(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?[^\s\(\)\[\]\."'{}]/;
     var urlRe = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?((?:[a-z0-9]?(?:[a-z0-9\-]{0,61}[a-z0-9])+\.)+[a-z]{2,6}|[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})(:[0-9]{1,4})?(\/[\w#!~:.?+=&%@!\-\/]*)?/i;
     //                                 (user:passwrd@)?((?:no "-"     (?:                              )+ .)+[tld no "-" ])(:port      )?(/ | /(path               ))?
+    
     //var urlRe = /^(\()((?:ht|f)tps?:\/\/[a-z0-9\-._~!$&'()*+,;=:\/?#[\]@%]+)(\))|(\[)((?:ht|f)tps?:\/\/[a-z0-9\-._~!$&'()*+,;=:\/?#[\]@%]+)(\])|(\{)((?:ht|f)tps?:\/\/[a-z0-9\-._~!$&'()*+,;=:\/?#[\]@%]+)(\})|(<|&(?:lt|#60|#x3c);)((?:ht|f)tps?:\/\/[a-z0-9\-._~!$&'()*+,;=:\/?#[\]@%]+)(>|&(?:gt|#62|#x3e);)|((?:^|[^=\s'"\]])\s*['"]?|[^=\s]\s+)(\b(?:ht|f)tps?:\/\/[a-z0-9\-._~!$'()*+,;=:\/?#[\]@%]+(?:(?!&(?:gt|#0*62|#x0*3e);|&(?:amp|apos|quot|#0*3[49]|#x0*2[27]);[.!&',:?;]?(?:[^a-z0-9\-._~!$&'()*+,;=:\/?#[\]@%]|$))&[a-z0-9\-._~!$'()*+,;=:\/?#[\]@%]*)*[a-z0-9\-_~$()*+=\/#[\]@%])/i;
     // from http://jmrware.com/articles/2010/linkifyurl/linkify.html
-    function urlInfo(urlMatch) {
-        var urlinfo = {
-            full: urlMatch[0],
-            protocol: urlMatch[1],
-            userpass: urlMatch[2],
-            domain: urlMatch[3],
-            port: urlMatch[4],
-            path: urlMatch[5]            
-        };
-        return urlinfo;
-    }
+//    function urlInfo(urlMatch) {
+//        var urlinfo = {
+//            full: urlMatch[0],
+//            protocol: urlMatch[1],
+//            userpass: urlMatch[2],
+//            domain: urlMatch[3],
+//            port: urlMatch[4],
+//            path: urlMatch[5]            
+//        };
+//        return urlinfo;
+//    }
     
     function noteLinkLookAhead(source,consume) {
       for (var i = 0; i<config.headings.length; i++) {
@@ -48,7 +49,7 @@ var SimpleParser = Editor.Parser = (function() {
       
       var notelink = noteLinkLookAhead(source,true);
       if (notelink) {              
-            return "sn-notelink";
+            return "sn-link-note";
       }
       
       while(!url && !source.endOfLine()) {

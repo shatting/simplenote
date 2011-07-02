@@ -29,6 +29,15 @@ html {
     border-bottom: 1px solid rgba(0, 0, 0, 0.15);
 }
 
+.sn-link-note {
+    color: #ff3333;
+    cursor:pointer;
+    text-decoration: none;
+}
+.sn-link-note:hover {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+}
+
 .sn-link-unhot {
     color: #111;
     cursor: text;
@@ -38,14 +47,6 @@ html {
     border-bottom: 0px;
 }
 
-.sn-notelink {
-    color: #ff3333;
-    cursor:pointer;
-    text-decoration: none;
-}
-.sn-notelink:hover {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
-}
 
 ::-webkit-scrollbar {
     width: 14px;

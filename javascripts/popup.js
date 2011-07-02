@@ -1473,8 +1473,12 @@ SNEditor.prototype.initialize = function() {
            openURLinTab(url,event.shiftKey || event.altKey);
         });
     
-        $(".sn-notelink",$editbox).die();
-        $(".sn-notelink",$editbox).live("click",function(event) {
+        $(".sn-link-note",$editbox).die();
+        $(".sn-link-note",$editbox).live("click",function(event) {
+           if (event.ctrlKey) {
+               _gaq.push(['_trackEvent', 'popup', 'linkclicked_unhot']);
+               return;
+           }
            var title = this.textContent.trim().substr(1);           
             snHelpers.getHeadings(true,function(headings) {              
                 var titles = headings.filter(function(h) { return h.title == title; });
@@ -1490,12 +1494,12 @@ SNEditor.prototype.initialize = function() {
         // bind ctrl link disable
         $editbox.bind('keydown', function(event) {
             if (event.keyCode == 17) // ctrl
-                $(".sn-link",$editbox).addClass("sn-link-unhot");
+                $("[class^=sn-link]",$editbox).addClass("sn-link-unhot");
         });
         // bind ctrl link disable disable
         $editbox.bind('keyup', function(event) {
             if (event.keyCode == 17) // ctrl
-                $(".sn-link",$editbox).removeClass("sn-link-unhot");
+                $("[class^=sn-link]",$editbox).removeClass("sn-link-unhot");
         });
 
         if (!extData.isTab)
