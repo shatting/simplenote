@@ -13,7 +13,7 @@ SimplenoteSM = {
         if (b != undefined)
             localStorage.credentialsValid = b == true;
         else
-            return localStorage.credentialsValid == "true";
+            return this.haveLogin()?localStorage.credentialsValid == "true":true;
     },
 
     haveLogin: function() {

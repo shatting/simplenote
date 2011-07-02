@@ -39,6 +39,7 @@ var SimplenoteDB = {
         this._setSyncInProgress(false);
         this.syncCallbackChunk = undefined;
         this.syncCallbackFinished = undefined;
+        this._isOffline = false;
         this._indexKeysTemp = [];
         this._indexKeysChanged = {hadchanges: false, added:[],changed:[],deleted:[]};
     },

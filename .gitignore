@@ -1,6 +1,4 @@
 *.swp
 *.md.html
 .DS_Store
-
 /res
-/javascripts/lib/jquery.quicksand.js
