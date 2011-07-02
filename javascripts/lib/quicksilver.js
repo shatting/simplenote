@@ -36,7 +36,7 @@
 
 
 String.prototype.score = function(abbreviation,offset) {
-  offset = offset || 0 // TODO: I think this is unused... remove
+  offset = offset || 0
  
   if(abbreviation.length == 0) return 0.9
   if(abbreviation.length > this.length) return 0.0
@@ -72,7 +72,7 @@ String.prototype.score = function(abbreviation,offset) {
             score -= ((c == 32 || c == 9) ? 1 : 0.15)
           }
 
-          // XXX maybe not port this heuristic
+          // maybe not port this heuristic
           // 
           //          } else if ([[NSCharacterSet uppercaseLetterCharacterSet] characterIsMember:[self characterAtIndex:matchedRange.location]]) {
           //            for (j = matchedRange.location-1; j >= (int) searchRange.location; j--) {

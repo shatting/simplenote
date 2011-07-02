@@ -363,7 +363,7 @@ var SimplenoteDB = {
         var callbacks = {
             success :       function(note) {
                 that.offline(false);
-                // TODO: should not have to decrypt, since merging cant happen with cyphertext
+                // should not have to decrypt, since merging cant happen with cyphertext
                 //SimplenoteLS.updateNote(SimplenoteDB._decryptNote(note),"updateresponse");
                 SimplenoteLS.removeFromSyncList(note.key);
                 SimplenoteLS.updateNote(note,"updateresponse");

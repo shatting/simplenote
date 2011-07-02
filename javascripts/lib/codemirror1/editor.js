@@ -11,7 +11,7 @@ var gecko = navigator.userAgent.match(/gecko\/(\d{8})/i);
 if (gecko) gecko = Number(gecko[1]);
 var mac = /Mac/.test(navigator.platform);
 
-// TODO this is related to the backspace-at-end-of-line bug. Remove
+// this is related to the backspace-at-end-of-line bug. Remove
 // this if Opera gets their act together, make the version check more
 // broad if they don't.
 var brokenOpera = window.opera && /Version\/10.[56]/.test(navigator.userAgent);

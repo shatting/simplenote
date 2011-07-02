@@ -3,6 +3,8 @@ var SimpleParser = Editor.Parser = (function() {
 //    while (!source.endOfLine()) source.next();
 //    return "text";
 //  }
+  var config;
+  
   var tokenizeSimple = (function() {
 
     var urlRe = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)\.(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?[^\s\(\)\[\]\."'{}]/;
@@ -34,7 +36,15 @@ var SimpleParser = Editor.Parser = (function() {
           //console.log(urlInfo(url));
           return "sn-link";
       }
-
+      
+      for (var i = 0; i<config.headings.length; i++) {
+          var title = config.headings[i].title;
+          var notelink = source.lookAheadRegex(new RegExp("^" + RegExp.escape(title),"i"),true);
+          if (notelink) {              
+              return "sn-notelink";
+          }
+      }
+      
       while(!url && !source.endOfLine()) {
         source.nextWhileMatches(/[^h\n\s]/);
         if (!source.endOfLine()) {
@@ -80,5 +90,9 @@ var SimpleParser = Editor.Parser = (function() {
     };
     return iter;
   }
-  return {make: parseSimple};
+  
+  function configure(inconfig) {
+    config = inconfig;
+  }
+  return {make: parseSimple, configure:configure};
 })();

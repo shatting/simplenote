@@ -21,10 +21,6 @@
  * @version 1.1
  * @history 1.1 2010-01-25 Fixed a problem with 1.4 which caused undesired show/hide animations
  * @history 1.0 2008-10-20 Initial Release
- * @todo slideUp doesn't work in IE - because of iframe?
- * @todo Hide all other menus when contextmenu is shown?
- * @todo More themes
- * @todo Nested context menus
  */
 ;(function($){
 	$.contextMenu = {

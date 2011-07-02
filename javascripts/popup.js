@@ -1231,11 +1231,11 @@ function slideIndex(callback, duration) {
 function SNEditor() {
     log("SNEditor:create");
     this.codeMirror = new CodeMirror(document.getElementById("note"),{
-                    parserfile: "parsesimple.js",
-                    path: "javascripts/lib/codemirror1/",
+                    parserfile: "/javascripts/simplenoteParser.js",
+                    path: "/javascripts/lib/codemirror1/",
                     iframeClass: "cm-iframe",
                     content: "",
-                    stylesheet: "stylesheets/editor.css",
+                    stylesheet: "/stylesheets/editor.css",
                     tabMode: "shift",
                     indentUnit: 4,
                     enterMode: "keep",
@@ -1472,6 +1472,21 @@ SNEditor.prototype.initialize = function() {
            var url = this.textContent.trim();
            openURLinTab(url,event.shiftKey || event.altKey);
         });
+    
+        $(".sn-notelink",$editbox).die();
+        $(".sn-notelink",$editbox).live("click",function(event) {
+           var title = this.textContent.trim();
+           chrome.extension.sendRequest({action:"getnotes", deleted: 0}, function(notes) {
+                var titles = headings(notes,true).filter(function(h) { return h.title == title; });
+                if (titles.length == 1) {
+                    if (extData.isTab && snEditor.note)
+                            snEditor.saveCaretScroll();
+
+                    snEditor.setNote(titles[0]);                
+                }
+            })          
+        });
+        
         // bind ctrl link disable
         $editbox.bind('keydown', function(event) {
             if (event.keyCode == 17) // ctrl
@@ -1718,7 +1733,12 @@ SNEditor.prototype.setNote = function(note, options) {
     }
 
     // set content
-    this.codeMirror.setCode(inputcontent);    
+    
+    chrome.extension.sendRequest({action:"getnotes", deleted: 0}, function(notes) {
+        that.codeMirror.setParser("SimpleParser", {headings: headings(notes)});
+        //console.log(headings(notes))
+        that.codeMirror.setCode(inputcontent);
+    })
     
     // set pinned
     this.setPintoggle(this.note.systemtags.indexOf("pinned")>=0);

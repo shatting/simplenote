@@ -109,7 +109,7 @@ var CodeMirror = (function(){
       html.push("<link rel=\"stylesheet\" type=\"text/css\" href=\"" + file + queryStr + "\"/>");
     });
     forEach(options.basefiles.concat(options.parserfile), function(file) {
-      if (!/^https?:/.test(file)) file = options.path + file;
+      if (!/^https?:/.test(file) && !/^\//.test(file)) file = options.path + file;
       html.push("<script type=\"text/javascript\" src=\"" + file + queryStr + "\"><" + "/script>");
     });
     html.push("</head><body style=\"border-width: 0;\" class=\"editbox\"" + sp + "></body></html>");
@@ -188,7 +188,7 @@ var CodeMirror = (function(){
     },
 
     getCode: function() {return this.editor.getCode();},
-    setCode: function(code) {this.editor.importCode(code);},
+    setCode: function(code) {this.editor.importCode(code);},    
     selection: function() {this.focusIfIE(); return this.editor.selectedText();},
     reindent: function() {this.editor.reindent();},
     reindentSelection: function() {this.focusIfIE(); this.editor.reindentSelection(null);},

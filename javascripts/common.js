@@ -390,6 +390,30 @@ function cssprop(e, id) {
 //  };
 //})(jQuery);
 
+function headings(notes,full) {
+    return notes.filter(function(n) {
+        return n.content != undefined;
+    }).map(function(n) {
+        if (n.content != undefined) {
+            var title = noteTitle(n);
+            if (full) {
+                n.title = title;
+                return n;
+            } else             
+                return {
+                    title: title,
+                    key: n.key
+                };
+            
+        } else
+            return null
+    });
+}
+
+function noteTitle(note) {
+    return note.content.split("\n").filter(function(l) {return l!= "";})[0].trim();
+}
+
 function getCBval(sel) {
     return $(sel).attr("checked") == "checked";
 }
