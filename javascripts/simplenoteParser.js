@@ -25,14 +25,14 @@ var SimpleParser = Editor.Parser = (function() {
 //        return urlinfo;
 //    }
     
-    function noteLinkLookAhead(source,consume) {
-      for (var i = 0; i<config.headings.length; i++) {
-          var title = config.headings[i].title;
-          var match = source.lookAheadRegex(new RegExp("^#" + RegExp.escape(title),"i"),consume);          
-          if (match)
-              return match;
-      }      
-    }
+//    function noteLinkLookAhead(source,consume) {
+//      for (var i = 0; i<config.headings.length; i++) {
+//          var title = config.headings[i].title;
+//          var match = source.lookAheadRegex(new RegExp("^#" + RegExp.escape(title),"i"),consume);          
+//          if (match)
+//              return match;
+//      }      
+//    }
     
     function normal(source, setState) {
       var url;
@@ -47,17 +47,17 @@ var SimpleParser = Editor.Parser = (function() {
           return "sn-link";
       }
       
-      var notelink = noteLinkLookAhead(source,true);
-      if (notelink) {              
-            return "sn-link-note";
-      }
+//      var notelink = noteLinkLookAhead(source,true);
+//      if (notelink) {              
+//            return "sn-link-note";
+//      }
       
       while(!url && !source.endOfLine()) {
         source.nextWhileMatches(/[^h\n\s#]/);
         if (!source.endOfLine()) {
             url = source.lookAheadRegex(urlRe, false);
-            notelink = noteLinkLookAhead(source, false);
-            if (url || notelink)
+            //notelink = noteLinkLookAhead(source, false);
+            if (url)
                 return "text";
             else {
                 source.next();                

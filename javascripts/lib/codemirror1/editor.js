@@ -15,7 +15,7 @@ var mac = /Mac/.test(navigator.platform);
 // this if Opera gets their act together, make the version check more
 // broad if they don't.
 var brokenOpera = window.opera && /Version\/10.[56]/.test(navigator.userAgent);
-// TODO remove this once WebKit 533 becomes less common.
+// remove this once WebKit 533 becomes less common.
 var slowWebkit = /AppleWebKit\/533/.test(navigator.userAgent);
 
 // Make sure a string does not contain two consecutive 'collapseable'
