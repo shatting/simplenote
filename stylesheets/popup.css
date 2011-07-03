@@ -146,6 +146,7 @@ div#statusbar {
     width: 197px;
     margin-left: 4px;    
     background: transparent url(/images/searchfield.png) no-repeat 6px 50%;
+    box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 2px inset;
 }
 
 .toolbarbutton {
@@ -359,6 +360,7 @@ div.statusicon-clickable:hover {
     top: 32px;
     right: 2px;
     left:2px;
+    box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 2px inset;
 }
 
 .CodeMirror-wrapping:focus {
