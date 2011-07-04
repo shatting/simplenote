@@ -65,12 +65,15 @@
         var data_itemcount = 0;
         if(typeof data == "string") {
             d_type = "string";
-            var req_string = data;
+            var req_string = data;            
+        } else if (typeof data == "function") {
+            d_type = "function";
+            var data_function = data;
         } else {
             var org_data = data;
             for (k in data) if (data.hasOwnProperty(k)) data_itemcount++;
         }
-        if((d_type == "object" && data_itemcount >= 0) || d_type == "string"){
+        if((d_type == "object" && data_itemcount >= 0) || d_type == "string" || d_type == "function"){
             return this.each(function(x){
                 if(!opts.asHtmlID){
                     x = x+""+Math.floor(Math.random()*100); //this ensures there will be unique IDs on the page if autoSuggest() is called multiple times
@@ -218,7 +221,7 @@
                             } else
                                 opts.onChange.call(this,"edited");
 
-                            if(input.val().length == 1){ // emptied input with this delete press
+                            if(input.val().length <= 1){ // emptied input with this delete press
                                 results_holder.hide();
                                 prev_query = "";
                             }
@@ -353,6 +356,15 @@
 
                                 for (var k in new_data) if (new_data.hasOwnProperty(k)) data_itemcount++;
 
+                                processSuggestionData(new_data, query);
+                            });
+                        } else if (d_type == "function") {                            
+                            data_function.call(this,function(new_data) {
+                                new_data = opts.retrieveComplete.call(this, new_data);
+                                data_itemcount = 0;
+                                for (var k in new_data) if (new_data.hasOwnProperty(k)) data_itemcount++;
+                                d_type = "object";
+                                org_data = new_data;
                                 processSuggestionData(new_data, query);
                             });
                         } else { //static data

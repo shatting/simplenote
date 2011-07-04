@@ -45,8 +45,7 @@ $.extend(extData,{
         }
     },
     
-    fontUrls : {
-        "Droid Sans Mono"   : '<link href="stylesheets/fonts.css" rel="stylesheet" type="text/css" >',
+    fontUrls : {        
         "Walter Turncoat"   : '<link href="http://fonts.googleapis.com/css?family=Walter+Turncoat:regular" rel="stylesheet" type="text/css" >',
         "Inconsolata"       : '<link href="http://fonts.googleapis.com/css?family=Inconsolata:regular" rel="stylesheet" type="text/css" >',
         "Lekton"            : '<link href="http://fonts.googleapis.com/css?family=Lekton" rel="stylesheet" type="text/css">',
@@ -418,14 +417,23 @@ function readyListener() {
                 $("body").show();
 
                 if (!extData.isTab) {
+                    $("#print").hide();
+
                     if (!directlyShowNote) {
                         $("body").css("width", extData.dimensions.def.body_width + "px");
                         $("body").css("height", extData.dimensions.def.body_height + "px");
-                    } else {
-                        $("#note").show();
-
+                    } else {                        
                         $("body").css("width", extData.dimensions.focus.body_width + "px");
                         $("body").css("height", extData.dimensions.focus.body_height + "px");
+                                                
+                        $("#revert").hide();
+                        $("#trash").show();        
+                        $('#popout').show();
+                        
+                        $("#note").css("left", extData.dimensions.focus.note_left + "px");
+                        
+                        $("#note").show();
+                                              
                     }
                 } else {
                     $("#note").show();
@@ -761,7 +769,7 @@ function fillIndex() {
                         indexAddNote("append",note);
                         if (i<maxFill && note.content != undefined)
                             indexFillNote(note);
-                    }
+                    }                    
                     $("div.noterow").contextMenu(noteRowCMfn, {
                                                                   theme:'gloss',
                                                                   offsetX: 0,
@@ -1173,7 +1181,7 @@ function localeDateString(d) {
 }
 //  ---------------------------------------
 function slideEditor(callback, duration) {
-    log("slideEditor");
+    log("slideEditor, duration " + duration);
     
     if (duration == undefined)
         duration = extData.slideDuration;
@@ -1461,9 +1469,8 @@ SNEditor.prototype.initialize = function() {
                 _gaq.push(['_trackEvent', 'popup', 'printclicked']);
                 that.print();
             });
-        } else
-            $('div#note #print').hide();
-
+            $('div#note #print').show();
+        }
 
         // bind link clicks
         $(".sn-link",$editbox).die();
@@ -1913,49 +1920,48 @@ SNEditor.prototype.needCMRefresh = function(type) {
 }
 SNEditor.prototype.setupTags = function() {
     var that = this;
-    log("SNEditor.setupTags:sending request")
-    chrome.extension.sendRequest({action:"tags",options: {sort:"frequency",predef:false}}, function(taginfos) {        
+    log("SNEditor.setupTags:sending request")    
 
-        $("#as-selections-tagsauto").remove();
-        $("#as-results-tagsauto").remove();
-        $("#tags").remove();
+    $("#as-selections-tagsauto").remove();
+    $("#as-results-tagsauto").remove();
+    $("#tags").remove();    
+    $('div#note').prepend('<input type="text" id="tags" spellcheck="false" tabindex="0"/>');
+    $('div#note input#tags').autoSuggest(function(callback) {
+                chrome.extension.sendRequest({action:"tags",options: {sort:"frequency",predef:false}}, function(taginfos) {
+                        taginfos = taginfos.map(function(e) {return {value: e.tag};}).filter(function(e) {return e.value != "webnote" && e.value != "Webnotes"});
+                        log("SNEditor.setupTags:request complete, numtags=" + taginfos.length);
+                        callback(taginfos);
+                });
+            }, {
+            asHtmlID: "tagsauto",
+            startText: chrome.i18n.getMessage("tag_placeholder"),
+            preFill: that.note.tags.join(","),
+            //selectionClick: function(elem){ elem.fadeTo("slow", 0.33); },
+            selectionAdded: function(elem) {
+                if (that.getTags())
+                    that.setDirty("tags", !arrayEqual(that.note.tags,that.getTags()));                                        
+            },
+            selectionRemoved: function(elem) {
+                elem.remove();
+                if (that.getTags())
+                    that.setDirty("tags", !arrayEqual(that.note.tags,that.getTags()));
 
-        taginfos = taginfos.map(function(e) {return {value: e.tag};}).filter(function(e) {return e.value != "webnote" && e.value != "Webnotes"});
-        log("SNEditor.setupTags:request complete, numtags=" + taginfos.length)
-
-        $('div#note').prepend('<input type="text" id="tags" spellcheck="false" tabindex="0"/>');
-        $('div#note input#tags').autoSuggest(taginfos, {
-                asHtmlID: "tagsauto",
-                startText: chrome.i18n.getMessage("tag_placeholder"),
-                preFill: that.note.tags.join(","),
-                //selectionClick: function(elem){ elem.fadeTo("slow", 0.33); },
-                selectionAdded: function(elem) {
-                    if (that.getTags())
-                        that.setDirty("tags", !arrayEqual(that.note.tags,that.getTags()));                                        
-                },
-                selectionRemoved: function(elem) {
-                    elem.remove();
-                    if (that.getTags())
-                        that.setDirty("tags", !arrayEqual(that.note.tags,that.getTags()));
-                    
-                },
-                onChange: function() {
-                    $("#cmwrapper").css("top", Math.max($(".as-selections").height() + 4,32) + "px");
-                    that.saveTimerRearm();
-                },
-                onSetupDone: function() {
-                    //console.log($(".as-selections").height())
-                    $("#cmwrapper").css("top", Math.max($(".as-selections").height() + 4,32) + "px");
-                    //$("#as-selections-tagsauto").tipTip({defaultPosition:"top", content: chrome.i18n.getMessage("tag_tooltip_html",["alt-t", "alt-e"]), delay: 800, maxWidth: "400px"});
-                    $("#as-selections-tagsauto").attr("title",chrome.i18n.getMessage("tag_tooltip",["alt-t", "alt-e"]));
-                },
-                keyDelay: 10,
-                onTabOut: function() {
-                    snEditor.focus();
-                }
-            });
-        
-    });
+            },
+            onChange: function() {
+                $("#cmwrapper").css("top", Math.max($(".as-selections").height() + 4,32) + "px");
+                that.saveTimerRearm();
+            },
+            onSetupDone: function() {                
+                //console.log($(".as-selections").height())
+                $("#cmwrapper").css("top", Math.max($(".as-selections").height() + 4,32) + "px");
+                //$("#as-selections-tagsauto").tipTip({defaultPosition:"top", content: chrome.i18n.getMessage("tag_tooltip_html",["alt-t", "alt-e"]), delay: 800, maxWidth: "400px"});
+                $("#as-selections-tagsauto").attr("title",chrome.i18n.getMessage("tag_tooltip",["alt-t", "alt-e"]));
+            },
+            keyDelay: 10,
+            onTabOut: function() {
+                snEditor.focus();
+            }
+        });    
 }
 //  ---------------------------------------
 SNEditor.prototype.trashNote = function() {

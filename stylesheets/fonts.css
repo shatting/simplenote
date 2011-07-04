@@ -1,8 +1,0 @@
-@media screen {
-@font-face {
-  font-family: 'Droid Sans Mono';
-  font-style: normal;
-  font-weight: normal;
-  src: local('Droid Sans Mono'), local('DroidSansMono'), url('../fonts/DroidSansMono.woff') format('woff');
-}
-}

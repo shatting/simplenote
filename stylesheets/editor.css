@@ -75,3 +75,10 @@ html {
     border: 1px solid #999;
     -webkit-border-radius: 6px;
 }
+
+@font-face {
+  font-family: 'Droid Sans Mono';
+  font-style: normal;
+  font-weight: normal;  
+  src: local('Droid Sans Mono'), local('DroidSansMono'), url('../fonts/DroidSansMono.woff') format('woff');
+}

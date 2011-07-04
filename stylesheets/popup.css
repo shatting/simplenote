@@ -30,7 +30,7 @@ div#note {
     bottom: 2px;
     top: 2px;
     min-width: 340px;
-    padding: 2px;
+    padding: 2px;    
 
     background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));        
     display:none;
@@ -389,7 +389,7 @@ div#note .toolbarbutton {
 }
 
 #pintoggle {
-    
+    background-image:url(/images/pin2_unpinned.png);
 }
 
 #pintoggle.pinned {
@@ -405,7 +405,7 @@ div#note .toolbarbutton {
     margin-right: 20px !important;
 }
 
-#print {
+#print {    
     background-image:url(/images/print.png);
 }
 
@@ -414,6 +414,7 @@ div#note .toolbarbutton {
 }
 
 #wraptoggle {
+    background-image:url(/images/wrap_off.png);
 }
 
 #wraptoggle.wrap_on {
