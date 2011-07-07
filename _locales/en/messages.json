@@ -61,7 +61,7 @@
     "cm_using_link_url":    { "message": "link URL"},
     "cm_using_image_url":   { "message": "image URL"},
     "editorcm_insert_url":  { "message": "Insert browser URL ($1)"},
-    "editorcm_search_selection": { "message": "Search for selection ($1)"},
+    "editorcm_search_selection": { "message": "Google selection ($1)"},
     "webnote_icon":         { "message": "Click to visit this webnote at $1" },
     "syncnote_tooltip":     { "message": "This note has not yet been uploaded to the server." },
     "cm_new_webnote":       { "message": "New Webnote" },
