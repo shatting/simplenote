@@ -482,14 +482,14 @@ function getChromeVersion() {
 }
 
 function scheduleGA(ms) {
-//    setTimeout(function() {
-//        var ga = document.createElement('script');ga.type = 'text/javascript';ga.async = true;
-//        if (extData.debugFlags.general && extData.debugFlags.GA)
-//            ga.src = 'https://ssl.google-analytics.com/u/ga_debug.js';
-//        else
-//            ga.src = 'https://ssl.google-analytics.com/ga.js';
-//        var s = document.getElementsByTagName('script')[0];s.parentNode.insertBefore(ga, s);
-//    },ms == undefined?100:ms);
+    setTimeout(function() {
+        var ga = document.createElement('script');ga.type = 'text/javascript';ga.async = true;
+        if (extData.debugFlags.general && extData.debugFlags.GA)
+            ga.src = 'https://ssl.google-analytics.com/u/ga_debug.js';
+        else
+            ga.src = 'https://ssl.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0];s.parentNode.insertBefore(ga, s);
+    },ms == undefined?100:ms);
 }
 
 extData.chromeVersion = getChromeVersion();
