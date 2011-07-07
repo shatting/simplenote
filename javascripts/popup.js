@@ -51,7 +51,10 @@ $.extend(extData,{
         "Lekton"            : '<link href="http://fonts.googleapis.com/css?family=Lekton" rel="stylesheet" type="text/css">',
         "Yanone Kaffeesatz" : '<link href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:300" rel="stylesheet" type="text/css" >',
         "Vollkorn"          : '<link href="http://fonts.googleapis.com/css?family=Vollkorn:regular" rel="stylesheet" type="text/css" >'
-    }
+    },
+    
+    builtinTags : ["webnotes","checklist"]
+            
 });
 
 //  ---------------------------------------
@@ -222,7 +225,7 @@ function uiEventListener(eventData, sender, sendResponse) {
             if (eventData.source != "local" && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key) {
                     var contentChanged = eventData.changes.added.indexOf("content")>=0;
                     var tagsChanged = eventData.changes.changed.indexOf("tags")>=0;
-                    if ( pinnedNowOn || pinnedNowOff || contentChanged || tagsChanged )
+                    if ( (pinnedNowOn || pinnedNowOff || contentChanged || tagsChanged) && eventData.newnote.content != undefined)
                         snEditor.setNote(eventData.newnote);
             }
         } else if (eventName == "offlinechanged") {
@@ -708,7 +711,7 @@ function fillTags(callFillIndex) {
                     $("#notetags").append('<option value="#shared#" ' + style +  '>' + chrome.i18n.getMessage("tags_shared") + ' [' + taginfo.count + ']</option>');
                 else if (taginfo.tag == "#webnote#")
                     $("#notetags").append('<option value="#webnote#" ' + style +  '>' + chrome.i18n.getMessage("tags_webnote") + ' [' + taginfo.count + ']</option>');
-                else if (taginfo.tag != "webnote" && taginfo.tag != "Webnotes") {
+                else if (extData.builtinTags.indexOf(taginfo.tag.toLowerCase()) < 0) {
                     $("#notetags").append('<option value="' + taginfo.tag + '" ' + style +  '>' + taginfo.tag + " [" + taginfo.count + "] </option>");
                 }
                 if (oldval == taginfo.tag)
@@ -1483,24 +1486,48 @@ SNEditor.prototype.initialize = function() {
            var url = this.textContent.trim();
            openURLinTab(url,event.shiftKey || event.altKey);
         });
+        
+        // bind checkboxes
+        $(".checkbox",$editbox).die();
+        $(".checkbox",$editbox).live("click",function(event) {     
+           var lineH = that.codeMirror.cursorLine();
+           var line = that.codeMirror.lineContent(lineH);
+           var m = line.replace(/\s*_\s*(.*)/,"* $1");
+           $(this,$editbox).removeClass("checkbox").addClass("checkbox-checked");
+           that.codeMirror.setLineContent(lineH,m);
+           
+           that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);
+           that.saveTimerRearm();
+        });
+        
+        $(".checkbox-checked",$editbox).die();
+        $(".checkbox-checked",$editbox).live("click",function(event) {     
+           var lineH = that.codeMirror.cursorLine();
+           var line = that.codeMirror.lineContent(lineH);
+           var m = line.replace(/\s*\*\s*(.*)/,"_ $1");
+           $(this,$editbox).removeClass("checkbox-checked").addClass("checkbox");
+           
+           that.codeMirror.setLineContent(lineH,m)
+           
+           that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);
+           that.saveTimerRearm();
+        });
     
-//        $(".sn-link-note",$editbox).die();
-//        $(".sn-link-note",$editbox).live("click",function(event) {
-//           if (event.ctrlKey) {
-//               _gaq.push(['_trackEvent', 'popup', 'linkclicked_unhot']);
-//               return;
-//           }
-//           var title = this.textContent.trim().substr(1);           
-//            snHelpers.getHeadings(true,function(headings) {              
-//                var titles = headings.filter(function(h) {return h.title == title;});
-//                if (titles.length == 1) {
-//                    if (extData.isTab && snEditor.note)
-//                            snEditor.saveCaretScroll();
-//
-//                    snEditor.setNote(titles[0]);                
-//                }            
-//            });
-//        });
+        $(".sn-link-note",$editbox).die();
+        $(".sn-link-note",$editbox).live("click",function(event) {
+            if (event.ctrlKey) {
+               _gaq.push(['_trackEvent', 'popup', 'linkclicked_unhot']);
+               return;
+            }
+            var title = this.textContent.trim().substr(1).replace(/_/g," ");           
+            var titles = extData.headings.filter(function(h) {return h.title == title;});
+            if (titles.length >= 1) {
+                if (extData.isTab && snEditor.note)
+                        snEditor.saveCaretScroll();
+
+                snEditor.setNote(titles[0]);                
+            }            
+        });
         
         // bind ctrl link disable
         $editbox.bind('keydown', function(event) {
@@ -1748,11 +1775,12 @@ SNEditor.prototype.setNote = function(note, options) {
     }
 
     // set content    
-    //snHelpers.getHeadings(false,function(headings) {
-    //    that.codeMirror.setParser("SimpleParser", {headings: headings});
-        //console.log(headings(notes))
-        that.codeMirror.setCode(inputcontent);
-    //})
+    that.codeMirror.setParser("SimpleParser", {checklist: that.note.tags.indexOf("Checklist") >= 0});
+    that.codeMirror.setCode(inputcontent);
+    
+    snHelpers.getHeadings(false,function(headings) {
+        that.codeMirror.setParser("SimpleParser", {headings: headings, checklist: that.note.tags.indexOf("Checklist") >= 0, wikilinks : true});
+    })
     
     // set pinned
     this.setPintoggle(this.note.systemtags.indexOf("pinned")>=0);
@@ -1899,8 +1927,22 @@ SNEditor.prototype.setDirty = function(what, how, event) {
         this.showRevert();
     else
         this.hideRevert();
-
+    
+    this.dirtyChangeListener(what);
+        
     return true;
+}
+
+SNEditor.prototype.dirtyChangeListener = function(what) {
+    var that = this;
+    
+    switch(what) {
+      case "tags":
+        snHelpers.getHeadings(false,function(headings) {
+            that.codeMirror.setParser("SimpleParser", {headings: headings, checklist: that.getTags().indexOf("Checklist") >= 0, wikilinks : true});
+        })
+        break;
+    }
 }
 
 SNEditor.prototype.needCMRefresh = function(type) {
@@ -1928,8 +1970,9 @@ SNEditor.prototype.setupTags = function() {
     $('div#note').prepend('<input type="text" id="tags" spellcheck="false" tabindex="0"/>');
     $('div#note input#tags').autoSuggest(function(callback) {
                 chrome.extension.sendRequest({action:"tags",options: {sort:"frequency",predef:false}}, function(taginfos) {
-                        taginfos = taginfos.map(function(e) {return {value: e.tag};}).filter(function(e) {return e.value != "webnote" && e.value != "Webnotes"});
+                        taginfos = taginfos.map(function(e) {return {value: e.tag};}).filter(function(e) { return extData.builtinTags.indexOf(e.value.toLowerCase()) < 0 });                        
                         log("SNEditor.setupTags:request complete, numtags=" + taginfos.length);
+                        taginfos.unshift({value:"Checklist"});
                         callback(taginfos);
                 });
             }, {
@@ -2178,6 +2221,7 @@ var snHelpers = {
     
     getHeadings: function(full, callback) {
         chrome.extension.sendRequest({action:"getnotes", deleted: 0}, function(notes) {
+            extData.headings = headings(notes, true);
             callback(headings(notes,full));
         });        
     }

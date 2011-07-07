@@ -7,7 +7,7 @@ var SimpleParser = Editor.Parser = (function() {
   
   var tokenizeSimple = (function() {
 
-    var urlRe = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)\.(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?[^\s\(\)\[\]\."'{}]/;
+    //var urlRe = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)\.(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?[^\s\(\)\[\]\."'{}]/;
     var urlRe = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?((?:[a-z0-9]?(?:[a-z0-9\-]{0,61}[a-z0-9])+\.)+[a-z]{2,6}|[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})(:[0-9]{1,4})?(\/[\w#!~:.?+=&%@!\-\/]*)?/i;
     //                                 (user:passwrd@)?((?:no "-"     (?:                              )+ .)+[tld no "-" ])(:port      )?(/ | /(path               ))?
     
@@ -25,39 +25,112 @@ var SimpleParser = Editor.Parser = (function() {
 //        return urlinfo;
 //    }
     
-//    function noteLinkLookAhead(source,consume) {
+    function noteLinkLookAhead(source,consume) {
+      if (!config.headings)
+          return null;
+      
+      var link = source.lookAheadRegex(/^#([^\s]+)/,false);
+//      console.log("possible wikilink: " + link[1]);
+      if (!link)
+          return false;
+      
+      var title = link[1].replace(/_/g," ");
+//      console.log("searching for title: " + title);
+//      
+      var matches = config.headings.filter(function(h) {          
+         return h.title.length == title.length && h.title == title; 
+      });
+      
+//      console.log("%i matches found", matches.length);
+//      for (var i= 0; i<matches.length; i++) {
+//          console.log(matches[i]);
+//      }
+      
+      if (consume) {
+          if (matches.length > 0) {
+              source.lookAheadRegex(/^#([^\s]+)/,true);              
+              return true;
+          }
+      } else
+          return matches.length > 0;
+          
+      
 //      for (var i = 0; i<config.headings.length; i++) {
 //          var title = config.headings[i].title;
-//          var match = source.lookAheadRegex(new RegExp("^#" + RegExp.escape(title),"i"),consume);          
-//          if (match)
+//          var match = source.lookAheadRegex(new RegExp("^#" + RegExp.escape(title.trim().replace(/ /g,"_")),"i"),consume);
+//          console.log("testing " + title)
+//          if (match) {
+//              console.log(" <-matched")
 //              return match;
+//          }
 //      }      
-//    }
+    }
+    
+    var checked = false;
+    function checklist(source, setState) {
+        if (source.endOfLine()) {
+          source.next();
+          
+          return "whitespace";
+        }
+
+        while(!source.endOfLine())
+            source.next();
+        
+        setState(normal);
+        
+        return checked?"text-checked":"text"
+    }
     
     function normal(source, setState) {
-      var url;
+      var url, notelink;
       if (source.endOfLine()) {
           source.next();
           return "whitespace";
       }
+            
+      if (config.wikilinks && source.equals("#")) {
+          notelink = noteLinkLookAhead(source,true);
+          if (notelink) {              
+                return "sn-link-note";
+          }
+      }
+      
       url = source.lookAheadRegex(urlRe, true)
       if (url) {
           //console.log("found a link:");
           //console.log(urlInfo(url));
           return "sn-link";
-      }
+      }      
       
-//      var notelink = noteLinkLookAhead(source,true);
-//      if (notelink) {              
-//            return "sn-link-note";
-//      }
+      if (config.checklist) {
+          if (source.lookAheadRegex(/^\_ /,true)) {
+              setState(checklist);
+              checked = false;
+              return "checkbox";
+          }
+          if (source.lookAheadRegex(/^\* /,true)) {
+              setState(checklist);
+              checked = true;
+              return "checkbox-checked";
+          }
+      }
+
       
       while(!url && !source.endOfLine()) {
-        source.nextWhileMatches(/[^h\n\s#]/);
+        source.nextWhileMatches(/[^h\n\s\#]/);
         if (!source.endOfLine()) {
-            url = source.lookAheadRegex(urlRe, false);
-            //notelink = noteLinkLookAhead(source, false);
-            if (url)
+            if (source.equals("h"))
+                url = source.lookAheadRegex(urlRe, false);
+            else
+                url = false;
+            
+            if (config.wikilinks && source.equals("#"))
+                notelink = noteLinkLookAhead(source, false);            
+            else
+                notelink = false;
+            
+            if (url || notelink)
                 return "text";
             else {
                 source.next();                
@@ -76,6 +149,7 @@ var SimpleParser = Editor.Parser = (function() {
   function parseSimple(source) {
     function indentTo(n) {return function() {return n;}}
     source = tokenizeSimple(source);
+
     var space = 0;
 
     var iter = {
@@ -95,12 +169,20 @@ var SimpleParser = Editor.Parser = (function() {
           return iter;
         };
       }
-    };
+    };    
+//    try {
+//        while (x = iter.next())            
+//            console.log(JSON.stringify(x.value) + " - " + x.type)
+//    } catch(e) {}
+    
     return iter;
   }
   
   function configure(inconfig) {
-    config = inconfig;
+    config = inconfig
+//    if (config.headings)
+//        for (var i=0; i<config.headings.length;i++)
+//            console.log("#" + config.headings[i].title.replace(/ /g,"_"))
   }
   return {make: parseSimple, configure:configure};
 })();

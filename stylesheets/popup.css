@@ -293,7 +293,6 @@ div.selectednote div.webnoteicon { background-image: url(/images/webnote_inv.png
 div.selectednote div.webnoteicon:hover { background-image: url(/images/webnote.png);  }
 div.webnoteicon { background-image: url(/images/webnote.png);  }
 
-
 div.selectednote div.syncicon { background-image: url(/images/sync_16_inv.png);  }
 div.syncicon {
     background: transparent url(/images/sync_16.png) no-repeat;
@@ -423,6 +422,11 @@ div#note .toolbarbutton {
 
 #wraptoggle.wrap_off {
     background-image:url(/images/wrap_off.png);
+}
+
+#checklisttoggle {
+    background-image: url("/images/checkbox.png");
+    -webkit-background-size: 19px 19px;
 }
 
 #backtoindex {
