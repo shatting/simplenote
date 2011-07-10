@@ -1492,9 +1492,10 @@ SNEditor.prototype.initialize = function() {
         $(".checkbox",$editbox).live("click",function(event) {     
            var lineH = that.codeMirror.cursorLine();
            var line = that.codeMirror.lineContent(lineH);
-           var m = line.replace(/\s*_\s*(.*)/,"* $1");
+           var m = line.replace(/\s*\-\s*(.*)/,"* $1");
            $(this,$editbox).removeClass("checkbox").addClass("checkbox-checked");
            that.codeMirror.setLineContent(lineH,m);
+           that.codeMirror.selectLines(lineH,3);
            
            that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);
            that.saveTimerRearm();
@@ -1504,13 +1505,15 @@ SNEditor.prototype.initialize = function() {
         $(".checkbox-checked",$editbox).live("click",function(event) {     
            var lineH = that.codeMirror.cursorLine();
            var line = that.codeMirror.lineContent(lineH);
-           var m = line.replace(/\s*\*\s*(.*)/,"_ $1");
+           var m = line.replace(/\s*\*\s*(.*)/,"- $1");
            $(this,$editbox).removeClass("checkbox-checked").addClass("checkbox");
-           
-           that.codeMirror.setLineContent(lineH,m)
+                      
+           that.codeMirror.setLineContent(lineH,m);
+           that.codeMirror.selectLines(lineH,3);
            
            that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);
            that.saveTimerRearm();
+           
         });
     
         $(".sn-link-note",$editbox).die();
@@ -1523,9 +1526,9 @@ SNEditor.prototype.initialize = function() {
             var titles = extData.headings.filter(function(h) {return h.title == title;});
             if (titles.length >= 1) {
                 if (extData.isTab && snEditor.note)
-                        snEditor.saveCaretScroll();
+                        that.saveCaretScroll();
 
-                snEditor.setNote(titles[0]);                
+                that.setNote(titles[0]);                
             }            
         });
         
@@ -1775,11 +1778,11 @@ SNEditor.prototype.setNote = function(note, options) {
     }
 
     // set content    
-    that.codeMirror.setParser("SimpleParser", {checklist: that.note.tags.indexOf("Checklist") >= 0});
+    that.codeMirror.setParser("SimpleParser", {checklist: that.note.tags.indexOf("Checklist") >= 0 ? ["-","*"] : false});
     that.codeMirror.setCode(inputcontent);
     
     snHelpers.getHeadings(false,function(headings) {
-        that.codeMirror.setParser("SimpleParser", {headings: headings, checklist: that.note.tags.indexOf("Checklist") >= 0, wikilinks : true});
+        that.codeMirror.setParser("SimpleParser", {headings: headings, checklist: that.note.tags.indexOf("Checklist") >= 0 ? ["-","*"] : false, wikilinks : true});
     })
     
     // set pinned
@@ -1939,7 +1942,7 @@ SNEditor.prototype.dirtyChangeListener = function(what) {
     switch(what) {
       case "tags":
         snHelpers.getHeadings(false,function(headings) {
-            that.codeMirror.setParser("SimpleParser", {headings: headings, checklist: that.getTags().indexOf("Checklist") >= 0, wikilinks : true});
+            that.codeMirror.setParser("SimpleParser", {headings: headings, checklist: that.getTags().indexOf("Checklist") >= 0 ? ["-","*"]:false, wikilinks : true});
         })
         break;
     }
@@ -1970,7 +1973,7 @@ SNEditor.prototype.setupTags = function() {
     $('div#note').prepend('<input type="text" id="tags" spellcheck="false" tabindex="0"/>');
     $('div#note input#tags').autoSuggest(function(callback) {
                 chrome.extension.sendRequest({action:"tags",options: {sort:"frequency",predef:false}}, function(taginfos) {
-                        taginfos = taginfos.map(function(e) {return {value: e.tag};}).filter(function(e) { return extData.builtinTags.indexOf(e.value.toLowerCase()) < 0 });                        
+                        taginfos = taginfos.map(function(e) {return {value: e.tag};}).filter(function(e) {return extData.builtinTags.indexOf(e.value.toLowerCase()) < 0});                        
                         log("SNEditor.setupTags:request complete, numtags=" + taginfos.length);
                         taginfos.unshift({value:"Checklist"});
                         callback(taginfos);

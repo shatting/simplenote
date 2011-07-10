@@ -65,19 +65,28 @@ var SimpleParser = Editor.Parser = (function() {
 //          }
 //      }      
     }
-    
+
+    function endOfLine(source,setState) {
+        console.log(source.peek())
+        setState(normal)
+        return "whitespace";
+    }
+
     var checked = false;
     function checklist(source, setState) {
         if (source.endOfLine()) {
-          source.next();
-          
+          source.next();          
           return "whitespace";
         }
-
-        while(!source.endOfLine())
-            source.next();
+              
+        line = source.lookAheadRegex(/^.*/, true);
+      
+//        if (source.peek() != config.checklist[0] && source.peek() != config.checklist[1])
+//          setState(checklist)
+//        else
+//          setState(normal);
         
-        setState(normal);
+        setState(endOfLine);
         
         return checked?"text-checked":"text"
     }
@@ -104,12 +113,12 @@ var SimpleParser = Editor.Parser = (function() {
       }      
       
       if (config.checklist) {
-          if (source.lookAheadRegex(/^\_ /,true)) {
+          if (source.lookAheadRegex(new RegExp("^\\" + config.checklist[0] + " "),true)) {
               setState(checklist);
               checked = false;
               return "checkbox";
           }
-          if (source.lookAheadRegex(/^\* /,true)) {
+          if (source.lookAheadRegex(new RegExp("^\\" + config.checklist[1] + " "),true)) {
               setState(checklist);
               checked = true;
               return "checkbox-checked";
@@ -140,7 +149,7 @@ var SimpleParser = Editor.Parser = (function() {
       }      
       return "text";
     }
-
+    
     return function(source, startState) {
       return tokenizer(source, startState || normal);
     };
@@ -179,10 +188,7 @@ var SimpleParser = Editor.Parser = (function() {
   }
   
   function configure(inconfig) {
-    config = inconfig
-//    if (config.headings)
-//        for (var i=0; i<config.headings.length;i++)
-//            console.log("#" + config.headings[i].title.replace(/ /g,"_"))
+    config = inconfig;
   }
   return {make: parseSimple, configure:configure};
 })();
@@ -190,3 +196,10 @@ var SimpleParser = Editor.Parser = (function() {
 RegExp.escape = function(text) {
     return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
 }
+//
+//function mergeobj(obj1,obj2){
+//    var obj3 = {};
+//    for (attrname in obj1) {obj3[attrname] = obj1[attrname];}
+//    for (attrname in obj2) {obj3[attrname] = obj2[attrname];}
+//    return obj3;
+//}

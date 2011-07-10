@@ -17,9 +17,6 @@ html {
 }
 
 .sn-link {
-    color: #4F92EB;
-    color: #5CA0FF;
-    color: #3C7ECF;
     color: #4189CB;
     cursor:pointer;
     text-decoration: none;
@@ -29,8 +26,8 @@ html {
     border-bottom: 1px solid rgba(0, 0, 0, 0.15);
 }
 
-.sn-link-note {
-    color: #ff3333;
+.sn-link-note {    
+    color: #4189CB;    
     cursor:pointer;
     text-decoration: none;
 }
@@ -48,14 +45,13 @@ html {
 }
 
 .checkbox, .checkbox-checked {
-    border: 1px solid rgba(0,0,0,0.4);
+    border: 1px solid rgba(128,128,128,0.8);
     padding: 0.5em;
     line-height: 1.2em;
-    background: #fff;
     background: transparent -webkit-gradient(linear, left top, left bottom, from(#fff), to(#ccc));
-    background: transparent ;
+    background: transparent;
     -webkit-appearance: none;
-    -webkit-box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    -webkit-box-shadow: 1px 1px 3px rgba(128,128,128,0.3);
     -webkit-border-radius: 0.5em;
     display: inline-block;
     line-height: 1em;
@@ -69,8 +65,17 @@ html {
     margin-right: 0.5em;
 }
 
+.checkbox:hover, .checkbox-checked:hover {
+    -webkit-background-size: 2.8em 2.8em;
+    ''-webkit-transition: -webkit-background-size 0.1s linear;
+}
+.checkbox {
+/*    background: url("/images/checkbox_unchecked.png") repeat-x center center;
+    -webkit-background-size: 2.5em 2.5em;*/
+}
+
 .checkbox-checked {
-    background: url("/images/checkbox.png") no-repeat center center;
+    background: url("/images/checkbox_editor.png") no-repeat center center;
     -webkit-background-size: 2.5em 2.5em;
 }
 
