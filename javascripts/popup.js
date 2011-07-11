@@ -19,7 +19,7 @@ $.extend(extData,{
     
     isTab : false,
     
-    editorSaveTime: 3000,
+    editorSaveTime: 6000,
     
     dimensions : {
         def:  {
@@ -711,6 +711,8 @@ function fillTags(callFillIndex) {
                     $("#notetags").append('<option value="#shared#" ' + style +  '>' + chrome.i18n.getMessage("tags_shared") + ' [' + taginfo.count + ']</option>');
                 else if (taginfo.tag == "#webnote#")
                     $("#notetags").append('<option value="#webnote#" ' + style +  '>' + chrome.i18n.getMessage("tags_webnote") + ' [' + taginfo.count + ']</option>');
+                else if (taginfo.tag == "#markdown#")
+                    $("#notetags").append('<option value="#markdown#" ' + style +  '>' + chrome.i18n.getMessage("tags_markdown") + ' [' + taginfo.count + ']</option>');
                 else if (extData.builtinTags.indexOf(taginfo.tag.toLowerCase()) < 0) {
                     $("#notetags").append('<option value="' + taginfo.tag + '" ' + style +  '>' + taginfo.tag + " [" + taginfo.count + "] </option>");
                 }
@@ -1260,7 +1262,8 @@ function SNEditor() {
     $("#cmwrapper").css("position","");
     $("#cmwrapper").css("height","");    
     $("#cmiframe").attr("tabindex","2");
-    $("#cmwrapper").append("<div id='markdownpreview' onselectstart='return true;'></div>");
+    $("#cmwrapper").append("<div id='markdownpreviewspacer'></div>");
+    $("#cmwrapper").append("<div id='markdownpreview'></div>");
 
     this.dirty={content: false, tags: false, pinned: false};    
 }
@@ -1315,8 +1318,11 @@ SNEditor.prototype.setFont = function() {
     }
     // 
     // set colors
-    if (localStorage.option_color_editor)
+    if (localStorage.option_color_editor) {
         $editbox.css("background-color",localStorage.option_color_editor);
+        $("#cmiframe").css("background-color",localStorage.option_color_editor);
+        $("#cmwrapper").css("background-color",localStorage.option_color_editor);
+    }
     if (localStorage.option_color_editor_font)
         $editbox.css("color",localStorage.option_color_editor_font);
 }
@@ -1337,6 +1343,8 @@ SNEditor.prototype.initialize = function() {
         return;
 
     log("SNEditor.intitalize");
+    
+    var holdmarkdownscroll = false;
 
     try {
 
@@ -1349,9 +1357,15 @@ SNEditor.prototype.initialize = function() {
         $editbox.unbind();
         $editbox.bind('change keyup paste cut', function(event) {
             that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);
-            if (that.markdown && that.isPreviewtoggle()) {                    
-                var html = markdown.toHTML(that.codeMirror.getCode());
-                $("#markdownpreview").html(html);
+            if (that.markdown && that.isPreviewtoggle()) {
+                that.markdownPreview(that.codeMirror.getCode());
+                
+                if ($("#markdownpreview").is(":visible")) {
+                    var scrollPercent = $(this).scrollTop()/this.scrollHeight;
+                    holdmarkdownscroll = true;
+                    $("#markdownpreview").scrollTop(Math.round($("#markdownpreview").get(0).scrollHeight * scrollPercent));                
+                    holdmarkdownscroll = false;
+                }
             }            
         });
 
@@ -1562,9 +1576,23 @@ SNEditor.prototype.initialize = function() {
                 $("[class^=sn-link]",$editbox).removeClass("sn-link-unhot");
         });
         
-        $("#markdownpreview").scroll(function () {            
+        $("#markdownpreview").scroll(function () {          
+            if ($("#markdownpreview").css("left") == "0%" || holdmarkdownscroll)
+                return;
+
             var scrollPercent = $(this).scrollTop()/this.scrollHeight;
             that.$CMbody().scrollTop(Math.round(that.$CMbody().get(0).scrollHeight * scrollPercent));
+        });
+        $("#markdownpreviewspacer").click(function() {
+            $("#markdownpreviewspacer").toggleClass("max");
+            $("#markdownpreview").toggleClass("max");
+            
+            if ($("#markdownpreviewspacer").hasClass("max"))
+                $("#cmiframe").hide(300);
+            else
+                $("#cmiframe").show(300);
+            
+            return;
         });
 
         if (!extData.isTab)
@@ -2138,14 +2166,17 @@ SNEditor.prototype.setPreview = function(to,content) {
     if (this.markdown && to) {
         $("#cmiframe").css("width","50%");
         $("#markdownpreview").show();
-        $("#markdownpreview").css("left","50%");
+        $("#markdownpreviewspacer").show();    
+        
         if (content)
-            $("#markdownpreview").html(markdown.toHTML(content));       
+            this.markdownPreview(content);       
         else
-            $("#markdownpreview").html(markdown.toHTML(this.codeMirror.getCode()));
+            this.markdownPreview(this.codeMirror.getCode());        
     } else {
-        $("#markdownpreview").hide();
+        $("#markdownpreview").hide();        
+        $("#markdownpreviewspacer").hide();
         $("#cmiframe").css("width","100%");
+        $("#cmiframe").show();
     }
 }
 
@@ -2156,6 +2187,15 @@ SNEditor.prototype.setMarkdown = function(to) {
     else
         $('div#note #previewtoggle').hide();
     this.adjustTagsWidth();
+}
+
+SNEditor.prototype.markdownPreview = function(m) {
+    log("rendering markdown");
+    //var converter = new Showdown.converter();
+    //var html = converter.makeHtml(m);
+    var html = markdown.toHTML(m);
+    $("#markdownpreview").html(html);
+    $('#markdownpreview a').attr('target', '_blank');
 }
 
 SNEditor.prototype.print = function() {

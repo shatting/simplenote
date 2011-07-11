@@ -348,9 +348,7 @@ div.statusicon-clickable:hover {
 
 /* note div */
 
-.CodeMirror-wrapping {
-    padding-top: 5px;
-    padding-left: 5px;    
+.CodeMirror-wrapping {     
     border-radius: 12px 0px 0px 0px;
     border: 1px solid #999;
     margin-top: 4px;    
@@ -368,23 +366,62 @@ div.statusicon-clickable:hover {
     outline: none;
 }
 
-.cm-iframe {
+#cmiframe { 
+    padding-left: 2px;
+    padding-bottom: 2px;
+    border-radius: 12px 0 0 0;
+    padding-right: 2px;
+    padding-top: 4px;
     position: absolute;
     -webkit-box-sizing: border-box;    
-    padding-right: 6px;
+}
+
+#markdownpreviewspacer.max {
+    background: #ccc url(/images/fade_in.png) no-repeat 60% 50%;
+    border-radius: 12px 0 0 0;
+    left: 0%;    
+    border-top-color: transparent;
+    top:1px;
+}
+
+#markdownpreviewspacer:hover {        
+    background-color: #ddd;
+}
+
+#markdownpreviewspacer {
+    display:none;
+    position:absolute;
+    width: 8px;
+    top: 0px;
+    bottom: 0px;    
+    background: #ccc url(/images/fade_out.png) no-repeat 60% 50%;
+    left: 50%;
+    cursor:pointer;
+    z-index:999;
+    border: 1px solid #ccc;
+    -webkit-transition: all 0.3s ease-in-out;  
+}
+
+#markdownpreview.max {
+    left:0%;
+    border-top-left-radius: 12px 12px;
 }
 
 #markdownpreview {
     display: none;
     position: absolute;
-    left:2px;
-    right: 2px;
-    top: 2px;
-    bottom:2px;
+    left:50%;
+    right: 0px;
+    top: 0px;
+    bottom:0px;
     overflow:auto;
+    -webkit-transition: all 0.3s ease-in-out;
     padding:10px;
-    border-left: 2px solid #ccc;
+    padding-left:24px;
+    ''border-left: 2px solid #ccc;
     cursor:default;
+    background-color: white;
+    
 }
 
 div#note .toolbarbutton {

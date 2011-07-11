@@ -67,7 +67,7 @@ var SimpleParser = Editor.Parser = (function() {
     }
 
     function endOfLine(source,setState) {
-        console.log(source.peek())
+        //console.log(source.peek())
         setState(normal)
         return "whitespace";
     }

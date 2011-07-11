@@ -94,34 +94,27 @@ input[type=text], input[type=checkbox], select {
   cursor:pointer;
 }
 
-
-::-webkit-scrollbar {
+.editbox::-webkit-scrollbar {
     width: 14px;
-    height: 14px;
-    background-color: transparent;
+    height: 14px;    
 }
 
-::-webkit-scrollbar-track-piece  {
-    background-color: #CACFDE;
-    background: -webkit-gradient(linear, right top, left top,color-stop(0.0, #F7F8FF),color-stop(1.0, #FFF));    
-    ''-webkit-border-radius: 6px;
-    ''background: #4F4F59 url(/images/texture.png);
+.editbox::-webkit-scrollbar-track-piece  {
+    background: transparent;    
 }
 
-/*:-webkit-scrollbar-button:start:decrement,
-::-webkit-scrollbar-button:end:increment  {
-    height: 30px;
-    display: block;
-    background-color: #FAA;
-}*/
+.editbox::-webkit-scrollbar-corner {
+    background: transparent;
+}
 
-::-webkit-scrollbar-thumb {
+.editbox::-webkit-scrollbar-thumb {
     background: -webkit-gradient(linear, right top, left top,color-stop(0.0, #F7F8FF),color-stop(1.0, #FFF));
     background: #CACFDE;
     background: #F7F8FF;
     border: 1px solid #999;
-    -webkit-border-radius: 6px;
+    -webkit-border-radius: 6px;    
 }
+
 
 @font-face {
   font-family: 'Droid Sans Mono';
