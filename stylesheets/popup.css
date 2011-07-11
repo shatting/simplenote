@@ -25,7 +25,7 @@ div#index {
 
 div#note {
     position: absolute;
-    left:402px;
+    left:400px;
     right: 2px;
     bottom: 2px;
     top: 2px;
@@ -377,29 +377,39 @@ div.statusicon-clickable:hover {
 }
 
 #markdownpreviewspacer.max {
-    background: #ccc url(/images/fade_in.png) no-repeat 60% 50%;
+    background: #F7F8FF url(/images/fade_in.png) no-repeat 60% 50%;
     border-radius: 12px 0 0 0;
     left: 0%;    
     border-top-color: transparent;
-    top:1px;
+    top:-1px;
+    border-left: 0px solid #999;
+    border-top: 1px solid #999;
+    border-bottom: 1px solid #999;
 }
 
-#markdownpreviewspacer:hover {        
-    background-color: #ddd;
+#markdownpreviewspacer:hover {                    
+    border-color: #acc3ec;    
+    border-top: 1px solid #999;
+    border-bottom: 1px solid #999;    
+    background-color: #ddeefe;
+    ''background-image: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#ddeefe), to(#bfe0f1));    
 }
 
 #markdownpreviewspacer {
     display:none;
     position:absolute;
-    width: 8px;
-    top: 0px;
-    bottom: 0px;    
-    background: #ccc url(/images/fade_out.png) no-repeat 60% 50%;
+    width: 12px;
+    top: -1px;
+    bottom: -1px;    
+    background: #F7F8FF url(/images/fade_out.png) no-repeat 50% 50%;
     left: 50%;
     cursor:pointer;
     z-index:999;
-    border: 1px solid #ccc;
-    -webkit-transition: all 0.3s ease-in-out;  
+    border-left: 1px solid #999;
+    border-right: 1px solid #999;
+    border-top: 1px solid #F7F8FF;
+    border-bottom: 1px solid #F7F8FF;
+    -webkit-transition: all 0.2s ease-in-out;      
 }
 
 #markdownpreview.max {
@@ -430,7 +440,7 @@ div#note .toolbarbutton {
     width:28px;
     height:28px;
     margin-right: 10px;
-    float:right;
+    float:right;    
 }
 
 #revert {
@@ -475,8 +485,7 @@ div#note .toolbarbutton {
 }
 #previewtoggle {
     display:none;
-    background-image:url(/images/preview_off.png);
-    -webkit-background-size: 21px 21px;
+    background-image:url(/images/preview_off.png);    
 }
 
 #previewtoggle.preview_on {
@@ -485,6 +494,18 @@ div#note .toolbarbutton {
 
 #previewtoggle.preview_off {
     background-image:url(/images/preview_off.png);
+}
+
+#markdowntoggle {    
+    background-image:url(/images/markdown_off.png);
+}
+
+#markdowntoggle.on {
+    background-image:url(/images/markdown_on.png);
+}
+
+#markdowntoggle.off {
+    background-image:url(/images/markdown_off.png);
 }
 
 #backtoindex {

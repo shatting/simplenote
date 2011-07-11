@@ -90,6 +90,14 @@ function unloadListener() {
                     note.systemtags.push("pinned");
                 }
             }
+            if (snEditor.dirty.markdown) {
+                note.systemtags = snEditor.note.systemtags;
+                if (!snEditor.isMarkdownToggle()) {
+                    note.systemtags.splice(note.systemtags.indexOf("markdown"),1);
+                } else {
+                    note.systemtags.push("markdown");
+                }
+            }
             if (snEditor.dirty.tags)
                 note.tags = snEditor.getTags();
     //        if ($('div#note input#encrypted').attr("dirty")=="true")
@@ -160,6 +168,12 @@ function uiEventListener(eventData, sender, sendResponse) {
             var modifyChanged = eventData.changes.changed.indexOf("modifydate")>=0;
             var deleted = eventData.changes.changed.indexOf("deleted")>=0 && eventData.oldnote.deleted == 0 && eventData.newnote.deleted == 1;
             var undeleted = eventData.changes.changed.indexOf("deleted")>=0 && eventData.oldnote.deleted == 1 && eventData.newnote.deleted == 0;
+            var markdownchanged = eventData.changes.changed.indexOf("systemtags")>=0 && (eventData.oldnote.systemtags.indexOf("markdown") >= 0 != eventData.newnote.systemtags.indexOf("markdown") >= 0);
+            
+            var needTagsRefresh = false;
+            var needIndexRefresh = false;
+            var needPinnedRefresh = false;
+            var needLastOpenRefresh = false;
 //            console.log(eventData.oldnote)
 //            console.log(eventData.newnote)
             if (deleted) {
@@ -170,13 +184,12 @@ function uiEventListener(eventData, sender, sendResponse) {
                 }
                 if (localStorage.lastopennote_key == eventData.newnote.key) {
                     delete localStorage.lastopennote_key
-                    snEditor.needCMRefresh("lastopen");
+                    needLastOpenRefresh = true;
                 }
                 if (eventData.newnote.systemtags.indexOf("pinned")>=0)
-                    snEditor.needCMRefresh("pinned");
+                    needPinnedRefresh = true;
 
-                fillTags(false);
-                snEditor.hideIfNotInIndex(eventData.newnote.key);
+                needTagsRefresh = true;                
             } else if (undeleted) {
                 log("EventListener:noteupdated: undeleted");
                 if (noteRowInIndex(eventData.newnote.key)) {
@@ -184,13 +197,12 @@ function uiEventListener(eventData, sender, sendResponse) {
                     $('div.noterow#' + eventData.newnote.key).hide("slow", function() {$(this).remove();});
                 }
                 if (eventData.newnote.systemtags.indexOf("pinned")>=0)
-                    snEditor.needCMRefresh("pinned");
+                    needPinnedRefresh = true;
 
-                fillTags(false);
-                snEditor.hideIfNotInIndex(eventData.newnote.key);
+                needTagsRefresh = true;         
             } else if (eventData.changes.changed.indexOf("tags")>=0) {
                 log("EventListener:noteupdated:tags");
-                fillTags(true);
+                needIndexRefresh = true;
             } else if (modifyChanged || pinnedNowOn || pinnedNowOff) {
                 if (modifyChanged)
                     log("EventListener:noteupdated:modifychanged");
@@ -200,7 +212,7 @@ function uiEventListener(eventData, sender, sendResponse) {
                     log("EventListener:noteupdated:pinnednowoff");
                          
                 if (($("#" + eventData.newnote.key).index()>0 || pinnedNowOff) && localStorage.option_sortby != "createdate") {
-                    fillTags(true);
+                    needIndexRefresh = true;
                 } else {
                     indexAddNote("replace", eventData.newnote);
                     if (eventData.newnote.content)
@@ -211,16 +223,22 @@ function uiEventListener(eventData, sender, sendResponse) {
             if (pinnedNowOn) {
                 $('div.noterow #' + eventData.newnote.key + "pin").removeClass("unpinned");
                 $('div.noterow #' + eventData.newnote.key + "pin").addClass("pinned");
-                snEditor.needCMRefresh("pinned");
+                needPinnedRefresh = true;
             } else if (pinnedNowOff) {
                 $('div.noterow #' + eventData.newnote.key + "pin").removeClass("pinned");
                 $('div.noterow #' + eventData.newnote.key + "pin").addClass("unpinned");
-                snEditor.needCMRefresh("pinned");
+                needPinnedRefresh = true;
             }
-
-            if (extData.isTab) {
-                if ((pinnedNowOn || pinnedNowOff) && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key)
+            
+            if (extData.isTab && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key) {
+                if (pinnedNowOn || pinnedNowOff)
                     snEditor.setPintoggle(eventData.newnote.systemtags.indexOf("pinned")>=0);
+                
+                if (markdownchanged) {
+                    snEditor.setMarkdownToggle(eventData.newnote.systemtags.indexOf("markdown") >= 0);
+                    snEditor.setPreview(eventData.newnote.content);
+                    needTagsRefresh = true;
+                }
             }
             if (eventData.source != "local" && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key) {
                     var contentChanged = eventData.changes.added.indexOf("content")>=0;
@@ -228,6 +246,14 @@ function uiEventListener(eventData, sender, sendResponse) {
                     if ( (pinnedNowOn || pinnedNowOff || contentChanged || tagsChanged) && eventData.newnote.content != undefined)
                         snEditor.setNote(eventData.newnote);
             }
+            
+            if (needIndexRefresh || needTagsRefresh)
+                fillTags(needIndexRefresh);
+            if (needPinnedRefresh)
+                snEditor.needCMRefresh("pinned");
+            if (needLastOpenRefresh)
+                snEditor.needCMRefresh("lastopen");
+            
         } else if (eventName == "offlinechanged") {
             log("EventListener:offline:" + eventData.status);
             if (eventData.status)
@@ -1357,7 +1383,7 @@ SNEditor.prototype.initialize = function() {
         $editbox.unbind();
         $editbox.bind('change keyup paste cut', function(event) {
             that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);
-            if (that.markdown && that.isPreviewtoggle()) {
+            if (that.isMarkdownToggle() && that.isPreviewtoggle()) {
                 that.markdownPreview(that.codeMirror.getCode());
                 
                 if ($("#markdownpreview").is(":visible")) {
@@ -1421,6 +1447,24 @@ SNEditor.prototype.initialize = function() {
 
             that.focus();
         });
+        
+        // add note markdown event listener
+        $('div#note #markdowntoggle').unbind();
+        $('div#note #markdowntoggle').bind('click', function(event) {
+
+            _gaq.push(['_trackEvent', 'popup', 'markdowntoggled']);
+
+            snEditor.setMarkdownToggle(!snEditor.isMarkdownToggle());
+
+            var changed = that.setDirty("markdown", (that.note.systemtags.indexOf("markdown")>=0) != snEditor.isMarkdownToggle() , event);
+
+            if (changed && extData.isTab)
+                that.saveNote();
+
+            that.focus();
+            
+            snEditor.setPreview();
+        });
 
         // bind back button
         $('div#note #backtoindex').unbind();
@@ -1455,11 +1499,11 @@ SNEditor.prototype.initialize = function() {
             that.setPreviewtoggle(!that.isPreviewtoggle());
 
             localStorage.markdown_preview = that.isPreviewtoggle();
-            that.setPreview(that.isPreviewtoggle());
+            that.setPreview();
             that.focus();
         });
         this.setPreviewtoggle(localStorage.markdown_preview == undefined || localStorage.markdown_preview == "true");
-        this.setPreview(this.isPreviewtoggle());
+        this.setPreview();
 
         // bind UNDO button
         $('div#note #revert').unbind();
@@ -1482,6 +1526,10 @@ SNEditor.prototype.initialize = function() {
             // reset pinned
             if (that.dirty.pinned) {
                 that.setPintoggle(note.systemtags.indexOf("pinned")>=0);
+            }
+            
+            if (that.dirty.markdown) {
+                that.setMarkdownToggle(note.systemtags.indexOf("markdown")>=0);
             }
 
             that.hideRevert();
@@ -1810,11 +1858,7 @@ SNEditor.prototype.setNote = function(note, options) {
     
     this.setFont();
     this.initialize();
-
-    this.setMarkdown(note.systemtags.indexOf("markdown") != -1);
-
-    this.setPreview(this.isPreviewtoggle(), note.content);
-     
+    
     // get note contents
     if (note.key == "") { // new note
 
@@ -1844,6 +1888,10 @@ SNEditor.prototype.setNote = function(note, options) {
     
     // set pinned
     this.setPintoggle(this.note.systemtags.indexOf("pinned")>=0);
+    
+    // set markdown
+    this.setMarkdownToggle(this.note.systemtags.indexOf("markdown") >= 0);
+    this.setPreview(note.content);
 
     this.clearDirty();
 
@@ -1920,6 +1968,14 @@ SNEditor.prototype.saveNote = function(callback) {
             noteData.systemtags.push("pinned");
         }
     }
+    if (this.dirty.markdown) {
+        noteData.systemtags = this.note.systemtags;
+        if (!this.isMarkdownToggle()) {
+            noteData.systemtags.splice(noteData.systemtags.indexOf("markdown"),1);
+        } else {
+            noteData.systemtags.push("markdown");
+        }
+    }
     if (this.dirty.tags)
         noteData.tags = this.getTags();
 //    if ($('div#note input#encrypted').attr("dirty")=="true")
@@ -1950,7 +2006,7 @@ SNEditor.prototype.saveNote = function(callback) {
 }
 //  ---------------------------------------
 SNEditor.prototype.isNoteDirty = function() {
-    return this.dirty.content || this.dirty.pinned || this.dirty.tags;// || $('div#note input#encrypted').attr("dirty")=="true";
+    return this.dirty.content || this.dirty.pinned || this.dirty.tags || this.dirty.markdown;// || $('div#note input#encrypted').attr("dirty")=="true";
 }
 //  ---------------------------------------
 SNEditor.prototype.clearDirty = function() {
@@ -1958,6 +2014,7 @@ SNEditor.prototype.clearDirty = function() {
     this.setDirty("content",false);
     this.setDirty("pinned",false);
     this.setDirty("tags",false);    
+    this.setDirty("markdown",false);  
     //$('div#note input#encrypted').removeAttr('dirty');
 }
 //  ---------------------------------------
@@ -2162,8 +2219,8 @@ SNEditor.prototype.isPreviewtoggle = function() {
     return $('div#note #previewtoggle').hasClass("preview_on");
 }
 
-SNEditor.prototype.setPreview = function(to,content) {    
-    if (this.markdown && to) {
+SNEditor.prototype.setPreview = function(content) {
+    if (this.isMarkdownToggle() && this.isPreviewtoggle()) {
         $("#cmiframe").css("width","50%");
         $("#markdownpreview").show();
         $("#markdownpreviewspacer").show();    
@@ -2180,12 +2237,21 @@ SNEditor.prototype.setPreview = function(to,content) {
     }
 }
 
-SNEditor.prototype.setMarkdown = function(to) {
-    this.markdown = to;
-    if (to)
-        $('div#note #previewtoggle').show();
-    else
-        $('div#note #previewtoggle').hide();
+SNEditor.prototype.isMarkdownToggle = function() {
+    return !$('#markdowntoggle').hasClass("off");
+}
+
+SNEditor.prototype.setMarkdownToggle = function(to) {
+    
+    if (to) {
+        $('#previewtoggle').show();
+        $('#markdowntoggle').removeClass("off");
+        $('#markdowntoggle').addClass("on");
+    } else {
+        $('#previewtoggle').hide();
+        $('#markdowntoggle').removeClass("on");
+        $('#markdowntoggle').addClass("off");
+    }
     this.adjustTagsWidth();
 }
 

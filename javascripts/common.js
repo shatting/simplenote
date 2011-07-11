@@ -10,7 +10,7 @@ var extData = {
     debugFlags : {
         general     : false,
         popup       : true,
-        popup2BG    : true,
+        popup2BG    : false,
         BG          : true,
         DB          : true,
         LS          : true,

@@ -81,7 +81,7 @@ html {
 
 .text-checked {
     text-decoration: line-through;
-    color: rgba(0,0,0,0.5);    
+    color: rgba(128,128,128,1);    
 }
 
 input[type=text], input[type=checkbox], select {
