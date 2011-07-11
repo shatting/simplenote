@@ -2,26 +2,17 @@
 
 ul.as-selections {
 	list-style-type: none;
-/*	border-top: 1px solid #888;
-	border-bottom: 1px solid #b6b6b6;
-	border-left: 1px solid #aaa;
-	border-right: 1px solid #aaa;*/
-        
         margin-top: 2px;
-	overflow: hidden;	
-	''-webkit-box-shadow:inset 0 0px 2px #888;
+	overflow: hidden;		
 	position: absolute;
         display: inline;
         right: 240px;
         left: 2px;
         font-size: 13px;
         padding-left: 2px;        
-        ''background: transparent url(/images/tag_dunkel.png) no-repeat 6px 8px;
-/*        border-radius: 12px;
-        border: 1px solid #999;*/
         color: #333;
         box-shadow: 0 1px 0 #fff;
-        cursor: text;
+        cursor: text;        
 }
 
 /*ul.as-selections:focus {

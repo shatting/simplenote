@@ -26,6 +26,7 @@
     "tags_published":       { "message": "(published)" },
     "tags_shared":          { "message": "(shared)" },
     "tags_webnote":         { "message": "(webnotes)" },
+    "tags_markdown":        { "message": "(markdown)" },    
     "no_notes_to_show":     { "message": "no notes found."},
     "created":              { "message": "created: "},
     "modified":             { "message": "modified: "},

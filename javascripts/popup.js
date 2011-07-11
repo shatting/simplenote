@@ -1260,6 +1260,7 @@ function SNEditor() {
     $("#cmwrapper").css("position","");
     $("#cmwrapper").css("height","");    
     $("#cmiframe").attr("tabindex","2");
+    $("#cmwrapper").append("<div id='markdownpreview' onselectstart='return true;'></div>");
 
     this.dirty={content: false, tags: false, pinned: false};    
 }
@@ -1348,6 +1349,10 @@ SNEditor.prototype.initialize = function() {
         $editbox.unbind();
         $editbox.bind('change keyup paste cut', function(event) {
             that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);
+            if (that.markdown && that.isPreviewtoggle()) {                    
+                var html = markdown.toHTML(that.codeMirror.getCode());
+                $("#markdownpreview").html(html);
+            }            
         });
 
         // fix for home not scrolling all to the left
@@ -1418,15 +1423,29 @@ SNEditor.prototype.initialize = function() {
 
             _gaq.push(['_trackEvent', 'popup', 'wordwraptoggled']);
 
-            snEditor.setWraptoggle(!snEditor.isWraptoggle());
+            that.setWraptoggle(!that.isWraptoggle());
 
-            localStorage.wordwrap = snEditor.isWraptoggle();
-            that.codeMirror.setTextWrapping(snEditor.isWraptoggle());
+            localStorage.wordwrap = that.isWraptoggle();
+            that.codeMirror.setTextWrapping(that.isWraptoggle());
             that.focus();
         });
         this.setWraptoggle(localStorage.wordwrap != undefined && localStorage.wordwrap == "true");
-        this.codeMirror.setTextWrapping(snEditor.isWraptoggle());
+        this.codeMirror.setTextWrapping(this.isWraptoggle());
 
+        // bind preview toggle
+        $("div#note #previewtoggle").unbind();
+        $("div#note #previewtoggle").bind('click', function(event) {
+
+            _gaq.push(['_trackEvent', 'popup', 'previewtoggled']);
+
+            that.setPreviewtoggle(!that.isPreviewtoggle());
+
+            localStorage.markdown_preview = that.isPreviewtoggle();
+            that.setPreview(that.isPreviewtoggle());
+            that.focus();
+        });
+        this.setPreviewtoggle(localStorage.markdown_preview == undefined || localStorage.markdown_preview == "true");
+        this.setPreview(this.isPreviewtoggle());
 
         // bind UNDO button
         $('div#note #revert').unbind();
@@ -1448,12 +1467,12 @@ SNEditor.prototype.initialize = function() {
 
             // reset pinned
             if (that.dirty.pinned) {
-                snEditor.setPintoggle(note.systemtags.indexOf("pinned")>=0);
+                that.setPintoggle(note.systemtags.indexOf("pinned")>=0);
             }
 
-            snEditor.hideRevert();
+            that.hideRevert();
 
-            snEditor.clearDirty(); // should not dont need this here b/c of callbacks
+            that.clearDirty(); // should not dont need this here b/c of callbacks
             that.focus();
         });
 
@@ -1525,7 +1544,7 @@ SNEditor.prototype.initialize = function() {
             var title = this.textContent.trim().substr(1).replace(/_/g," ");           
             var titles = extData.headings.filter(function(h) {return h.title == title;});
             if (titles.length >= 1) {
-                if (extData.isTab && snEditor.note)
+                if (extData.isTab && that.note)
                         that.saveCaretScroll();
 
                 that.setNote(titles[0]);                
@@ -1541,6 +1560,11 @@ SNEditor.prototype.initialize = function() {
         $editbox.bind('keyup', function(event) {
             if (event.keyCode == 17) // ctrl
                 $("[class^=sn-link]",$editbox).removeClass("sn-link-unhot");
+        });
+        
+        $("#markdownpreview").scroll(function () {            
+            var scrollPercent = $(this).scrollTop()/this.scrollHeight;
+            that.$CMbody().scrollTop(Math.round(that.$CMbody().get(0).scrollHeight * scrollPercent));
         });
 
         if (!extData.isTab)
@@ -1559,11 +1583,12 @@ SNEditor.prototype.initialize = function() {
         }
         // add context menu
         this.makeContextMenu();
-
-        this.initialized = true;
+        
+        this.initialized = true;    
     } catch (e) {
         exceptionCaught(e);
     }
+        
 }
 
 //  ---------------------------------------
@@ -1758,6 +1783,10 @@ SNEditor.prototype.setNote = function(note, options) {
     this.setFont();
     this.initialize();
 
+    this.setMarkdown(note.systemtags.indexOf("markdown") != -1);
+
+    this.setPreview(this.isPreviewtoggle(), note.content);
+     
     // get note contents
     if (note.key == "") { // new note
 
@@ -1999,9 +2028,10 @@ SNEditor.prototype.setupTags = function() {
             },
             onSetupDone: function() {                
                 //console.log($(".as-selections").height())
+                that.adjustTagsWidth();
                 $("#cmwrapper").css("top", Math.max($(".as-selections").height() + 4,32) + "px");
                 //$("#as-selections-tagsauto").tipTip({defaultPosition:"top", content: chrome.i18n.getMessage("tag_tooltip_html",["alt-t", "alt-e"]), delay: 800, maxWidth: "400px"});
-                $("#as-selections-tagsauto").attr("title",chrome.i18n.getMessage("tag_tooltip",["alt-t", "alt-e"]));
+                $("#as-selections-tagsauto").attr("title",chrome.i18n.getMessage("tag_tooltip",["alt-t", "alt-e"]));                
             },
             keyDelay: 10,
             onTabOut: function() {
@@ -2090,6 +2120,44 @@ SNEditor.prototype.isWraptoggle = function() {
     return $('div#note #wraptoggle').hasClass("wrap_on");
 }
 
+SNEditor.prototype.setPreviewtoggle = function(to) {
+    if (to) {
+        $('div#note #previewtoggle').addClass("preview_on");
+        $('div#note #previewtoggle').removeClass("preview_off");
+    } else {
+        $('div#note #previewtoggle').addClass("preview_off");
+        $('div#note #previewtoggle').removeClass("preview_on");
+    }
+}
+
+SNEditor.prototype.isPreviewtoggle = function() {
+    return $('div#note #previewtoggle').hasClass("preview_on");
+}
+
+SNEditor.prototype.setPreview = function(to,content) {    
+    if (this.markdown && to) {
+        $("#cmiframe").css("width","50%");
+        $("#markdownpreview").show();
+        $("#markdownpreview").css("left","50%");
+        if (content)
+            $("#markdownpreview").html(markdown.toHTML(content));       
+        else
+            $("#markdownpreview").html(markdown.toHTML(this.codeMirror.getCode()));
+    } else {
+        $("#markdownpreview").hide();
+        $("#cmiframe").css("width","100%");
+    }
+}
+
+SNEditor.prototype.setMarkdown = function(to) {
+    this.markdown = to;
+    if (to)
+        $('div#note #previewtoggle').show();
+    else
+        $('div#note #previewtoggle').hide();
+    this.adjustTagsWidth();
+}
+
 SNEditor.prototype.print = function() {
     this.codeMirror.win.print();
 }
@@ -2099,13 +2167,21 @@ SNEditor.prototype.showRevert = function() {
         $('div#note #revert').show();
     //alert($('div#note #pintoggle').css("left"))
     //$('div#note #tags').animate({right:"+=28"});
+    this.adjustTagsWidth();
 }
 
 SNEditor.prototype.hideRevert = function() {
     $('div#note #revert').hide();
     //$('div#note #tags').animate({right:"-=28"});
+    this.adjustTagsWidth();
 }
 
+SNEditor.prototype.adjustTagsWidth = function() {
+    if ($("#revert").is(":visible"))
+        $("#as-selections-tagsauto").css("right", ($("#note").width() - $("#revert").position().left +10) + "px");
+    else
+        $("#as-selections-tagsauto").css("right", ($("#note").width() - $("#pintoggle").position().left + 10) + "px");
+}
 
 var snHelpers = {
     

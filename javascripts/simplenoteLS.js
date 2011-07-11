@@ -227,6 +227,9 @@ var SimplenoteLS = {
                     case "#webnote#":
                         add &= note.content != undefined && note.content.match(extData.webnotereg) != undefined;
                         break;
+                    case "#markdown#":
+                        add &= note.systemtags.indexOf("markdown") >= 0;
+                        break;
                     default:
                         add &= note.tags != undefined && note.tags.indexOf(options.tag)>=0;
                 }
@@ -359,7 +362,7 @@ var SimplenoteLS = {
         
         var keys = this.getKeys();
 
-        var predeftags = [{tag:"#all#",count:0},{tag:"#notag#",count:0},{tag:"#trash#",count:0},{tag:"#published#",count:0},{tag:"#shared#",count:0},{tag:"#webnote#",count:0}];
+        var predeftags = [{tag:"#all#",count:0},{tag:"#notag#",count:0},{tag:"#trash#",count:0},{tag:"#published#",count:0},{tag:"#shared#",count:0},{tag:"#webnote#",count:0},{tag:"#markdown#",count:0}];
         var tags = [];
         var thisnote;
         var thistags;
@@ -391,6 +394,8 @@ var SimplenoteLS = {
                     predeftags[4].count++;
                 if (thissystemtags != undefined && thissystemtags.indexOf("published") >= 0)
                     predeftags[3].count++;
+                if (thissystemtags != undefined && thissystemtags.indexOf("markdown") >= 0)
+                    predeftags[6].count++;
                 if (thisnote.content != undefined && thisnote.content.match(extData.webnotereg)) {
                     predeftags[5].count++;
                     predeftags[0].count--;

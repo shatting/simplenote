@@ -29,7 +29,7 @@ div#note {
     right: 2px;
     bottom: 2px;
     top: 2px;
-    min-width: 340px;
+    min-width: 792px;
     padding: 2px;    
 
     background: -webkit-gradient(linear, left top, left bottom,color-stop(0.0, #F7F8FF),color-stop(1.0, white));        
@@ -374,6 +374,19 @@ div.statusicon-clickable:hover {
     padding-right: 6px;
 }
 
+#markdownpreview {
+    display: none;
+    position: absolute;
+    left:2px;
+    right: 2px;
+    top: 2px;
+    bottom:2px;
+    overflow:auto;
+    padding:10px;
+    border-left: 2px solid #ccc;
+    cursor:default;
+}
+
 div#note .toolbarbutton {
     display:inline;   
     margin-top: 1px;
@@ -423,10 +436,18 @@ div#note .toolbarbutton {
 #wraptoggle.wrap_off {
     background-image:url(/images/wrap_off.png);
 }
+#previewtoggle {
+    display:none;
+    background-image:url(/images/preview_off.png);
+    -webkit-background-size: 21px 21px;
+}
 
-#checklisttoggle {
-    background-image: url("/images/checkbox.png");
-    -webkit-background-size: 19px 19px;
+#previewtoggle.preview_on {
+    background-image:url(/images/preview_on.png);
+}
+
+#previewtoggle.preview_off {
+    background-image:url(/images/preview_off.png);
 }
 
 #backtoindex {
