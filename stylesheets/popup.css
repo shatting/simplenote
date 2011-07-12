@@ -434,6 +434,50 @@ div.statusicon-clickable:hover {
     
 }
 
+#markdownpreview { font-family: "Helvetica Neue", Arial, Helvetica, Arimo, FreeSans, "Nimbus Sans", "Phetsarath OT", Malayalam, "Gargi_1.7", sans-serif; color: #333333; text-rendering: optimizeLegibility;}
+
+#markdownpreview h1 { font-family: "museo-sans-1","museo-sans-2", Helvetica Neue, Helvetica, Arial, sans-serif; font-weight: 100; font-size: 36px; text-shadow: 0 1px 0 #fff; line-height: 1.2; color: #9191A1; margin: 0 0 1em 0; padding: 0 23% 2em 0; text-transform: lowercase; border-bottom: 1px solid rgba(0, 0, 0, 0.1); background: url(/img/header.png) no-repeat right top; }
+
+#markdownpreview h3 { margin: 0 0 1em 0; }
+
+#markdownpreview legend, h2 { font-weight: 200; font-size: 20px; color: #666; padding: 0 0 1em 0; }
+
+#markdownpreview h4 { font-size: 1.1em; line-height: 1.2; margin: 0 0 0.25em 0; color: #666666; }
+
+#markdownpreview h5 { font-size: .8em; line-height: 1.2; margin: 0 0 0 0; color: #666; }
+
+#markdownpreview ul { list-style-type: none; }
+
+#markdownpreview ol { padding: 0 0 0 2em; list-style-type: decimal; }
+#markdownpreview ol li { margin: 0 0 0.5em 0; }
+
+#markdownpreview a { cursor: pointer; color: #4189cb; text-decoration: none; }
+#markdownpreview a:link, a:visited, a { text-decoration: none; font-weight: bold; color: #4189cb; border-bottom: 1px solid rgba(0, 0, 0, 0.15); }
+#markdownpreview a:focus, a:hover { color: #333333; border-bottom: 1px solid #9a9c9f; border-bottom: 1px solid rgba(0, 0, 0, 0.35); background: rgba(70, 108, 185, 0.06); }
+#markdownpreview a.img { border: 0; }
+
+#markdownpreview { word-wrap: break-word; }
+#markdownpreview h1 { background: transparent none; border-bottom-width: 0; color: inherit; font-size: 28px; font-weight: normal; line-height: 40px; text-shadow: none; text-transform: none; }
+#markdownpreview hgroup :first-child { margin: 0 0 0 0; }
+#markdownpreview hgroup :last-child { margin-top: 0; font-style: italic; font-weight: bold; }
+#markdownpreview h1, #markdownpreview h2, #markdownpreview h3, #markdownpreview h4, #markdownpreview h5, #markdownpreview h6 { padding: 0; margin: 0; color: inherit; }
+#markdownpreview h2 { font-weight: bold; font-size: 22.4px; line-height: 40px; }
+#markdownpreview hgroup h1 + h2 { font-size: 135%; font-weight: bold; line-height: 40px; font-style: italic; }
+#markdownpreview h3 { font-size: 17.5px; line-height: 40px; }
+#markdownpreview h4 { font-size: 16.1px; }
+#markdownpreview h5, #markdownpreview h6 { font-size: 14px; line-height: 20px; }
+#markdownpreview h6 { font-weight: normal; font-style: italic; }
+#markdownpreview p, #markdownpreview dd, #markdownpreview dt, #markdownpreview pre, #markdownpreview ul, #markdownpreview ol, #markdownpreview table.text, #markdownpreview div.warn { margin-bottom: 20px; }
+#markdownpreview ul, #markdownpreview ol { padding-left: 28.28px; }
+#markdownpreview ul ul, #markdownpreview ul ol, #markdownpreview ol ul, #markdownpreview ol ol { margin-bottom: 0; }
+#markdownpreview ul { list-style-type: square; }
+#markdownpreview ol { list-style-type: decimal; }
+#markdownpreview dt { font-weight: bold; }
+#markdownpreview dd { padding-left: 28.28px; }
+#markdownpreview blockquote { border-left: 3px solid #d0d0d0; margin-left: 13.14px; padding: 0 14.14px 0 12.14px; color: #4c4c4c; }
+#markdownpreview hr { display: block; border-width: 0; height: 3px; background: #aaa; background: rgba(0, 0, 0, 0.3); margin-bottom: 17px; }
+#markdownpreview pre { white-space: pre-wrap; }
+
 div#note .toolbarbutton {
     display:inline;   
     margin-top: 1px;

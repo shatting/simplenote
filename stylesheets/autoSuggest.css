@@ -44,6 +44,7 @@ ul.as-selections li.as-selection-item {
         cursor: default;
         margin-top: 2px;
         margin-bottom: 2px;
+        cursor:text;
 }
 
 ul.as-selections li.as-selection-item:last-child {

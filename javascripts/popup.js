@@ -1389,8 +1389,7 @@ SNEditor.prototype.initialize = function() {
                 if ($("#markdownpreview").is(":visible")) {
                     var scrollPercent = $(this).scrollTop()/this.scrollHeight;
                     holdmarkdownscroll = true;
-                    $("#markdownpreview").scrollTop(Math.round($("#markdownpreview").get(0).scrollHeight * scrollPercent));                
-                    holdmarkdownscroll = false;
+                    $("#markdownpreview").scrollTop(Math.round($("#markdownpreview").get(0).scrollHeight * scrollPercent));                    
                 }
             }            
         });
@@ -1624,8 +1623,12 @@ SNEditor.prototype.initialize = function() {
                 $("[class^=sn-link]",$editbox).removeClass("sn-link-unhot");
         });
         
-        $("#markdownpreview").scroll(function () {          
-            if ($("#markdownpreview").css("left") == "0%" || holdmarkdownscroll)
+        $("#markdownpreview").scroll(function () {       
+            if (holdmarkdownscroll) {
+                holdmarkdownscroll = false;
+                return;
+            }
+            if ($("#markdownpreview").css("left") == "0%")
                 return;
 
             var scrollPercent = $(this).scrollTop()/this.scrollHeight;
@@ -2257,9 +2260,10 @@ SNEditor.prototype.setMarkdownToggle = function(to) {
 
 SNEditor.prototype.markdownPreview = function(m) {
     log("rendering markdown");
-    //var converter = new Showdown.converter();
-    //var html = converter.makeHtml(m);
-    var html = markdown.toHTML(m);
+    var converter = new Showdown.converter();
+    var html = converter.makeHtml(m);
+    //var html = markdown.toHTML(m);
+    //var html = Markdown(m);
     $("#markdownpreview").html(html);
     $('#markdownpreview a').attr('target', '_blank');
 }
