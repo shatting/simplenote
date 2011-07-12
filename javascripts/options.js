@@ -2,6 +2,23 @@ $(document).ready(function() {
 
   $("#email").val(SimplenoteSM.email() != undefined?SimplenoteSM.email():"");
   $("#password").val(SimplenoteSM.password() != undefined?SimplenoteSM.password():"");
+  $("#webapplogin").change(function() {
+        if (!getCBval("#webapplogin")) {
+            $("#email").show("fast");
+            $("#password").show("fast");
+            $("#save").show("fast");
+//            $("#email").attr("disabled","disabled");
+//            $("#password").attr("disabled","disabled");
+        } else {
+            $("#email").hide("fast");
+            $("#password").hide("fast");
+            $("#save").hide("fast");
+//            $("#email").removeAttr("disabled");
+//            $("#password").removeAttr("disabled");
+        }
+        save_clicked();
+  });
+  setCBval("#webapplogin",SimplenoteSM.webapplogin());
   
   $("#abstractlines").val(localStorage.option_abstractlines == undefined?"3":localStorage.option_abstractlines);
 
@@ -197,51 +214,57 @@ function save_options() {
 }
 
 function save_clicked() {
-    
-    var email = $("#email").val().trim();
-    var password = $("#password").val();
+            
+    if (!getCBval("#webapplogin")) {
+        var email = $("#email").val().trim();
+        var password = $("#password").val();
 
-    $("#save").attr("disabled","disabled");
+        $("#save").attr("disabled","disabled");
 
-    if (email == SimplenoteSM.email() && password == SimplenoteSM.password() && SimplenoteSM.credentialsValid()) {
-        $("#loginmessage").html("");
-        $("#loginmessage").css("color","black");
-        $("#save").removeAttr("disabled");
-        return;
-    }
-    
-    if (email=="") {
-        $("#loginmessage").html("Please enter your Simplenote email address");
-        $("#loginmessage").css("color","red");
-        $("#save").removeAttr("disabled");
-        $("#email").focus();
-        return;
-    }
-
-    if (password=="") {
-        $("#loginmessage").html("Please enter your Simplenote password");
-        $("#loginmessage").css("color","red");
-        $("#save").removeAttr("disabled");
-        $("#password").focus();
-        return;
-    }
-
-    _gaq.push(['_trackEvent', 'Options', 'save_clicked']);
-
-    if (email != SimplenoteSM.email() && (localStorage._syncKeys)) {
-      if (!confirm("You are about to switch your Simplenote login!\n\nThere are notes stored locally that have not been synchronized to the server.\n\nIf you switch accounts now, those changes will be lost.\n\nContinue?")) {
-            $("#loginmessage").html("Changes not saved");
+        if (email == SimplenoteSM.email() && password == SimplenoteSM.password() && SimplenoteSM.credentialsValid()) {
+            $("#loginmessage").html("");
             $("#loginmessage").css("color","black");
-            $("#email").val(SimplenoteSM.email());
-            $("#password").val(SimplenoteSM.password());
             $("#save").removeAttr("disabled");
-            _gaq.push(['_trackEvent', 'Options', 'save_clicked','synckeyspresent_reverted']);
             return;
-      } else
-        _gaq.push(['_trackEvent', 'Options', 'save_clicked','synckeyspresent_overridden']);
-    }
+        }
 
-    SimplenoteSM.setLogin(email,password);
+        if (email=="") {
+            $("#loginmessage").html("Please enter your Simplenote email address");
+            $("#loginmessage").css("color","red");
+            $("#save").removeAttr("disabled");
+            $("#email").focus();
+            return;
+        }
+
+        if (password=="") {
+            $("#loginmessage").html("Please enter your Simplenote password");
+            $("#loginmessage").css("color","red");
+            $("#save").removeAttr("disabled");
+            $("#password").focus();
+            return;
+        }
+
+        _gaq.push(['_trackEvent', 'Options', 'save_clicked']);
+
+        if (email != SimplenoteSM.email() && (localStorage._syncKeys)) {
+          if (!confirm("You are about to switch your Simplenote login!\n\nThere are notes stored locally that have not been synchronized to the server.\n\nIf you switch accounts now, those changes will be lost.\n\nContinue?")) {
+                $("#loginmessage").html("Changes not saved");
+                $("#loginmessage").css("color","black");
+                $("#email").val(SimplenoteSM.email());
+                $("#password").val(SimplenoteSM.password());
+                $("#save").removeAttr("disabled");
+                _gaq.push(['_trackEvent', 'Options', 'save_clicked','synckeyspresent_reverted']);
+                return;
+          } else
+            _gaq.push(['_trackEvent', 'Options', 'save_clicked','synckeyspresent_overridden']);
+        }
+
+        SimplenoteSM.setLogin(email,password);
+    } else {
+        SimplenoteSM.clear();
+    }
+    
+    SimplenoteSM.webapplogin(getCBval("#webapplogin"));
 
     $("#loginmessage").html("Logging in..");
     $("#loginmessage").css("color","black");
@@ -281,19 +304,25 @@ function save_clicked() {
                     }
                 });
             } else {
-                SimplenoteSM.clear();
+               
 
                 if (successObj.reason=="timeout") {
                     _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_timeout']);
                     $("#loginmessage").html("Could not log in: network timeout, please try again later.");
                 } else if (successObj.reason=="logininvalid") {
-                    _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_invalid']);
-                    $("#loginmessage").html("Could not log in: email or password incorrect.");
+                    if (SimplenoteSM.webapplogin()) {
+                        _gaq.push(['_trackEvent', 'Options', 'save_clicked','webapp_login_invalid']);
+                        $("#loginmessage").html("Could not log in. Please login to <a href='https://simple-note.appspot.com/signin'>Simplenote</a> first!");
+                    } else {                                            
+                        _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_invalid']);
+                        $("#loginmessage").html("Could not log in: email or password incorrect.");
+                    }
                 } else {
                     _gaq.push(['_trackEvent', 'Options', 'save_clicked','login_error']);
                     $("#loginmessage").html("Could not log in: unknown error.");
                 }
                 $("#loginmessage").css("color","red");
+                 SimplenoteSM.clear();
             }
             $("#save").removeAttr("disabled");
         });

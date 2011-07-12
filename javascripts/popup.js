@@ -423,6 +423,7 @@ function readyListener() {
 
         var signUpLink =  "<a href='https://simple-note.appspot.com/create/'>" + chrome.i18n.getMessage("signup") + "</a>";
         var optionsLink = "<a href='options.html'>" + chrome.i18n.getMessage("options_page") + "</a>";
+        var loginLink = "<a href='https://simple-note.appspot.com/signin/'>" + "login page" + "</a>";
 
         if ( !SimplenoteSM.haveLogin() ) {
 
@@ -434,9 +435,13 @@ function readyListener() {
         } else if ( !SimplenoteSM.credentialsValid() ) {
 
             _gaq.push(['_trackEvent', 'popup', 'ready', 'credentails_not_valid']);
-
             log("(ready): credentials not valid");
-            displayStatusMessage("Login for email '" + SimplenoteSM.email() + "' failed, please check your Simplenote email address and password on the " + optionsLink + "!");
+            
+            if (SimplenoteSM.webapplogin()) {
+                displayStatusMessage("You seem to be no longer logged in with Simplenote. Please login on the Simplenote " + loginLink + ".");
+            } else {
+                displayStatusMessage("Login for email '" + SimplenoteSM.email() + "' failed, please check your Simplenote email address and password on the " + optionsLink + "!");
+            }            
 
         } else {
                 extData.times.startsetup = (new Date())-start;
@@ -1248,7 +1253,7 @@ function slideIndex(callback, duration) {
     snEditor.saveCaretScroll();
 
     $("#index").show();
-    $("markdownpreview #info").hide();
+    $("#markdownpreview #info").hide();
     if (!extData.isTab) {
         $('div#note').animate({left: extData.dimensions.def.note_left + "px"}, {duration:duration, easing: extData.slideEasing});
         $('div#index').animate({left: extData.dimensions.def.index_left + "px", right: extData.dimensions.def.index_right + "px"}, {duration: duration, easing: extData.slideEasing});

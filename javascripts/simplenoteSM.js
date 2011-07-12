@@ -17,7 +17,7 @@ SimplenoteSM = {
     },
 
     haveLogin: function() {
-        return localStorage.option_email != undefined && localStorage.option_password != undefined;
+        return (localStorage.option_email != undefined && localStorage.option_password != undefined || this.webapplogin());
     },
     
     tokenAcquired: function(credentials) {
@@ -46,13 +46,29 @@ SimplenoteSM = {
     },
 
     getCredentials: function() {
-        var credentials = { email: localStorage.option_email, password: localStorage.option_password };
-        
-        if (localStorage.token) {
-            credentials.token = localStorage.token;
-            credentials.tokenTime = new Date(localStorage.tokenTime);
+        if (this.webapplogin())
+            return "webapp"
+        else {
+            var credentials = {email: localStorage.option_email, password: localStorage.option_password};
+
+            if (localStorage.token) {
+                credentials.token = localStorage.token;
+                credentials.tokenTime = new Date(localStorage.tokenTime);
+            }
+            return credentials;
         }
-        return credentials;
+    },
+    
+    webapplogin : function(val) {
+        if (val === undefined)
+            return localStorage.option_webapplogin != undefined && localStorage.option_webapplogin == "true";
+        else {
+            localStorage.option_webapplogin = val;
+            if (val) {
+                localStorage.credentialsValid = "true";                
+            }
+        }
+                    
     }
 }
 

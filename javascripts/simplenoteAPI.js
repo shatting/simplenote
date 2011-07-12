@@ -86,6 +86,32 @@ var SimplenoteAPI2 = {
         if (!callbacks) callbacks = {};
 
         var haveToken;
+        
+        if (credentials == "webapp") {
+            this.log("using webapp login, trying index()");
+            this.index({length:10},{
+                success : function() {
+                    if (callbacks.success)
+                        callbacks.success();
+                },                  
+                loginInvalid: function() {
+                    if (callbacks.loginInvalid)
+                        callbacks.loginInvalid();
+                },
+                timeout : function() {
+                    if (callbacks.timeout)
+                        callbacks.timeout();
+                },
+                repeat : function() {
+                    if (callbacks.timeout)
+                        callbacks.timeout();
+                }                    
+            });
+            
+            return;
+        }
+            
+        
         // precond: this.credentials either full set (email+pass+token) or undefined
         if (!this.credentials) { //A
             if (!credentials) //A1
