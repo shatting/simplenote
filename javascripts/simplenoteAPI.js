@@ -45,7 +45,8 @@ var SimplenoteAPI2 = {
      *      ?email=[email]&token=[token]
      *  @throws exception if not logged in or token expired
      */
-    authURLadd : function() {
+    authURLadd : function() {      
+        return "";
         if (!this.isLoggedIn()) {
             throw new Error("not logged in or token expired");            
         }
@@ -139,9 +140,10 @@ var SimplenoteAPI2 = {
                 that.credentials.token = response;
                 that.credentials.tokenTime = new Date();
                 // this.credentials full valid set now
-
-                if (callbacks.success)
-                    callbacks.success(SimplenoteAPI2.credentials);
+                 
+                // set the browser user
+                that.setUser(credentials.email,credentials.password, callbacks.success);
+                                
             },
             error: function (jqXHR, textStatus, errorThrown) {
                 that.log("index::status=" + textStatus + "(" + jqXHR.status + ")");
@@ -212,7 +214,7 @@ var SimplenoteAPI2 = {
         if (!callbacks) callbacks = {};
         if (!options) options = {};
         var url = this.root2 + "index" + this.authURLadd();
-        var urloptions = "";
+        var urloptions = this.authURLadd()?this.authURLadd():"?";
         if (options.length) urloptions+="&length=" + options.length;
         if (options.mark) urloptions+="&mark=" + options.mark;
         if (options.since) urloptions+="&since=" + options.since;
@@ -624,6 +626,19 @@ var SimplenoteAPI2 = {
                         if (callbacks.repeat)
                             callbacks.repeat(options,callbacks);
                 }
+            }
+        });
+    },
+
+    setUser : function(email,password,callback) {
+        jQuery.ajax({
+            url: "https://simple-note.appspot.com/user",            
+            type: "POST",            
+            data:  "email=" + email + "&password=" + password + "&remember=1",
+            dataType: "text",
+            complete: function(jqXHR, textStatus) {
+                if (callback)
+                    callback(SimplenoteAPI2.credentials);
             }
         });
     }
