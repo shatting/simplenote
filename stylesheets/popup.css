@@ -404,12 +404,17 @@ div.statusicon-clickable:hover {
     background: #F7F8FF url(/images/fade_out.png) no-repeat 50% 50%;
     left: 50%;
     cursor:pointer;
-    z-index:999;
+    z-index:4;
     border-left: 1px solid #999;
     border-right: 1px solid #999;
     border-top: 1px solid #F7F8FF;
     border-bottom: 1px solid #F7F8FF;
     -webkit-transition: all 0.2s ease-in-out;      
+}
+
+#markdownpreview.loading {
+    -webkit-transition: none;
+    background: white url(/images/loader.gif) no-repeat 50%;        
 }
 
 #markdownpreview.max {
@@ -430,9 +435,10 @@ div.statusicon-clickable:hover {
     padding-left:24px;
     ''border-left: 2px solid #ccc;
     cursor:default;
-    background-color: white;
-    
+    background-color: white;    
 }
+
+
 
 #markdownpreview { font-family: "Helvetica Neue", Arial, Helvetica, Arimo, FreeSans, "Nimbus Sans", "Phetsarath OT", Malayalam, "Gargi_1.7", sans-serif; color: #333333; text-rendering: optimizeLegibility;}
 
@@ -477,6 +483,14 @@ div.statusicon-clickable:hover {
 #markdownpreview blockquote { border-left: 3px solid #d0d0d0; margin-left: 13.14px; padding: 0 14.14px 0 12.14px; color: #4c4c4c; }
 #markdownpreview hr { display: block; border-width: 0; height: 3px; background: #aaa; background: rgba(0, 0, 0, 0.3); margin-bottom: 17px; }
 #markdownpreview pre { white-space: pre-wrap; }
+
+#markdownpreview #info {    
+    color: #CACFDE;
+    position: fixed;
+    right: 25px;
+    background: rgba(255, 255, 255, 0.9);
+    -webkit-box-shadow: 0px 0px 5px white;
+}
 
 div#note .toolbarbutton {
     display:inline;   

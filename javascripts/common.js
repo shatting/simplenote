@@ -8,7 +8,7 @@ var extData = {
     webnoteregstr : "^SYNCPADWEBNOTE\\[(.*),(\\d+px),(\\d+px),(\\d+px)?,(\\d+px)?\\]$",
     
     debugFlags : {
-        general     : false,
+        general     : true,
         popup       : true,
         popup2BG    : false,
         BG          : true,

@@ -168,7 +168,7 @@ function uiEventListener(eventData, sender, sendResponse) {
             var modifyChanged = eventData.changes.changed.indexOf("modifydate")>=0;
             var deleted = eventData.changes.changed.indexOf("deleted")>=0 && eventData.oldnote.deleted == 0 && eventData.newnote.deleted == 1;
             var undeleted = eventData.changes.changed.indexOf("deleted")>=0 && eventData.oldnote.deleted == 1 && eventData.newnote.deleted == 0;
-            var markdownchanged = eventData.changes.changed.indexOf("systemtags")>=0 && (eventData.oldnote.systemtags.indexOf("markdown") >= 0 != eventData.newnote.systemtags.indexOf("markdown") >= 0);
+            var markdownchanged = eventData.changes.changed.indexOf("systemtags")>=0 && (eventData.oldnote.systemtags.indexOf("markdown") >= 0 != eventData.newnote.systemtags.indexOf("markdown") >= 0);            
             
             var needTagsRefresh = false;
             var needIndexRefresh = false;
@@ -235,9 +235,11 @@ function uiEventListener(eventData, sender, sendResponse) {
                     snEditor.setPintoggle(eventData.newnote.systemtags.indexOf("pinned")>=0);
                 
                 if (markdownchanged) {
-                    snEditor.setMarkdownToggle(eventData.newnote.systemtags.indexOf("markdown") >= 0);
-                    snEditor.setPreview(eventData.newnote.content);
+                    snEditor.setMarkdownToggle(eventData.newnote.systemtags.indexOf("markdown") >= 0);                    
+                    snEditor.updateMarkdown(eventData.newnote);
                     needTagsRefresh = true;
+                } else if (eventData.changes.changed.indexOf("version") >= 0 && eventData.newnote.systemtags.indexOf("markdown")>=0) {
+                    snEditor.updateMarkdown(eventData.newnote);
                 }
             }
             if (eventData.source != "local" && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key) {
@@ -1246,6 +1248,7 @@ function slideIndex(callback, duration) {
     snEditor.saveCaretScroll();
 
     $("#index").show();
+    $("markdownpreview #info").hide();
     if (!extData.isTab) {
         $('div#note').animate({left: extData.dimensions.def.note_left + "px"}, {duration:duration, easing: extData.slideEasing});
         $('div#index').animate({left: extData.dimensions.def.index_left + "px", right: extData.dimensions.def.index_right + "px"}, {duration: duration, easing: extData.slideEasing});
@@ -1370,7 +1373,7 @@ SNEditor.prototype.initialize = function() {
 
     log("SNEditor.intitalize");
     
-    var holdmarkdownscroll = false;
+    this.holdmarkdownscroll = false;
 
     try {
 
@@ -1382,15 +1385,15 @@ SNEditor.prototype.initialize = function() {
 
         $editbox.unbind();
         $editbox.bind('change keyup paste cut', function(event) {
+            console.log(event.type)
             that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);
             if (that.isMarkdownToggle() && that.isPreviewtoggle()) {
-                that.markdownPreview(that.codeMirror.getCode());
-                
-                if ($("#markdownpreview").is(":visible")) {
-                    var scrollPercent = $(this).scrollTop()/this.scrollHeight;
-                    holdmarkdownscroll = true;
-                    $("#markdownpreview").scrollTop(Math.round($("#markdownpreview").get(0).scrollHeight * scrollPercent));                    
+                if (that.dirty.content) {
+                    that.updateMarkdown(that.codeMirror.getCode());                    
+                } else {
+                    that.updateMarkdown();                    
                 }
+                that.syncScrolls("fromeditor");
             }            
         });
 
@@ -1462,7 +1465,7 @@ SNEditor.prototype.initialize = function() {
 
             that.focus();
             
-            snEditor.setPreview();
+            snEditor.setPreviewPane();
         });
 
         // bind back button
@@ -1498,11 +1501,11 @@ SNEditor.prototype.initialize = function() {
             that.setPreviewtoggle(!that.isPreviewtoggle());
 
             localStorage.markdown_preview = that.isPreviewtoggle();
-            that.setPreview();
+            that.setPreviewPane();
             that.focus();
         });
         this.setPreviewtoggle(localStorage.markdown_preview == undefined || localStorage.markdown_preview == "true");
-        this.setPreview();
+        this.setPreviewPane();
 
         // bind UNDO button
         $('div#note #revert').unbind();
@@ -1528,7 +1531,8 @@ SNEditor.prototype.initialize = function() {
             }
             
             if (that.dirty.markdown) {
-                that.setMarkdownToggle(note.systemtags.indexOf("markdown")>=0);
+                that.setMarkdownToggle(note.systemtags.indexOf("markdown")>=0);                
+                this.setPreviewPane();
             }
 
             that.hideRevert();
@@ -1624,24 +1628,30 @@ SNEditor.prototype.initialize = function() {
         });
         
         $("#markdownpreview").scroll(function () {       
-            if (holdmarkdownscroll) {
-                holdmarkdownscroll = false;
+            if (that.holdmarkdownscroll) {
+                that.holdmarkdownscroll = false;
                 return;
             }
             if ($("#markdownpreview").css("left") == "0%")
                 return;
 
-            var scrollPercent = $(this).scrollTop()/this.scrollHeight;
-            that.$CMbody().scrollTop(Math.round(that.$CMbody().get(0).scrollHeight * scrollPercent));
+            that.syncScrolls();
+        }).click( function () {
+            $("#markdownpreviewspacer").click();
         });
         $("#markdownpreviewspacer").click(function() {
             $("#markdownpreviewspacer").toggleClass("max");
             $("#markdownpreview").toggleClass("max");
+            var scrollBefore = $("#markdownpreview").scrollTop()/$("#markdownpreview").get(0).scrollHeight;
             
             if ($("#markdownpreviewspacer").hasClass("max"))
-                $("#cmiframe").hide(300);
+                $("#cmiframe").hide(300, function() {
+                    $("#markdownpreview").scrollTop($("#markdownpreview").get(0).scrollHeight * scrollBefore);
+                });
             else
-                $("#cmiframe").show(300);
+                $("#cmiframe").show(300, function() {
+                    $("#markdownpreview").scrollTop($("#markdownpreview").get(0).scrollHeight * scrollBefore);
+                });
             
             return;
         });
@@ -1668,6 +1678,26 @@ SNEditor.prototype.initialize = function() {
         exceptionCaught(e);
     }
         
+}
+
+SNEditor.prototype.syncScrolls = function(direction) {
+    var source, target;
+    
+    if (!$("#markdownpreview").is(":visible"))
+        return;
+    
+    if (direction == "fromeditor") {    
+        source = this.$CMbody().get(0);
+        target = $("#markdownpreview").get(0);
+        this.holdmarkdownscroll = true;
+    } else {
+        target = this.$CMbody().get(0);
+        source = $("#markdownpreview").get(0);
+    }
+    
+    var newST = source.scrollTop * (target.scrollHeight - target.clientHeight) / (source.scrollHeight - source.clientHeight);    
+    
+    $(target).scrollTop(Math.round(newST));                        
 }
 
 //  ---------------------------------------
@@ -1893,8 +1923,8 @@ SNEditor.prototype.setNote = function(note, options) {
     this.setPintoggle(this.note.systemtags.indexOf("pinned")>=0);
     
     // set markdown
-    this.setMarkdownToggle(this.note.systemtags.indexOf("markdown") >= 0);
-    this.setPreview(note.content);
+    this.setMarkdownToggle(this.note.systemtags.indexOf("markdown") >= 0);    
+    this.updateMarkdown();
 
     this.clearDirty();
 
@@ -2216,22 +2246,21 @@ SNEditor.prototype.setPreviewtoggle = function(to) {
         $('div#note #previewtoggle').addClass("preview_off");
         $('div#note #previewtoggle').removeClass("preview_on");
     }
+    this.setPreviewPane();
+        
+    if (to)
+        this.updateMarkdown();
 }
 
 SNEditor.prototype.isPreviewtoggle = function() {
     return $('div#note #previewtoggle').hasClass("preview_on");
 }
 
-SNEditor.prototype.setPreview = function(content) {
+SNEditor.prototype.setPreviewPane = function() {
     if (this.isMarkdownToggle() && this.isPreviewtoggle()) {
         $("#cmiframe").css("width","50%");
         $("#markdownpreview").show();
-        $("#markdownpreviewspacer").show();    
-        
-        if (content)
-            this.markdownPreview(content);       
-        else
-            this.markdownPreview(this.codeMirror.getCode());        
+        $("#markdownpreviewspacer").show();             
     } else {
         $("#markdownpreview").hide();        
         $("#markdownpreviewspacer").hide();
@@ -2249,23 +2278,89 @@ SNEditor.prototype.setMarkdownToggle = function(to) {
     if (to) {
         $('#previewtoggle').show();
         $('#markdowntoggle').removeClass("off");
-        $('#markdowntoggle').addClass("on");
+        $('#markdowntoggle').addClass("on");        
     } else {
         $('#previewtoggle').hide();
         $('#markdowntoggle').removeClass("on");
         $('#markdowntoggle').addClass("off");
     }
     this.adjustTagsWidth();
+    this.setPreviewPane();
 }
 
-SNEditor.prototype.markdownPreview = function(m) {
+SNEditor.prototype.updateMarkdown = function(input) {
+    if (!this.isMarkdownToggle() || !this.isPreviewtoggle()) 
+        return;
+    
     log("rendering markdown");
-    var converter = new Showdown.converter();
-    var html = converter.makeHtml(m);
+//    var converter = new Showdown.converter();
+//    var html = converter.makeHtml(m);
     //var html = markdown.toHTML(m);
-    //var html = Markdown(m);
-    $("#markdownpreview").html(html);
-    $('#markdownpreview a').attr('target', '_blank');
+    //var html = Markdown(m);    
+    if (typeof input == "string") {
+        log("updating markup locally");
+        var converter = new Showdown.converter();        
+        this.setMarkdownHtml(converter.makeHtml(input),"local","Syncpad uses a local markdown preview if the note has not yet been saved to the server. It might differ from the server version, and does not support 'Markdown Extra'");
+    } else {      
+        var version, key;        
+        if (!input) {
+            log("updating markup from server with stored note version");
+            version = this.note.version;
+            key = this.note.key;
+        } else {
+            log("updating markup from server with input note version");
+            version = input.version;
+            key = input.key;
+        }
+        var serverTitle = "Markdown output as displayed by the Simplenote server. Updated each time after the note has been uploaded to the server.";
+        
+        if (snEditor.markupCache && snEditor.markupCache[key] && snEditor.markupCache[key].version == version) {      
+            log("no, actually from cache");
+
+            this.setMarkdownHtml(snEditor.markupCache[key].html,"server", serverTitle)
+        } else {
+            $("#markdownpreview").addClass("loading");
+            $("#markdownpreview").html("<span id='info'>loading..</span>");
+            $.ajax({
+                    url: "https://simple-note.appspot.com/markdown/" + key + "/" + version,    
+                    timeout: 3000,
+                    complete : function(jqXHR, textStatus) {
+                        if (textStatus == "success") {
+                            if (!snEditor.markupCache)
+                                snEditor.markupCache = {};
+
+                            snEditor.markupCache[key] = {
+                                version: version,
+                                html: JSON.parse(jqXHR.responseText).html
+                            }
+
+                            snEditor.setMarkdownHtml(snEditor.markupCache[key].html, "server", serverTitle);
+                        } else {           
+                            var converter = new Showdown.converter();        
+                            snEditor.setMarkdownHtml(converter.makeHtml(snEditor.codeMirror.getCode()), "local (" + textStatus + ")", "Server timed out, using local preview.");
+                        }
+                        $("#markdownpreview").removeClass("loading");
+                    }
+            });
+        }
+    }
+    
+}
+
+SNEditor.prototype.setMarkdownHtml = function(html, info, moreinfo) {       
+    $("#markdownpreview").html("<span id='info'>" + info + "</span>" + html);
+    if (moreinfo)
+        $("#markdownpreview #info").attr("title",moreinfo);
+    
+    $('#markdownpreview a').attr('target', '_blank');    
+    $('#markdownpreview a[href^="#"]').click(function(event) {
+        event.preventDefault();        
+        event.stopPropagation();      
+        $($(this).attr("href").replace(":","\\:")).get(0).scrollIntoView();
+        snEditor.syncScrolls();
+    });
+    snEditor.syncScrolls("fromeditor");
+    
 }
 
 SNEditor.prototype.print = function() {
