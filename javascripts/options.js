@@ -2,23 +2,23 @@ $(document).ready(function() {
 
   $("#email").val(SimplenoteSM.email() != undefined?SimplenoteSM.email():"");
   $("#password").val(SimplenoteSM.password() != undefined?SimplenoteSM.password():"");
-  $("#webapplogin").change(function() {
-        if (!getCBval("#webapplogin")) {
-            $("#email").show("fast");
-            $("#password").show("fast");
-            $("#save").show("fast");
-//            $("#email").attr("disabled","disabled");
-//            $("#password").attr("disabled","disabled");
-        } else {
-            $("#email").hide("fast");
-            $("#password").hide("fast");
-            $("#save").hide("fast");
-//            $("#email").removeAttr("disabled");
-//            $("#password").removeAttr("disabled");
-        }
-        save_clicked();
-  });
-  setCBval("#webapplogin",SimplenoteSM.webapplogin());
+//  $("#webapplogin").change(function() {
+//        if (!getCBval("#webapplogin")) {
+//            $("#email").show("fast");
+//            $("#password").show("fast");
+//            $("#save").show("fast");
+////            $("#email").attr("disabled","disabled");
+////            $("#password").attr("disabled","disabled");
+//        } else {
+//            $("#email").hide("fast");
+//            $("#password").hide("fast");
+//            $("#save").hide("fast");
+////            $("#email").removeAttr("disabled");
+////            $("#password").removeAttr("disabled");
+//        }
+//        save_clicked();
+//  });
+//  setCBval("#webapplogin",SimplenoteSM.webapplogin());
   
   $("#abstractlines").val(localStorage.option_abstractlines == undefined?"3":localStorage.option_abstractlines);
 
@@ -215,7 +215,7 @@ function save_options() {
 
 function save_clicked() {
             
-    if (!getCBval("#webapplogin")) {
+//    if (!getCBval("#webapplogin")) {
         var email = $("#email").val().trim();
         var password = $("#password").val();
 
@@ -260,11 +260,11 @@ function save_clicked() {
         }
 
         SimplenoteSM.setLogin(email,password);
-    } else {
-        SimplenoteSM.clear();
-    }
-    
-    SimplenoteSM.webapplogin(getCBval("#webapplogin"));
+//    } else {
+//        SimplenoteSM.clear();
+//    }
+//    
+//    SimplenoteSM.webapplogin(getCBval("#webapplogin"));
 
     $("#loginmessage").html("Logging in..");
     $("#loginmessage").css("color","black");

@@ -2,59 +2,59 @@ var extData = extData || {};
 
 $.extend(extData,{
     background: undefined,
-    
+
     popup : this,
-    
+
     times : {
         popup: (new Date())-start
     },
-    
+
     preLoadFactor : 1/2, // amount of vertical viewport size to add for preloading notes in index
-    
+
     currentView: "index",
-    
+
     slideEasing: "swing", // swing or linear
-    
+
     slideDuration: 200,
-    
+
     isTab : false,
-    
+
     editorSaveTime: 6000,
-    
+
     dimensions : {
         def:  {
-            index_left: 2,
-            index_right: 2,
-            note_left: 400,
+            index_left: 0,
+            index_right: 0,
+            note_left: 401,
             body_width: 400,
             body_height: 550
         },
-        selected: {
-            index_left: 2,
-            index_right: 2,
-            note_left: 400,
-            body_width: 800,
-            body_height: 550
-        },
+//        selected: {
+//            index_left: 2,
+//            index_right: 2,
+//            note_left: 400,
+//            body_width: 800,
+//            body_height: 550
+//        },
         focus: {
             index_left: -400,
             index_right: -2,
-            note_left: 2,
+            note_left: 0,
             body_width: 800,
             body_height: 550
         }
     },
-    
-    fontUrls : {        
+
+    fontUrls : {
         "Walter Turncoat"   : '<link href="http://fonts.googleapis.com/css?family=Walter+Turncoat:regular" rel="stylesheet" type="text/css" >',
         "Inconsolata"       : '<link href="http://fonts.googleapis.com/css?family=Inconsolata:regular" rel="stylesheet" type="text/css" >',
         "Lekton"            : '<link href="http://fonts.googleapis.com/css?family=Lekton" rel="stylesheet" type="text/css">',
         "Yanone Kaffeesatz" : '<link href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:300" rel="stylesheet" type="text/css" >',
         "Vollkorn"          : '<link href="http://fonts.googleapis.com/css?family=Vollkorn:regular" rel="stylesheet" type="text/css" >'
     },
-    
+
     builtinTags : ["webnotes","checklist"]
-            
+
 });
 
 //  ---------------------------------------
@@ -138,7 +138,7 @@ function uiEventListener(eventData, sender, sendResponse) {
         var eventName = eventData.name;
     //    if (syncInProgress && (eventName == "noteadded" || eventName == "noteupdated" || eventName == "notedeleted"))
     //            return;
-        
+
         if (eventName == "sync") {
 
             log("EventListener:sync:" + eventData.status + ", hadChanges=" + eventData.changes.hadchanges );
@@ -168,8 +168,8 @@ function uiEventListener(eventData, sender, sendResponse) {
             var modifyChanged = eventData.changes.changed.indexOf("modifydate")>=0;
             var deleted = eventData.changes.changed.indexOf("deleted")>=0 && eventData.oldnote.deleted == 0 && eventData.newnote.deleted == 1;
             var undeleted = eventData.changes.changed.indexOf("deleted")>=0 && eventData.oldnote.deleted == 1 && eventData.newnote.deleted == 0;
-            var markdownchanged = eventData.changes.changed.indexOf("systemtags")>=0 && (eventData.oldnote.systemtags.indexOf("markdown") >= 0 != eventData.newnote.systemtags.indexOf("markdown") >= 0);            
-            
+            var markdownchanged = eventData.changes.changed.indexOf("systemtags")>=0 && (eventData.oldnote.systemtags.indexOf("markdown") >= 0 != eventData.newnote.systemtags.indexOf("markdown") >= 0);
+
             var needTagsRefresh = false;
             var needIndexRefresh = false;
             var needPinnedRefresh = false;
@@ -189,7 +189,7 @@ function uiEventListener(eventData, sender, sendResponse) {
                 if (eventData.newnote.systemtags.indexOf("pinned")>=0)
                     needPinnedRefresh = true;
 
-                needTagsRefresh = true;                
+                needTagsRefresh = true;
             } else if (undeleted) {
                 log("EventListener:noteupdated: undeleted");
                 if (noteRowInIndex(eventData.newnote.key)) {
@@ -199,7 +199,7 @@ function uiEventListener(eventData, sender, sendResponse) {
                 if (eventData.newnote.systemtags.indexOf("pinned")>=0)
                     needPinnedRefresh = true;
 
-                needTagsRefresh = true;         
+                needTagsRefresh = true;
             } else if (eventData.changes.changed.indexOf("tags")>=0) {
                 log("EventListener:noteupdated:tags");
                 needIndexRefresh = true;
@@ -210,7 +210,7 @@ function uiEventListener(eventData, sender, sendResponse) {
                     log("EventListener:noteupdated:pinnednowon");
                 else if (pinnedNowOff)
                     log("EventListener:noteupdated:pinnednowoff");
-                         
+
                 if (($("#" + eventData.newnote.key).index()>0 || pinnedNowOff) && localStorage.option_sortby != "createdate") {
                     needIndexRefresh = true;
                 } else {
@@ -229,13 +229,13 @@ function uiEventListener(eventData, sender, sendResponse) {
                 $('div.noterow #' + eventData.newnote.key + "pin").addClass("unpinned");
                 needPinnedRefresh = true;
             }
-            
+
             if (extData.isTab && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key) {
                 if (pinnedNowOn || pinnedNowOff)
                     snEditor.setPintoggle(eventData.newnote.systemtags.indexOf("pinned")>=0);
-                
+
                 if (markdownchanged) {
-                    snEditor.setMarkdownToggle(eventData.newnote.systemtags.indexOf("markdown") >= 0);                    
+                    snEditor.setMarkdownToggle(eventData.newnote.systemtags.indexOf("markdown") >= 0);
                     snEditor.updateMarkdown(eventData.newnote);
                     needTagsRefresh = true;
                 } else if (eventData.changes.changed.indexOf("version") >= 0 && eventData.newnote.systemtags.indexOf("markdown")>=0) {
@@ -248,14 +248,14 @@ function uiEventListener(eventData, sender, sendResponse) {
                     if ( (pinnedNowOn || pinnedNowOff || contentChanged || tagsChanged) && eventData.newnote.content != undefined)
                         snEditor.setNote(eventData.newnote);
             }
-            
+
             if (needIndexRefresh || needTagsRefresh)
                 fillTags(needIndexRefresh);
             if (needPinnedRefresh)
                 snEditor.needCMRefresh("pinned");
             if (needLastOpenRefresh)
                 snEditor.needCMRefresh("lastopen");
-            
+
         } else if (eventName == "offlinechanged") {
             log("EventListener:offline:" + eventData.status);
             if (eventData.status)
@@ -280,7 +280,7 @@ function uiEventListener(eventData, sender, sendResponse) {
         } else {
             log("EventListener:");
             log(eventData);
-        }        
+        }
     } catch (e) {
         exceptionCaught(e);
     }
@@ -292,7 +292,7 @@ function noteRowInIndex(key) {
 
 // shortcuts
 $(document).keydown(shorcuts);
-function shorcuts(event) {   
+function shorcuts(event) {
 
     if ($("#q").is(":focus")) {
         switch(event.keyCode) {
@@ -352,9 +352,9 @@ function shorcuts(event) {
 
             }
     }
-    
+
     if (extData.currentView=="editor" || extData.isTab) {
-        // - editor: 
+        // - editor:
         if (event.altKey && !event.shiftKey && !event.ctrlKey)
             switch(event.keyCode) {
                 case 83: //alt-s
@@ -370,12 +370,12 @@ function shorcuts(event) {
                 case 80: //alt-p
                     $('div#note #pintoggle').click();
                     break;
-                case 87: //alt-w                    
+                case 87: //alt-w
                     $("div#note #wraptoggle").click();
                     break;
                 case 84: //alt-t
                     event.preventDefault();
-                    $("#tagsauto").focus();                    
+                    $("#tagsauto").focus();
                     break;
                 case 69: //alt-e
                     event.preventDefault();
@@ -383,8 +383,8 @@ function shorcuts(event) {
                     break;
             }
         if (event.altKey && !event.shiftKey && event.ctrlKey)
-            switch(event.keyCode) {                                                    
-                case 68: //crtl-alt-d                    
+            switch(event.keyCode) {
+                case 68: //crtl-alt-d
                     $('#trash').click();break;
             }
     }
@@ -393,11 +393,11 @@ function shorcuts(event) {
 //  ---------------------------------------
 $(document).ready(readyListener);
 function readyListener() {
-    
+
     extData.times.ready = (new Date())-start;
 
     try {
-        
+
         extData.background = chrome.extension.getBackgroundPage();
         chrome.browserAction.setBadgeText({
             text:""
@@ -409,7 +409,7 @@ function readyListener() {
             setTimeout("readyListener()",1000);
             return;
         }
-        var m = location.href.match(/\?.*tab\=(true|false).*/);        
+        var m = location.href.match(/\?.*tab\=(true|false).*/);
         extData.isTab = m != undefined && m[1] == "true";
 
         if (extData.isTab) {
@@ -436,12 +436,12 @@ function readyListener() {
 
             _gaq.push(['_trackEvent', 'popup', 'ready', 'credentails_not_valid']);
             log("(ready): credentials not valid");
-            
+
             if (SimplenoteSM.webapplogin()) {
                 displayStatusMessage("You seem to be no longer logged in with Simplenote. Please login on the Simplenote " + loginLink + ".");
             } else {
                 displayStatusMessage("Login for email '" + SimplenoteSM.email() + "' failed, please check your Simplenote email address and password on the " + optionsLink + "!");
-            }            
+            }
 
         } else {
                 extData.times.startsetup = (new Date())-start;
@@ -458,21 +458,22 @@ function readyListener() {
                     if (!directlyShowNote) {
                         $("body").css("width", extData.dimensions.def.body_width + "px");
                         $("body").css("height", extData.dimensions.def.body_height + "px");
-                    } else {                        
+                    } else {
                         $("body").css("width", extData.dimensions.focus.body_width + "px");
                         $("body").css("height", extData.dimensions.focus.body_height + "px");
-                                                
+
                         $("#revert").hide();
-                        $("#trash").show();        
+                        $("#trash").show();
                         $('#popout').show();
-                        
+
                         $("#note").css("left", extData.dimensions.focus.note_left + "px");
-                        
+
                         $("#note").show();
-                                              
+
                     }
                 } else {
                     $("#note").show();
+                    $("body").addClass("tab");
                 }
 
                 popupi18n();
@@ -498,11 +499,11 @@ function readyListener() {
                 fillTags(true);
                 // bind ADD button
                 $('div#index div#toolbar div#add').click(function(event) {
-                    
+
                     if (event.shiftKey) {
                         _gaq.push(['_trackEvent', 'popup', 'addwebnoteclicked']);
-                        
-                        if (extData.isTab) {                        
+
+                        if (extData.isTab) {
                             return;
                         }
                         chrome.extension.sendRequest({
@@ -523,12 +524,12 @@ function readyListener() {
 
                 // bind ADD WEBNOTE button
                 $('div#index div#toolbar div#add_webnote').click(function(event) {
-                    
+
                     if (extData.isTab)
                         return;
-                    
+
                     _gaq.push(['_trackEvent', 'popup', 'addwebnoteclicked']);
-                    
+
                     chrome.extension.sendRequest({
                         action: "webnotes",
                         request: {
@@ -565,7 +566,7 @@ function readyListener() {
                             isnewnote: true,
                             focus: true
                         });
-                    } else if (event.which == 27) {                        
+                    } else if (event.which == 27) {
                         //event.stopPropagation();
                     } else
                         fillIndex();
@@ -573,17 +574,22 @@ function readyListener() {
                 }).focus(function() {
                     log("focus")
                     $("#toolbar").children().not(this).not("#q_clear").hide();
-                    $(this).animate({width:"350px"},{duration: 200, complete: function() {$("#q_clear").show();}});
+                    $(this).addClass("max");
+                    $(this).animate({width:"350px"},{duration: 200, complete: function() {
+                            $("#q_clear").show();
+                        }});
                 }).blur(function(event) {
 //                            if (clearclicked) {
 //                                clearclicked = false;
 //                                return
 //                            }
                     log("blur")
+                    $(this).removeClass("max");
                     $(this).animate({width:"197px"},{duration: 200, complete: function() {
                             $("#toolbar").children().not(this).not("#q_clear").show();
                             if ($("#q").val().trim() == "")
                                 $("#q_clear").hide();
+
                         }});
                 });
 //                        var clearclicked = false;
@@ -596,7 +602,7 @@ function readyListener() {
                     event.stopPropagation();
                     $("body").focus();
                     fillIndex();
-                    
+
                 });
 
                 $.timeago.settings.strings= {
@@ -618,8 +624,8 @@ function readyListener() {
                     numbers: []
                 }
 
-                if (localStorage.option_color_index)
-                    $("body").css("background-color",localStorage.option_color_index);
+//                if (localStorage.option_color_index)
+//                    $("body").css("background-color",localStorage.option_color_index);
 
                 //$("div#note").resizable();
                 if (extData.isTab) {
@@ -645,7 +651,7 @@ function readyListener() {
 //                    });
 //                    console.log(cssprop("div#note","left"))
 //                    console.log($("div#index").css("right"))
-                    $("div#index").css("width",cssprop("div#note","left")-4)
+                    //$("div#index").css("width",cssprop("div#note","left")-4)
                 }
 
             setTimeout(function() {
@@ -661,11 +667,12 @@ function readyListener() {
             },1000);
 
             extData.times.endsetup = (new Date())-start;
-
+            
+            //tooltip("[title]");
         }
-   
+
         scheduleGA();
-    
+
     } catch (e) {
         exceptionCaught(e);
     }
@@ -678,18 +685,19 @@ function popupi18n() {
     $("#add").attr("title",chrome.i18n.getMessage("add_tooltip","alt-a"));
     $("#add_webnote").attr("title",chrome.i18n.getMessage("add_webnote_tooltip"));
     $("#snlink").attr("title",chrome.i18n.getMessage("snlink_tooltip"));
-    $("#sync").attr("title",chrome.i18n.getMessage("sync_tooltip"));    
-    $("#pintoggle").attr("title",chrome.i18n.getMessage("pin_tooltip","alt-p"));   
+    $("#sync").attr("title",chrome.i18n.getMessage("sync_tooltip"));
+    $("#pintoggle").attr("title",chrome.i18n.getMessage("pin_tooltip","alt-p"));
     $("#popout").attr("title",chrome.i18n.getMessage("popout_tooltip","alt-o"));
     $("#trash").attr("title",chrome.i18n.getMessage("trash_tooltip"," (ctrl-alt-d)"));
     $("#wraptoggle").attr("title",chrome.i18n.getMessage("wordwrap_tooltip","alt-w"));
-    $("#revert").attr("title",chrome.i18n.getMessage("revert_tooltip","alt-r"));    
-    $("#print").attr("title",chrome.i18n.getMessage("print_tooltip"));    
+    $("#revert").attr("title",chrome.i18n.getMessage("revert_tooltip","alt-r"));
+    $("#print").attr("title",chrome.i18n.getMessage("print_tooltip"));
 
     if (extData.isTab)
         $('#backtoindex').attr("title",chrome.i18n.getMessage("close_tab_tooltip",["alt-b","alt-x"]));
     else
-        $("#backtoindex").attr("title",chrome.i18n.getMessage("backtoindex_tooltip",["alt-b","alt-x"]));    
+        $("#backtoindex").attr("title",chrome.i18n.getMessage("backtoindex_tooltip",["alt-b","alt-x"]));
+    
 }
 
 /*
@@ -704,11 +712,11 @@ function displayStatusMessage(message) {
     $('#note').hide();
     $("body").show();
     $("#index").show();
-    
+
     $('#notes').html(message);
     $('body').css("background","#fff");
     $("body").css("width", "400px");
-    $("body").css("height", "150px");    
+    $("body").css("height", "150px");
 
     $('a').attr('target', '_blank').click(function() {window.close();});
 }
@@ -750,7 +758,7 @@ function fillTags(callFillIndex) {
                     $("#notetags").append('<option value="' + taginfo.tag + '" ' + style +  '>' + taginfo.tag + " [" + taginfo.count + "] </option>");
                 }
                 if (oldval == taginfo.tag)
-                    stillhavetag = true;                
+                    stillhavetag = true;
             });
             if (!stillhavetag) {
                 oldval = "#all#";
@@ -807,7 +815,7 @@ function fillIndex() {
                         indexAddNote("append",note);
                         if (i<maxFill && note.content != undefined)
                             indexFillNote(note);
-                    }                    
+                    }
                     $("div.noterow").contextMenu(noteRowCMfn, {
                                                                   theme:'gloss',
                                                                   offsetX: 0,
@@ -815,14 +823,11 @@ function fillIndex() {
                                                                   direction:'down',
                                                                   showSpeed: 10,
                                                                   onBeforeShow:function() {
-                                                                      $(this.target).addClass("selectednote");
+                                                                      $(this.target).addClass("highlightednote");
                                                                   },
                                                                   hideSpeed:10,
-                                                                  onBeforeHide:function() {
-                                                                      if (extData.isTab && snEditor && snEditor.note)
-                                                                            $(this.target).not("#" + snEditor.note.key).removeClass("selectednote");
-                                                                      else
-                                                                            $(this.target).removeClass("selectednote");
+                                                                  onBeforeHide:function() {                                                                      
+                                                                      $(this.target).removeClass("highlightednote");
                                                                   },
                                                                   otherBodies: extData.isTab && snEditor?snEditor.$CMbody():null,
                                                                   scrollRemove: "div#notes"
@@ -842,6 +847,8 @@ function fillIndex() {
                 snHelpers.printTimes();
 
                 log("fillIndex(async):done");
+
+
             } catch (e) {
                 exceptionCaught(e);
             }
@@ -849,19 +856,35 @@ function fillIndex() {
         });
     } catch (e) {
         exceptionCaught(e);
-    }    
+    }
+}
+
+function tooltip(sel,opts) {
+    opts = $.extend({
+        effect: 'slide',
+        predelay: 1000,
+        events: {
+          def:     "mouseover,mouseout",
+          input:   "mouseover,mouseout",
+          widget:  "mouseover,mouseout",
+          tooltip: "mouseover,mouseout"
+        },
+        opacity: 0.95
+    }, opts);
+
+    $(sel).tooltip(opts).dynamic({bottom: {direction: 'down', bounce: true}});
 }
 
 function noteRowCMfn(contextmenu) {
-            
+
     var notename = $("#" + $(contextmenu.target).attr("id") + "heading").text();
-    var istrash = $(contextmenu.target).hasClass("noterowdeleted");    
-    
+    var istrash = $(contextmenu.target).hasClass("noterowdeleted");
+
     var i = {};
     if (!istrash) {
         i[chrome.i18n.getMessage("trash_tooltip","")] = {
             onclick: function() {
-                _gaq.push(['_trackEvent', 'popup', 'cm', 'trash']);                
+                _gaq.push(['_trackEvent', 'popup', 'cm', 'trash']);
                 noteOps.trashNote($(this).attr("id"));
             },
             icon: "/images/trash.png"
@@ -917,7 +940,7 @@ function noteRowCMfn(contextmenu) {
         };
         return [i,j,$.contextMenu.separator,k];
     }
-            
+
 }
 
 var noteOps = {
@@ -1019,7 +1042,7 @@ function indexAddNote(mode, note){
 
         $noterow.attr("pinned",note.systemtags.indexOf("pinned")>=0?"true":"false");
         $noterow.attr("shared",note.systemtags.indexOf("shared")>=0?"true":"false");
-     
+
         // bind timeago for time abbr
         $notetime.unbind();
         if (localStorage.option_showdate == "true")
@@ -1133,7 +1156,7 @@ function indexFillNoteReqComplete(note) {
             $noteheading.html(heading); // dont need more than 100 chars
             if (headingtext.length > 25)
                 $noteheading.attr("title",headingtext);
-            
+
             // deleted note css style
             if (note.deleted == 1) {
                 $noterow.addClass("noterowdeleted"); // for undelete image on hover
@@ -1157,6 +1180,7 @@ function indexFillNoteReqComplete(note) {
                     if (extData.isTab && snEditor.note)
                         snEditor.saveCaretScroll();
 
+                    $("div.noterow").removeClass("selectednote");
                     snEditor.setNote(event.data);
                 });
 
@@ -1182,6 +1206,9 @@ function indexFillNoteReqComplete(note) {
             snHelpers.checkInView();
             if ($noterow.index()<=$(".selectednote").index())
                 snHelpers.scrollSelectedIntoView();
+
+            //tooltip($("[title]",$noterow));
+
         } catch (e) {
             exceptionCaught(e);
         }
@@ -1220,7 +1247,7 @@ function localeDateString(d) {
 //  ---------------------------------------
 function slideEditor(callback, duration) {
     log("slideEditor, duration " + duration);
-    
+
     if (duration == undefined)
         duration = extData.slideDuration;
 
@@ -1234,10 +1261,10 @@ function slideEditor(callback, duration) {
                 if (callback) callback();
             }
         });
-        
+
     } else
         if (callback) callback();
-    
+
     extData.currentView = "editor";
 
 }
@@ -1247,7 +1274,7 @@ function slideIndex(callback, duration) {
 
     if (duration == undefined)
         duration = extData.slideDuration;
-    
+
     localStorage.lastopennote_open = "false";
     snEditor.clearDirty();
     snEditor.saveCaretScroll();
@@ -1265,7 +1292,7 @@ function slideIndex(callback, duration) {
         });
     } else
          if (callback) callback();
-    
+
     extData.currentView = "index";
 
     delete snEditor.note;
@@ -1294,15 +1321,15 @@ function SNEditor() {
     $(".CodeMirror-wrapping").attr("id","cmwrapper");
 
     $("#cmwrapper").css("position","");
-    $("#cmwrapper").css("height","");    
+    $("#cmwrapper").css("height","");
     $("#cmiframe").attr("tabindex","2");
     $("#cmwrapper").append("<div id='markdownpreviewspacer'></div>");
     $("#cmwrapper").append("<div id='markdownpreview'></div>");
 
-    this.dirty={content: false, tags: false, pinned: false};    
+    this.dirty={content: false, tags: false, pinned: false};
 }
 
-SNEditor.prototype.$CMbody = function () {    
+SNEditor.prototype.$CMbody = function () {
     return $(this.codeMirror.editor.container);
 }
 
@@ -1312,7 +1339,7 @@ SNEditor.prototype.$CMhead = function () {
 
 //  ---------------------------------------
 SNEditor.prototype.setFont = function() {
-    log("SNEditor.setFont")    
+    log("SNEditor.setFont")
     var $head = this.$CMhead();
     var $editbox = this.$CMbody();
     // get fontinfo if there
@@ -1347,10 +1374,10 @@ SNEditor.prototype.setFont = function() {
     if (localStorage.option_editorfontshadow && localStorage.option_editorfontshadow != "false") {
        if (localStorage.option_editorfontshadow == "true")
            $editbox.css("text-shadow","0px 0px 1px #ccc" );
-       else 
+       else
            $editbox.css("text-shadow", localStorage.option_editorfontshadow);
     }
-    // 
+    //
     // set colors
     if (localStorage.option_color_editor) {
         $editbox.css("background-color",localStorage.option_color_editor);
@@ -1363,7 +1390,7 @@ SNEditor.prototype.setFont = function() {
 //  ---------------------------------------
 SNEditor.prototype.getTags = function() {
     log("SNEditor.getTags")
-        
+
     var vals = $("#as-selections-tagsauto .as-selection-item").get().map(function(e) {return e.textContent.substr(1)});
     var tags = vals.map(function(e) {return e.trim();}).filter(function(e) {return e != ""});
 
@@ -1372,12 +1399,12 @@ SNEditor.prototype.getTags = function() {
 
 //  ---------------------------------------
 SNEditor.prototype.initialize = function() {
-       
+
     if (this.initialized)
         return;
 
     log("SNEditor.intitalize");
-    
+
     this.holdmarkdownscroll = false;
 
     try {
@@ -1394,12 +1421,12 @@ SNEditor.prototype.initialize = function() {
             that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);
             if (that.isMarkdownToggle() && that.isPreviewtoggle()) {
                 if (that.dirty.content) {
-                    that.updateMarkdown(that.codeMirror.getCode());                    
+                    that.updateMarkdown(that.codeMirror.getCode());
                 } else {
-                    that.updateMarkdown();                    
+                    that.updateMarkdown();
                 }
                 that.syncScrolls("fromeditor");
-            }            
+            }
         });
 
         // fix for home not scrolling all to the left
@@ -1454,7 +1481,7 @@ SNEditor.prototype.initialize = function() {
 
             that.focus();
         });
-        
+
         // add note markdown event listener
         $('div#note #markdowntoggle').unbind();
         $('div#note #markdowntoggle').bind('click', function(event) {
@@ -1469,7 +1496,7 @@ SNEditor.prototype.initialize = function() {
                 that.saveNote();
 
             that.focus();
-            
+
             snEditor.setPreviewPane();
         });
 
@@ -1534,9 +1561,9 @@ SNEditor.prototype.initialize = function() {
             if (that.dirty.pinned) {
                 that.setPintoggle(note.systemtags.indexOf("pinned")>=0);
             }
-            
+
             if (that.dirty.markdown) {
-                that.setMarkdownToggle(note.systemtags.indexOf("markdown")>=0);                
+                that.setMarkdownToggle(note.systemtags.indexOf("markdown")>=0);
                 this.setPreviewPane();
             }
 
@@ -1575,52 +1602,52 @@ SNEditor.prototype.initialize = function() {
            var url = this.textContent.trim();
            openURLinTab(url,event.shiftKey || event.altKey);
         });
-        
+
         // bind checkboxes
         $(".checkbox",$editbox).die();
-        $(".checkbox",$editbox).live("click",function(event) {     
+        $(".checkbox",$editbox).live("click",function(event) {
            var lineH = that.codeMirror.cursorLine();
            var line = that.codeMirror.lineContent(lineH);
            var m = line.replace(/\s*\-\s*(.*)/,"* $1");
            $(this,$editbox).removeClass("checkbox").addClass("checkbox-checked");
            that.codeMirror.setLineContent(lineH,m);
            that.codeMirror.selectLines(lineH,3);
-           
+
            that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);
            that.saveTimerRearm();
         });
-        
+
         $(".checkbox-checked",$editbox).die();
-        $(".checkbox-checked",$editbox).live("click",function(event) {     
+        $(".checkbox-checked",$editbox).live("click",function(event) {
            var lineH = that.codeMirror.cursorLine();
            var line = that.codeMirror.lineContent(lineH);
            var m = line.replace(/\s*\*\s*(.*)/,"- $1");
            $(this,$editbox).removeClass("checkbox-checked").addClass("checkbox");
-                      
+
            that.codeMirror.setLineContent(lineH,m);
            that.codeMirror.selectLines(lineH,3);
-           
+
            that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);
            that.saveTimerRearm();
-           
+
         });
-    
+
         $(".sn-link-note",$editbox).die();
         $(".sn-link-note",$editbox).live("click",function(event) {
             if (event.ctrlKey) {
                _gaq.push(['_trackEvent', 'popup', 'linkclicked_unhot']);
                return;
             }
-            var title = this.textContent.trim().substr(1).replace(/_/g," ");           
+            var title = this.textContent.trim().substr(1).replace(/_/g," ");
             var titles = extData.headings.filter(function(h) {return h.title == title;});
             if (titles.length >= 1) {
                 if (extData.isTab && that.note)
                         that.saveCaretScroll();
 
-                that.setNote(titles[0]);                
-            }            
+                that.setNote(titles[0]);
+            }
         });
-        
+
         // bind ctrl link disable
         $editbox.bind('keydown', function(event) {
             if (event.keyCode == 17) // ctrl
@@ -1631,8 +1658,8 @@ SNEditor.prototype.initialize = function() {
             if (event.keyCode == 17) // ctrl
                 $("[class^=sn-link]",$editbox).removeClass("sn-link-unhot");
         });
-        
-        $("#markdownpreview").scroll(function () {       
+
+        $("#markdownpreview").scroll(function () {
             if (that.holdmarkdownscroll) {
                 that.holdmarkdownscroll = false;
                 return;
@@ -1648,7 +1675,7 @@ SNEditor.prototype.initialize = function() {
             $("#markdownpreviewspacer").toggleClass("max");
             $("#markdownpreview").toggleClass("max");
             var scrollBefore = $("#markdownpreview").scrollTop()/$("#markdownpreview").get(0).scrollHeight;
-            
+
             if ($("#markdownpreviewspacer").hasClass("max"))
                 $("#cmiframe").hide(300, function() {
                     $("#markdownpreview").scrollTop($("#markdownpreview").get(0).scrollHeight * scrollBefore);
@@ -1657,7 +1684,7 @@ SNEditor.prototype.initialize = function() {
                 $("#cmiframe").show(300, function() {
                     $("#markdownpreview").scrollTop($("#markdownpreview").get(0).scrollHeight * scrollBefore);
                 });
-            
+
             return;
         });
 
@@ -1677,21 +1704,22 @@ SNEditor.prototype.initialize = function() {
         }
         // add context menu
         this.makeContextMenu();
-        
-        this.initialized = true;    
+
+        this.initialized = true;
+
     } catch (e) {
         exceptionCaught(e);
     }
-        
+
 }
 
 SNEditor.prototype.syncScrolls = function(direction) {
     var source, target;
-    
+
     if (!$("#markdownpreview").is(":visible"))
         return;
-    
-    if (direction == "fromeditor") {    
+
+    if (direction == "fromeditor") {
         source = this.$CMbody().get(0);
         target = $("#markdownpreview").get(0);
         this.holdmarkdownscroll = true;
@@ -1699,10 +1727,10 @@ SNEditor.prototype.syncScrolls = function(direction) {
         target = this.$CMbody().get(0);
         source = $("#markdownpreview").get(0);
     }
-    
-    var newST = source.scrollTop * (target.scrollHeight - target.clientHeight) / (source.scrollHeight - source.clientHeight);    
-    
-    $(target).scrollTop(Math.round(newST));                        
+
+    var newST = source.scrollTop * (target.scrollHeight - target.clientHeight) / (source.scrollHeight - source.clientHeight);
+
+    $(target).scrollTop(Math.round(newST));
 }
 
 //  ---------------------------------------
@@ -1724,7 +1752,7 @@ SNEditor.prototype.restoreCaretScroll = function (caretScroll) {
     log("SNEditor.restoreCaretScroll")
     if (!this.note)
         return;
-    
+
     if (!caretScroll && localStorage[this.note.key + "_caret"] && (localStorage.option_remembercaret == undefined || localStorage.option_remembercaret == "true"))
         caretScroll = JSON.parse(localStorage[this.note.key + "_caret"]);
 
@@ -1739,7 +1767,7 @@ SNEditor.prototype.restoreCaretScroll = function (caretScroll) {
                 lineH = this.codeMirror.lastLine();
         }
         var character = Math.min(this.codeMirror.lineContent(lineH).length,caretScroll.character);
-        
+
 //        cs2str("target     ",caretScroll);
 
 //        this.logCaretScroll("before curso");
@@ -1782,7 +1810,7 @@ SNEditor.prototype.insertUrl = function() {
 
 //  ---------------------------------------
 SNEditor.prototype.searchForSelection = function () {
-    log("SNEditor.searchForSelection")    
+    log("SNEditor.searchForSelection")
     if (this.codeMirror.selection().trim() != "") {
         _gaq.push(['_trackEvent', 'popup', 'searchForSelection']);
         openURLinTab("http://google.com/search?q=" + encodeURIComponent(this.codeMirror.selection().trim()));
@@ -1802,13 +1830,13 @@ SNEditor.prototype.hideIfNotInIndex = function (key) {
         else
             return this.id;
     }).filter(function(e) {return e.id != "";}).get();
-    
+
     if (!this.note || (this.note.key != "" && keys.indexOf(this.note.key)<0)) {
         if (keys.length > 0) {
             key = key?key:keys[0];
             chrome.extension.sendRequest({action:"note", key:key}, function(note) {
                 if (note.deleted != 1) {
-                    
+
                     //that.setNote(note,{focus:false});
                 } else
                     $("div#note").hide();
@@ -1835,7 +1863,7 @@ SNEditor.prototype.focus = function() {
 SNEditor.prototype.makeContextMenu = function() {
 
     log("SNEditor.makeContextMenu")
-    
+
     var that = this;
     this.$CMbody().contextMenu(
         function() {
@@ -1859,14 +1887,14 @@ SNEditor.prototype.makeContextMenu = function() {
             direction:'down',
             otherBodies: $(extData.popup),
             scrollRemove: "#cmiframe"
-        }        
+        }
     );
 }
 
 //  ---------------------------------------
 SNEditor.prototype.setNote = function(note, options) {
 
-    // new note dummy data    
+    // new note dummy data
     if (note==undefined)
         note = {content:"",tags:[],systemtags:[], key:""};
 
@@ -1893,10 +1921,10 @@ SNEditor.prototype.setNote = function(note, options) {
     this.note = note;
     if (options.isnewnote)
         this.note.content = "";
-    
+
     this.setFont();
     this.initialize();
-    
+
     // get note contents
     if (note.key == "") { // new note
 
@@ -1904,10 +1932,10 @@ SNEditor.prototype.setNote = function(note, options) {
         $('div#note #popout').hide();
 
     } else { // existing note
-        
+
         $("#trash").show();
 
-        if (!extData.isTab) {            
+        if (!extData.isTab) {
             $('div#note #popout').show();
         }
 
@@ -1916,19 +1944,19 @@ SNEditor.prototype.setNote = function(note, options) {
         this.needCMRefresh("lastopen");
     }
 
-    // set content    
+    // set content
     that.codeMirror.setParser("SimpleParser", {checklist: that.note.tags.indexOf("Checklist") >= 0 ? ["-","*"] : false});
     that.codeMirror.setCode(inputcontent);
-    
+
     snHelpers.getHeadings(false,function(headings) {
         that.codeMirror.setParser("SimpleParser", {headings: headings, checklist: that.note.tags.indexOf("Checklist") >= 0 ? ["-","*"] : false, wikilinks : true});
     })
-    
+
     // set pinned
     this.setPintoggle(this.note.systemtags.indexOf("pinned")>=0);
-    
+
     // set markdown
-    this.setMarkdownToggle(this.note.systemtags.indexOf("markdown") >= 0);    
+    this.setMarkdownToggle(this.note.systemtags.indexOf("markdown") >= 0);
     this.updateMarkdown();
 
     this.clearDirty();
@@ -1942,10 +1970,10 @@ SNEditor.prototype.setNote = function(note, options) {
     $("#as-selections-tagsauto").remove();
     $("#as-results-tagsauto").remove();
 
-    slideEditor(function () {        
+    slideEditor(function () {
 
         that.setupTags();
-        
+
         if (note.systemtags.indexOf("unread")>0) {
 
             note.systemtags.splice(note.systemtags.indexOf("unread"),1);
@@ -1953,12 +1981,12 @@ SNEditor.prototype.setNote = function(note, options) {
                 that.note = note;
                 $("#" + note.key).removeClass("unread");
             });
-        }       
+        }
 
         that.$CMbody().one("focus", function() {
             if (!that.note)
                 return;
-            
+
             if (that.note.key)
                 that.restoreCaretScroll();
             else if (options.isnewnote)
@@ -1966,10 +1994,10 @@ SNEditor.prototype.setNote = function(note, options) {
         });
 
         if (options.focus)
-            that.focus();        
+            that.focus();
 
         that.saveTimerInit();
-        
+
     }, options.duration);
 
     if (extData.isTab) {
@@ -1978,13 +2006,13 @@ SNEditor.prototype.setNote = function(note, options) {
             $("div.noterow#"+ note.key).addClass("selectednote");
             chrome.extension.sendRequest({action:"cm_updatelastopen"});
             snHelpers.scrollSelectedIntoView();
-        }        
+        }
     }
 }
 
 //  ---------------------------------------
 SNEditor.prototype.saveNote = function(callback) {
-    
+
     this.saveTimerClear();
 
     if(!this.isNoteDirty())
@@ -2038,7 +2066,7 @@ SNEditor.prototype.saveNote = function(callback) {
             log("CodeMirror.saveNote: request complete");
             if (callback && typeof callback == "function")
                 callback();
-        });        
+        });
     }
 
 }
@@ -2051,8 +2079,8 @@ SNEditor.prototype.clearDirty = function() {
     log("SNEditor.clearDirty");
     this.setDirty("content",false);
     this.setDirty("pinned",false);
-    this.setDirty("tags",false);    
-    this.setDirty("markdown",false);  
+    this.setDirty("tags",false);
+    this.setDirty("markdown",false);
     //$('div#note input#encrypted').removeAttr('dirty');
 }
 //  ---------------------------------------
@@ -2082,15 +2110,15 @@ SNEditor.prototype.setDirty = function(what, how, event) {
         this.showRevert();
     else
         this.hideRevert();
-    
+
     this.dirtyChangeListener(what);
-        
+
     return true;
 }
 
 SNEditor.prototype.dirtyChangeListener = function(what) {
     var that = this;
-    
+
     switch(what) {
       case "tags":
         snHelpers.getHeadings(false,function(headings) {
@@ -2117,15 +2145,15 @@ SNEditor.prototype.needCMRefresh = function(type) {
 }
 SNEditor.prototype.setupTags = function() {
     var that = this;
-    log("SNEditor.setupTags:sending request")    
+    log("SNEditor.setupTags:sending request")
 
     $("#as-selections-tagsauto").remove();
     $("#as-results-tagsauto").remove();
-    $("#tags").remove();    
+    $("#tags").remove();
     $('div#note').prepend('<input type="text" id="tags" spellcheck="false" tabindex="0"/>');
     $('div#note input#tags').autoSuggest(function(callback) {
                 chrome.extension.sendRequest({action:"tags",options: {sort:"frequency",predef:false}}, function(taginfos) {
-                        taginfos = taginfos.map(function(e) {return {value: e.tag};}).filter(function(e) {return extData.builtinTags.indexOf(e.value.toLowerCase()) < 0});                        
+                        taginfos = taginfos.map(function(e) {return {value: e.tag};}).filter(function(e) {return extData.builtinTags.indexOf(e.value.toLowerCase()) < 0});
                         log("SNEditor.setupTags:request complete, numtags=" + taginfos.length);
                         taginfos.unshift({value:"Checklist"});
                         callback(taginfos);
@@ -2134,10 +2162,9 @@ SNEditor.prototype.setupTags = function() {
             asHtmlID: "tagsauto",
             startText: chrome.i18n.getMessage("tag_placeholder"),
             preFill: that.note.tags.join(","),
-            //selectionClick: function(elem){ elem.fadeTo("slow", 0.33); },
             selectionAdded: function(elem) {
                 if (that.getTags())
-                    that.setDirty("tags", !arrayEqual(that.note.tags,that.getTags()));                                        
+                    that.setDirty("tags", !arrayEqual(that.note.tags,that.getTags()));
             },
             selectionRemoved: function(elem) {
                 elem.remove();
@@ -2149,18 +2176,18 @@ SNEditor.prototype.setupTags = function() {
                 $("#cmwrapper").css("top", Math.max($(".as-selections").height() + 4,32) + "px");
                 that.saveTimerRearm();
             },
-            onSetupDone: function() {                
-                //console.log($(".as-selections").height())
+            onSetupDone: function() {
+
                 that.adjustTagsWidth();
                 $("#cmwrapper").css("top", Math.max($(".as-selections").height() + 4,32) + "px");
-                //$("#as-selections-tagsauto").tipTip({defaultPosition:"top", content: chrome.i18n.getMessage("tag_tooltip_html",["alt-t", "alt-e"]), delay: 800, maxWidth: "400px"});
-                $("#as-selections-tagsauto").attr("title",chrome.i18n.getMessage("tag_tooltip",["alt-t", "alt-e"]));                
+                $("#as-selections-tagsauto").attr("title",chrome.i18n.getMessage("tag_tooltip",["alt-t", "alt-e"]));
+                //tooltip("#as-selections-tagsauto");
             },
             keyDelay: 10,
             onTabOut: function() {
                 snEditor.focus();
             }
-        });    
+        });
 }
 //  ---------------------------------------
 SNEditor.prototype.trashNote = function() {
@@ -2173,13 +2200,13 @@ SNEditor.prototype.trashNote = function() {
 
 SNEditor.prototype.saveTimerInit = function() {
     if (!extData.isTab)
-        return;       
+        return;
     var that = this;
 
     // Allocate timer element
     this.savetimer = {
             timer : null,
-            text : that.codeMirror.getCode(),            
+            text : that.codeMirror.getCode(),
             wait : extData.editorSaveTime
     };
 
@@ -2189,7 +2216,7 @@ SNEditor.prototype.saveTimerInit = function() {
 SNEditor.prototype.saveTimerClear = function() {
     if (!extData.isTab)
         return;
-    
+
     if (this.savetimer)
         clearTimeout(this.savetimer.timer);
 }
@@ -2197,7 +2224,7 @@ SNEditor.prototype.saveTimerRearm = function() {
     if (!extData.isTab)
         return;
     var that = this;
-    
+
     clearTimeout(this.savetimer.timer);
     this.savetimer.timer = setTimeout(function() {that._saveTimerExecute();}, this.savetimer.wait);
 }
@@ -2205,7 +2232,7 @@ SNEditor.prototype.saveTimerRearm = function() {
 SNEditor.prototype._saveTimerExecute = function() {
     if (!extData.isTab)
         return;
-    
+
     var elTxt = this.codeMirror.getCode();
 
     // Fire if text > options.captureLength AND text != saved txt OR if override AND text > options.captureLength
@@ -2252,7 +2279,7 @@ SNEditor.prototype.setPreviewtoggle = function(to) {
         $('div#note #previewtoggle').removeClass("preview_on");
     }
     this.setPreviewPane();
-        
+
     if (to)
         this.updateMarkdown();
 }
@@ -2265,9 +2292,9 @@ SNEditor.prototype.setPreviewPane = function() {
     if (this.isMarkdownToggle() && this.isPreviewtoggle()) {
         $("#cmiframe").css("width","50%");
         $("#markdownpreview").show();
-        $("#markdownpreviewspacer").show();             
+        $("#markdownpreviewspacer").show();
     } else {
-        $("#markdownpreview").hide();        
+        $("#markdownpreview").hide();
         $("#markdownpreviewspacer").hide();
         $("#cmiframe").css("width","100%");
         $("#cmiframe").show();
@@ -2279,11 +2306,11 @@ SNEditor.prototype.isMarkdownToggle = function() {
 }
 
 SNEditor.prototype.setMarkdownToggle = function(to) {
-    
+
     if (to) {
         $('#previewtoggle').show();
         $('#markdowntoggle').removeClass("off");
-        $('#markdowntoggle').addClass("on");        
+        $('#markdowntoggle').addClass("on");
     } else {
         $('#previewtoggle').hide();
         $('#markdowntoggle').removeClass("on");
@@ -2293,21 +2320,23 @@ SNEditor.prototype.setMarkdownToggle = function(to) {
     this.setPreviewPane();
 }
 
-SNEditor.prototype.updateMarkdown = function(input) {
-    if (!this.isMarkdownToggle() || !this.isPreviewtoggle()) 
+SNEditor.prototype.updateMarkdown = function(input,nocache) {
+    if (!this.isMarkdownToggle() || !this.isPreviewtoggle())
         return;
-    
+
+    var server = "S", local ="L";
+
     log("rendering markdown");
 //    var converter = new Showdown.converter();
 //    var html = converter.makeHtml(m);
     //var html = markdown.toHTML(m);
-    //var html = Markdown(m);    
+    //var html = Markdown(m);
     if (typeof input == "string") {
         log("updating markup locally");
-        var converter = new Showdown.converter();        
-        this.setMarkdownHtml(converter.makeHtml(input),"local","Syncpad uses a local markdown preview if the note has not yet been saved to the server. It might differ from the server version, and does not support 'Markdown Extra'");
-    } else {      
-        var version, key;        
+        var converter = new Showdown.converter();
+        this.setMarkdownHtml(converter.makeHtml(input),local,"Syncpad uses a local markdown preview if the note has not yet been saved to the server. It might differ from the server version, and does not support 'Markdown Extra'");
+    } else {
+        var version, key;
         if (!input) {
             log("updating markup from server with stored note version");
             version = this.note.version;
@@ -2318,16 +2347,18 @@ SNEditor.prototype.updateMarkdown = function(input) {
             key = input.key;
         }
         var serverTitle = "Markdown output as displayed by the Simplenote server. Updated each time after the note has been uploaded to the server.";
-        
-        if (snEditor.markupCache && snEditor.markupCache[key] && snEditor.markupCache[key].version == version) {      
+
+        if (!nocache && snEditor.markupCache && snEditor.markupCache[key] && snEditor.markupCache[key].version == version) {
             log("no, actually from cache");
 
-            this.setMarkdownHtml(snEditor.markupCache[key].html,"server", serverTitle)
+            this.setMarkdownHtml(snEditor.markupCache[key].html,server, serverTitle)
         } else {
             $("#markdownpreview").addClass("loading");
             $("#markdownpreview").html("<span id='info'>loading..</span>");
+            $("#markdownpreview #info").css("right", (cssprop("#note","right") + 35) + "px");
+
             $.ajax({
-                    url: "https://simple-note.appspot.com/markdown/" + key + "/" + version,    
+                    url: "https://simple-note.appspot.com/markdown/" + key + "/" + version,
                     timeout: 3000,
                     complete : function(jqXHR, textStatus) {
                         if (textStatus == "success") {
@@ -2339,33 +2370,41 @@ SNEditor.prototype.updateMarkdown = function(input) {
                                 html: JSON.parse(jqXHR.responseText).html
                             }
 
-                            snEditor.setMarkdownHtml(snEditor.markupCache[key].html, "server", serverTitle);
-                        } else {           
-                            var converter = new Showdown.converter();        
-                            snEditor.setMarkdownHtml(converter.makeHtml(snEditor.codeMirror.getCode()), "local (" + textStatus + ")", "Server timed out, using local preview.");
+                            snEditor.setMarkdownHtml(snEditor.markupCache[key].html, server, serverTitle);
+                        } else {
+                            var converter = new Showdown.converter();
+                            snEditor.setMarkdownHtml(converter.makeHtml(snEditor.codeMirror.getCode()), local + " (" + textStatus + ")", "Server error, using local preview.");
                         }
                         $("#markdownpreview").removeClass("loading");
                     }
             });
         }
     }
-    
+
 }
 
-SNEditor.prototype.setMarkdownHtml = function(html, info, moreinfo) {       
+SNEditor.prototype.setMarkdownHtml = function(html, info, moreinfo) {
     $("#markdownpreview").html("<span id='info'>" + info + "</span>" + html);
-    if (moreinfo)
+    if (moreinfo) {
         $("#markdownpreview #info").attr("title",moreinfo);
-    
-    $('#markdownpreview a').attr('target', '_blank');    
+        //tooltip("#markdownpreview #info",{position: "bottom left"});
+    }
+
+    $("#markdownpreview #info").css("right", (cssprop("#note","right") + 35) + "px");
+    $("#markdownpreview #info").click(function(event) {
+        snEditor.updateMarkdown(undefined,true);
+        event.stopPropagation();
+    });
+
+    $('#markdownpreview a').attr('target', '_blank');
     $('#markdownpreview a[href^="#"]').click(function(event) {
-        event.preventDefault();        
-        event.stopPropagation();      
+        event.preventDefault();
+        event.stopPropagation();
         $($(this).attr("href").replace(":","\\:")).get(0).scrollIntoView();
         snEditor.syncScrolls();
     });
-    snEditor.syncScrolls("fromeditor");
-    
+    this.syncScrolls("fromeditor");
+
 }
 
 SNEditor.prototype.print = function() {
@@ -2394,7 +2433,7 @@ SNEditor.prototype.adjustTagsWidth = function() {
 }
 
 var snHelpers = {
-    
+
     //  ---------------------------------------
     // from inview.js
     getViewportSize : function () {
@@ -2497,22 +2536,22 @@ var snHelpers = {
         }
 
     },
-    
+
     genericUrlOpenHandler: function(event) {
         event.stopPropagation();
         openURLinTab(event.data, event.ctrlKey || event.altKey );
     },
-    
+
     printTimes: function() {
         for(var i in extData.times)
             log(i + ": " + extData.times[i]);
     },
-    
+
     getHeadings: function(full, callback) {
         chrome.extension.sendRequest({action:"getnotes", deleted: 0}, function(notes) {
             extData.headings = headings(notes, true);
             callback(headings(notes,full));
-        });        
+        });
     }
 }
 

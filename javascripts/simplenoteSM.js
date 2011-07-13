@@ -61,12 +61,12 @@ SimplenoteSM = {
     
     webapplogin : function(val) {
         if (val === undefined)
-            return localStorage.option_webapplogin != undefined && localStorage.option_webapplogin == "true";
+            return false; //localStorage.option_webapplogin != undefined && localStorage.option_webapplogin == "true";
         else {
-            localStorage.option_webapplogin = val;
-            if (val) {
-                localStorage.credentialsValid = "true";                
-            }
+//            localStorage.option_webapplogin = val;
+//            if (val) {
+//                localStorage.credentialsValid = "true";                
+//            }
         }
                     
     }

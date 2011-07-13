@@ -149,7 +149,7 @@
 			},obj);
 			// If an icon is specified, hard-code the background-image style. Themes that don't show images should take this into account in their CSS
 			var iconStyle = (o.icon)?'background-image:url('+o.icon+');':'';
-			var $div = $('<div class="'+cmenu.itemClassName+' '+o.className+((o.disabled)?' '+cmenu.disabledItemClassName:'')+'" title="'+o.title+'"></div>')
+			var $div = $('<div class="'+cmenu.itemClassName+' '+o.className+((o.disabled)?' '+cmenu.disabledItemClassName:'') + (o.title!= ""?'" title="'+o.title+'"':'"') + '></div>')
 							// If the item is disabled, don't do anything when it is clicked
 							.bind("mousedown",
                                                             function(e){

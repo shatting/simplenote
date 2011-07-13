@@ -427,9 +427,13 @@
                                 }
                                 tab_press = false;
                                 input_focus = false;
-                            }).mouseover(function(){
+                            }).mouseover(function(event){
                                 $("li", results_ul).removeClass("active");
                                 $(this).addClass("active");
+                                event.stopPropagation();
+                                event.preventDefault();
+                                event.preventBubble();
+                                event.preventCapture();
                             }).data("data",{
                                 attributes: data[num],
                                 num: num_count
@@ -485,7 +489,7 @@
 
                     values_array.push(data[opts.selectedValuesProp]);
 
-                    var item = $('<li class="as-selection-item" id="as-selection-'+num+'" title=""></li>').click(function(){
+                    var item = $('<li class="as-selection-item" id="as-selection-'+num+'"></li>').click(function(){
                         opts.selectionClick.call(this, $(this));
                         input_focus = true;
                         input.blur();

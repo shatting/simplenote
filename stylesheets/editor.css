@@ -51,7 +51,7 @@ html {
     background: transparent -webkit-gradient(linear, left top, left bottom, from(#fff), to(#ccc));
     background: transparent;
     -webkit-appearance: none;
-    -webkit-box-shadow: 1px 1px 3px rgba(128,128,128,0.3);
+    ''-webkit-box-shadow: 1px 1px 2px rgba(128,128,128,0.25);
     -webkit-border-radius: 0.5em;
     display: inline-block;
     line-height: 1em;
@@ -63,10 +63,13 @@ html {
     cursor:pointer;
     color: transparent !important;
     margin-right: 0.5em;
+    -webkit-transition: all 0.1s linear;
+
 }
 
 .checkbox:hover, .checkbox-checked:hover {
     -webkit-background-size: 2.8em 2.8em;
+    -webkit-box-shadow: 1px 1px 2px rgba(128,128,128,0.25);
     ''-webkit-transition: -webkit-background-size 0.1s linear;
 }
 .checkbox {
@@ -97,9 +100,10 @@ input[type=text], input[type=checkbox], select {
 .editbox::-webkit-scrollbar {
     width: 14px;
     height: 14px;    
+    background: transparent;    
 }
 
-.editbox::-webkit-scrollbar-track-piece  {
+/*.editbox::-webkit-scrollbar-track-piece  {
     background: transparent;    
 }
 
@@ -113,8 +117,39 @@ input[type=text], input[type=checkbox], select {
     background: #F7F8FF;
     border: 1px solid #999;
     -webkit-border-radius: 6px;    
+}*/
+
+/* scrollbar */
+::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;    
+    cursor:pointer;
+    background-color: transparent;    
 }
 
+::-webkit-scrollbar-track-piece  {    
+    background-color: transparent;    
+}
+
+::-webkit-scrollbar-thumb {                
+    border: 1px solid #bbb;
+    border-top: 1px solid #999;
+    border-bottom: 1px solid #999;
+    -webkit-border-radius: 6px;   
+    background: -webkit-linear-gradient(left, white 70%, #F6F6F9 90%, #EDEDF3);
+    ''box-shadow: 1px 1px 2px #EDEDF3;    
+}
+    
+::-webkit-scrollbar-thumb:horizontal {            
+    background: url(/images/grabhandle_horiz.png) no-repeat 50%;
+        background: -webkit-linear-gradient(top, white 70%, #F6F6F9 90%, #EDEDF3);
+}
+
+::-webkit-scrollbar-thumb:vertical {            
+    background: url(/images/grabhandle.png) no-repeat 50%;
+
+    background: -webkit-linear-gradient(left, white 70%, #F6F6F9 90%, #EDEDF3);
+}
 
 @font-face {
   font-family: 'Droid Sans Mono';
