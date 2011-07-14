@@ -9,6 +9,13 @@ body {
   background: white;
 }
 
+
+body.message {
+    width: 400px;
+    height: 106px;
+}
+
+
 body.tab {
     background-image: url(/images/texture.png);  
     background: #4F4F59;
@@ -72,6 +79,7 @@ div#note {
     padding: 2px;
     border: 1px solid #EDEDF3;    
     background: -webkit-linear-gradient(right, white 70%, #F6F6F9 90%, #EDEDF3);
+    background: -webkit-linear-gradient(right, #EDEDF3, #F6F6F9 10%, white 70%, #F6F6F9 90%, #EDEDF3);
     box-shadow: 8px 10px 8px -5px rgba(0, 0, 0, 0.8);
     border-radius: 12px 2px 0px 2px;
 }
@@ -113,6 +121,10 @@ div#notes {
 
 .tab div#notes {
     border-left: 1px solid #999;;
+}
+
+.message div#notes {
+    padding-left: 14px;
 }
 
 div#statusbar {
@@ -206,8 +218,8 @@ div#statusbar {
 #q {
     padding: 4px 6px 4px 24px;    
     font-size: 13px;
-    width: 197px;
-    margin-left: 4px;    
+    width: 201px;
+    margin-left: 3px;    
     background: transparent url(/images/searchfield.png) no-repeat 6px 50%;
     box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 2px inset;
     -webkit-transition: background-color 0.4s ease-in-out;
@@ -257,7 +269,7 @@ div.noterow {
     
     cursor:pointer;
     
-    -webkit-box-shadow: 4px 4px 3px -4px #333;
+    box-shadow: 4px 4px 3px -4px rgba(0, 0, 0, 0.2);
     -webkit-transition: all 70ms ease-in-out;
     
     margin-right: 4px;
@@ -267,10 +279,10 @@ div.noterow {
     padding-right: 5px;
     background: white;
     cursor: pointer;
-    border: 1px solid #CCC;
+    border: 1px solid #AAA;
     -webkit-transition: all 70ms ease-in-out;
     border-left: 4px solid #aaa;
-    border-radius: 0px 3px 3px 0px;    
+    ''border-radius: 0px 3px 3px 0px;    
     margin-left: -3px;
 }
 
@@ -313,7 +325,11 @@ div.selectednote:hover {
 }
 
 div.fullhit {       
-    border: 1px dashed green;
+    
+}
+
+div.partialhit {       
+    opacity: 0.5;
 }
 
 /* noterow children */
@@ -328,7 +344,7 @@ div.noteheading, div.abstract {
     -webkit-transition: all 70ms ease-in-out;
 }
 
-div.noteheading { color:#111;}
+div.noteheading { color:#333;}
 div.noterowdeleted div.noteheading { color:#666;}
 
 div.abstract {
@@ -445,6 +461,17 @@ div.statusicon-clickable:hover {
 /* note div */
 
 #cmwrapper {     
+    border-radius: 12px 0px 0px 0px;
+    border: 1px solid #999;
+    margin-top: 2px;
+    position: absolute;    
+    bottom: 2px;
+    top: 32px;
+    right: 2px;
+    left: 5px;
+}
+
+.tab #cmwrapper {     
     border-radius: 12px 0px 0px 0px;
     border: 1px solid #999;
     margin-top: 2px;
@@ -604,6 +631,11 @@ div.statusicon-clickable:hover {
     border: 1px solid #EDEDF3;
 }
 
+#markdownpreview #info.loading {
+    background: transparent url(/images/loader_small.gif) no-repeat 50%;
+    width: 18px;
+}
+
 div#note .toolbarbutton {
     display:inline;   
     margin-top: 1px;
@@ -635,7 +667,11 @@ div#note .toolbarbutton {
 }
 
 #print {    
-    background-image:url(/images/print.png);
+    background-image:url(/images/print.png);    
+}
+
+.tab #print {    
+    margin-left: 15px;
 }
 
 #popout {
@@ -680,12 +716,13 @@ div#note .toolbarbutton {
 
 #backtoindex {
     background-image:url(/images/back.png);    
-    margin-right: 7px !important;
+    margin-right: 0px !important;
 }
 
 .tab #backtoindex {
     background-image:url(/images/close.png);    
     margin-right: 7px !important;
+    margin-left: 15px;    
 }
 
 .tooltip {

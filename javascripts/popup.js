@@ -714,9 +714,7 @@ function displayStatusMessage(message) {
     $("#index").show();
 
     $('#notes').html(message);
-    $('body').css("background","#fff");
-    $("body").css("width", "400px");
-    $("body").css("height", "150px");
+    $('body').addClass("message");
 
     $('a').attr('target', '_blank').click(function() {window.close();});
 }
@@ -1152,6 +1150,8 @@ function indexFillNoteReqComplete(note) {
                 //html = note.score + " - " + html;
                 if (note.score >= 1)
                     $noterow.addClass("fullhit")
+                if (note.score < 1)
+                    $noterow.addClass("partialhit")
             }
             $noteheading.html(heading); // dont need more than 100 chars
             if (headingtext.length > 25)
@@ -1324,7 +1324,7 @@ function SNEditor() {
     $("#cmwrapper").css("height","");
     $("#cmiframe").attr("tabindex","2");
     $("#cmwrapper").append("<div id='markdownpreviewspacer'></div>");
-    $("#cmwrapper").append("<div id='markdownpreview'></div>");
+    $("#cmwrapper").append("<div id='markdownpreview'><span id='info'></span></div>");
 
     this.dirty={content: false, tags: false, pinned: false};
 }
@@ -1950,6 +1950,7 @@ SNEditor.prototype.setNote = function(note, options) {
     this.setPintoggle(this.note.systemtags.indexOf("pinned")>=0);
 
     // set markdown
+    this.clearMarkdown();
     this.setMarkdownToggle(this.note.systemtags.indexOf("markdown") >= 0);
     this.updateMarkdown();
 
@@ -2058,7 +2059,7 @@ SNEditor.prototype.saveNote = function(callback) {
                 that.note = note;
                 that.clearDirty();
             }
-            if (that.note.key == "") {
+            if (that.note && that.note.key == "") {
                 
             }
             log("CodeMirror.saveNote: request complete");
@@ -2357,13 +2358,13 @@ SNEditor.prototype.updateMarkdown = function(input,nocache) {
 
             this.setMarkdownHtml(snEditor.markupCache[key].html, server, serverTitle)
         } else {
-            $("#markdownpreview").addClass("loading");
-            $("#markdownpreview").html("<span id='info'>loading..</span>");
+            //$("#markdownpreview").addClass("loading");            
             $("#markdownpreview #info").css("right", (cssprop("#note","right") + 35) + "px");
-
+            $("#markdownpreview #info").addClass("loading");
+                
             $.ajax({
                     url: "https://simple-note.appspot.com/markdown/" + key + "/" + version,
-                    timeout: 3000,
+                    timeout: 5000,
                     complete : function(jqXHR, textStatus) {
                         if (textStatus == "success") {
                             if (!snEditor.markupCache)
@@ -2379,12 +2380,17 @@ SNEditor.prototype.updateMarkdown = function(input,nocache) {
                             var converter = new Showdown.converter();
                             snEditor.setMarkdownHtml(converter.makeHtml(snEditor.codeMirror.getCode()), local + " (" + textStatus + ")", "Server error, using local preview.");
                         }
-                        $("#markdownpreview").removeClass("loading");
+                        //$("#markdownpreview").removeClass("loading");
+                        $("#markdownpreview #info").removeClass("loading");
                     }
             });
         }
     }
 
+}
+
+SNEditor.prototype.clearMarkdown = function() {
+    $("#markdownpreview").html("<span id='info'></span>");
 }
 
 SNEditor.prototype.setMarkdownHtml = function(html, info, moreinfo) {
@@ -2417,15 +2423,12 @@ SNEditor.prototype.print = function() {
 
 SNEditor.prototype.showRevert = function() {
     if (!extData.isTab)
-        $('div#note #revert').show();
-    //alert($('div#note #pintoggle').css("left"))
-    //$('div#note #tags').animate({right:"+=28"});
+        $('div#note #revert').show();    
     this.adjustTagsWidth();
 }
 
 SNEditor.prototype.hideRevert = function() {
-    $('div#note #revert').hide();
-    //$('div#note #tags').animate({right:"-=28"});
+    $('div#note #revert').hide();    
     this.adjustTagsWidth();
 }
 

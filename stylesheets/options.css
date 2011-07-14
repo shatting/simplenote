@@ -68,10 +68,12 @@ a, a:visited {
     font-size: 18px;
     border-radius:4px;
     background:#EEE;
+    background: -webkit-linear-gradient(left, white 70%, #F6F6F9 90%, #EDEDF3);    
+
     margin:7px 0;
     padding:2px 2px 5px 6px;
     padding:6px;
-    -webkit-box-shadow: 1px 10px 5px rgba(0,0,0,0.3);
+    -webkit-box-shadow: 6px 10px 5px -4px rgba(0, 0, 0, 0.3);
     border-top: 1px solid #FFF;
 }
 .optionheading {

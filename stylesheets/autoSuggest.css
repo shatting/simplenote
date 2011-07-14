@@ -7,11 +7,15 @@ ul.as-selections {
 	position: absolute;
         display: inline;
         right: 240px;
-        left: 10px;
+        left: 5px;
         font-size: 13px;
         padding-left: 0px;        
         color: #333;        
         cursor: text;        
+}
+
+.tab ul.as-selections {
+    left: 10px;
 }
 
 /*ul.as-selections:focus {

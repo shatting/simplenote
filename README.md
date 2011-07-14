@@ -1,5 +1,50 @@
 CHANGELOG
 ===============
+2.0 _[July 15]_
+---------------
+- **markdown**: preview + toggle
+
+    _implemented_: local preview and server preview and toggle. the local preview does not support the _Markdown Extra_ extensions. the preview is maximizable by clicking on it. here is a good [markdown syntax guide](http://www.floatnotes.org/documentation/markdown-quickreference).
+  
+    _planned_: editor support
+  
+- **wikilinks**: clickable note links in notes.
+    
+    _implemented_: create a link to a note by typing `#notetitle`.
+    
+    _planned_: autocomplete
+
+- **checklists**: clickable checkboxes in notes. 
+
+    _implemented_: notes tagged `Checklist` will show checkboxes. an unchecked item
+    is a line having a dash followed by a space (`'- '`) as first non-space characters.
+    
+    > `- unchecked item`
+        
+    a checked item has a asterisk followed by a space (`'* '`) as first non-space characters.
+    
+    > `* checked item`
+    
+    _planned_: support for other 3rd party checklist notation (listary, jadenote, ...)
+    
+- some redesign, most notably the tab mode
+- lots of small fixes
+
+1.8.6.2 [July 2]
+---------------
+- improved startup, added inset shadows to editor and search field
+
+1.8.6 [July 1]
+---------------
+- bugfix release mostly
+- option for "font smoothing" (try this if the chosen font looks bad, useful mostly on OSes without built-in font smoothing (linux, win pre 7))
+
+1.8.4 [June 25]
+---------------
+- search now fuzzy, eg. you can type "smplnt" to find notes containing "simplenote"
+- click tags to edit them (just for that particular note though)
+- lots of smaller fixes
+
 1.8.3 [June 17]
 ---------------
 - tags autocomplete (the hover animation is a bit choppy - couldnt find the reason)
@@ -34,7 +79,6 @@ CHANGELOG
 - bugfixes
 
 1.7.1 [June 2]
-
 ----------------
 - option: cascading context menus on/off (separate for pinned and others)
 - right click context menu in index view: trash note
@@ -107,7 +151,7 @@ To open in tab, open a note and click the new "Popout" button. Will later integr
 - added shortcuts. you can hover over an element (button, checkbox, text input field) to see its shortcut in the tooltip.
 - added editor context menu (right click): insert tab url and search for selection.
 
-NOTICE: sadly, i had to add the new extension permission "tabs" for getting the tab url. the permission shows up as "browsing history" in the webstore. since the extension can only connect to the server "simple-note.appspot.com", and i am not in any way affiliated with this company, there is no way for me to get hold of that data, even if i wanted (which i dont).
+    _NOTICE: sadly, i had to add the new extension permission "tabs" for getting the tab url. the permission shows up as "browsing history" in the webstore. since the extension can only connect to the server "simple-note.appspot.com", and i am not in any way affiliated with this company, there is no way for me to get hold of that data, even if i wanted (which i dont)._
 
 1.5.2 [May 1]
 ----------------
