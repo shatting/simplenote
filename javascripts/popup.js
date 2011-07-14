@@ -1420,11 +1420,7 @@ SNEditor.prototype.initialize = function() {
             console.log(event.type)
             that.setDirty("content", that.note.content != that.codeMirror.getCode(), event);
             if (that.isMarkdownToggle() && that.isPreviewtoggle()) {
-                if (that.dirty.content) {
-                    that.updateMarkdown(that.codeMirror.getCode());
-                } else {
-                    that.updateMarkdown();
-                }
+                that.updateMarkdown();
                 that.syncScrolls("fromeditor");
             }
         });
@@ -1497,7 +1493,6 @@ SNEditor.prototype.initialize = function() {
 
             that.focus();
 
-            snEditor.setPreviewPane();
         });
 
         // bind back button
@@ -1532,8 +1527,7 @@ SNEditor.prototype.initialize = function() {
 
             that.setPreviewtoggle(!that.isPreviewtoggle());
 
-            localStorage.markdown_preview = that.isPreviewtoggle();
-            that.setPreviewPane();
+            localStorage.markdown_preview = that.isPreviewtoggle();            
             that.focus();
         });
         this.setPreviewtoggle(localStorage.markdown_preview == undefined || localStorage.markdown_preview == "true");
@@ -1551,7 +1545,8 @@ SNEditor.prototype.initialize = function() {
             if (that.dirty.content) {
                 //that.saveCaretScroll();
                 that.codeMirror.setCode(note.content);
-                that.restoreCaretScroll();
+                that.updateMarkdown();
+                that.restoreCaretScroll();                
             }
             // reset tags
             if (that.dirty.tags)
@@ -1563,8 +1558,7 @@ SNEditor.prototype.initialize = function() {
             }
 
             if (that.dirty.markdown) {
-                that.setMarkdownToggle(note.systemtags.indexOf("markdown")>=0);
-                this.setPreviewPane();
+                that.setMarkdownToggle(note.systemtags.indexOf("markdown")>=0);                
             }
 
             that.hideRevert();
@@ -1835,16 +1829,15 @@ SNEditor.prototype.hideIfNotInIndex = function (key) {
         if (keys.length > 0) {
             key = key?key:keys[0];
             chrome.extension.sendRequest({action:"note", key:key}, function(note) {
-                if (note.deleted != 1) {
-
+                if (note && note.deleted != 1) {
                     //that.setNote(note,{focus:false});
                 } else
                     $("div#note").hide();
                 });
         } else
-            $("div#note").hide();
+            $("div#note").hide();        
     } else if (this.note)
-        this.show();
+        this.show();    
 
     if ($('#q').val() == "")
         snHelpers.scrollSelectedIntoView();
@@ -1918,12 +1911,13 @@ SNEditor.prototype.setNote = function(note, options) {
 
     var inputcontent = note.content;
 
-    this.note = note;
-    if (options.isnewnote)
-        this.note.content = "";
 
     this.setFont();
     this.initialize();
+    
+    this.note = note;
+    if (options.isnewnote)
+        this.note.content = "";
 
     // get note contents
     if (note.key == "") { // new note
@@ -2060,8 +2054,12 @@ SNEditor.prototype.saveNote = function(callback) {
     if (noteData.action) {
         chrome.extension.sendRequest(noteData, function(note) {
             if (that.note && (that.note.key == note.key || that.note.key == "")) {
+                $("#trash").show();
                 that.note = note;
                 that.clearDirty();
+            }
+            if (that.note.key == "") {
+                
             }
             log("CodeMirror.saveNote: request complete");
             if (callback && typeof callback == "function")
@@ -2280,7 +2278,7 @@ SNEditor.prototype.setPreviewtoggle = function(to) {
     }
     this.setPreviewPane();
 
-    if (to)
+    if (to && this.note)
         this.updateMarkdown();
 }
 
@@ -2318,6 +2316,8 @@ SNEditor.prototype.setMarkdownToggle = function(to) {
     }
     this.adjustTagsWidth();
     this.setPreviewPane();
+    if (to && this.note)
+        this.updateMarkdown();
 }
 
 SNEditor.prototype.updateMarkdown = function(input,nocache) {
@@ -2331,10 +2331,14 @@ SNEditor.prototype.updateMarkdown = function(input,nocache) {
 //    var html = converter.makeHtml(m);
     //var html = markdown.toHTML(m);
     //var html = Markdown(m);
+    
     if (typeof input == "string") {
         log("updating markup locally");
         var converter = new Showdown.converter();
-        this.setMarkdownHtml(converter.makeHtml(input),local,"Syncpad uses a local markdown preview if the note has not yet been saved to the server. It might differ from the server version, and does not support 'Markdown Extra'");
+        this.setMarkdownHtml(converter.makeHtml(input), local, "Syncpad uses a local markdown preview if the note has not yet been saved to the server. It might differ from the server version, and does not support 'Markdown Extra'");
+    } else if (!input && (this.note.key == "" || this.dirty.content)){
+        var converter = new Showdown.converter();
+        this.setMarkdownHtml(converter.makeHtml(snEditor.codeMirror.getCode()), local, "Syncpad uses a local markdown preview if the note has not yet been saved to the server. It might differ from the server version, and does not support 'Markdown Extra'");
     } else {
         var version, key;
         if (!input) {
@@ -2351,7 +2355,7 @@ SNEditor.prototype.updateMarkdown = function(input,nocache) {
         if (!nocache && snEditor.markupCache && snEditor.markupCache[key] && snEditor.markupCache[key].version == version) {
             log("no, actually from cache");
 
-            this.setMarkdownHtml(snEditor.markupCache[key].html,server, serverTitle)
+            this.setMarkdownHtml(snEditor.markupCache[key].html, server, serverTitle)
         } else {
             $("#markdownpreview").addClass("loading");
             $("#markdownpreview").html("<span id='info'>loading..</span>");
