@@ -1,6 +1,6 @@
 {
   "name": "Syncpad for Simplenote",
-  "version": "1.8.6.2",
+  "version": "2.0",
   "minimum_chrome_version": "5.0.316.0",
   "description": "__MSG_description__",
   "default_locale": "en",

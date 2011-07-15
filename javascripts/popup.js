@@ -1875,8 +1875,8 @@ SNEditor.prototype.makeContextMenu = function() {
         },
         {
             theme:'gloss',
-            offsetX: extData.isTab?406:6,
-            offsetY: 38,
+            offsetX: extData.isTab?446:6,
+            offsetY: extData.isTab?78:38,
             direction:'down',
             otherBodies: $(extData.popup),
             scrollRemove: "#cmiframe"
