@@ -431,9 +431,7 @@
                                 $("li", results_ul).removeClass("active");
                                 $(this).addClass("active");
                                 event.stopPropagation();
-                                event.preventDefault();
-                                event.preventBubble();
-                                event.preventCapture();
+                                event.preventDefault();                                
                             }).data("data",{
                                 attributes: data[num],
                                 num: num_count

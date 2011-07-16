@@ -365,6 +365,8 @@ $(document).ready(function() {
     
     SimplenoteBG.log("(ready)");
     
+    SimplenoteBG.startup();
+    
     setTimeout(function() {
         SimplenoteLS._maintain();
         SimplenoteBG.backgroundSync(true, function() {

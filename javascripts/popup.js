@@ -391,7 +391,6 @@ function shorcuts(event) {
 }
 
 //  ---------------------------------------
-$(document).ready(readyListener);
 function readyListener() {
 
     extData.times.ready = (new Date())-start;
@@ -2562,3 +2561,4 @@ var snHelpers = {
     }
 }
 
+$(document).ready(readyListener);
