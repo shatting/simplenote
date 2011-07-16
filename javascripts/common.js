@@ -8,7 +8,7 @@ var extData = {
     webnoteregstr : "^SYNCPADWEBNOTE\\[(.*),(\\d+px),(\\d+px),(\\d+px)?,(\\d+px)?\\]$",
     
     debugFlags : {
-        general     : false,
+        general     : true,
         popup       : true,
         popup2BG    : false,
         BG          : true,
@@ -389,6 +389,15 @@ function cssprop(e, id) {
 //    return $(arr);
 //  };
 //})(jQuery);
+
+var ticktock;
+function tick() {
+    ticktock = (new Date()).getTime();
+}
+
+function tock(s) {
+    console.log("%s: %i",s,((new Date()).getTime()) - ticktock);
+}
 
 function headings(notes,full) {
     return notes.filter(function(n) {

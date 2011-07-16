@@ -8,6 +8,8 @@ $.extend(extData,{
     times : {
         popup: (new Date())-start
     },
+    
+    sentTimeBeacon: false,
 
     preLoadFactor : 1/2, // amount of vertical viewport size to add for preloading notes in index
 
@@ -179,8 +181,8 @@ function uiEventListener(eventData, sender, sendResponse) {
             if (deleted) {
                 log("EventListener:noteupdated: deleted");
                 if (noteRowInIndex(eventData.newnote.key)) {
-                    $('div.noterow#' + eventData.newnote.key).attr("deleteanimation","true");
-                    $('div.noterow#' + eventData.newnote.key).hide("slow", function() {$(this).remove();});
+                    $('#' + eventData.newnote.key).attr("deleteanimation","true");
+                    $('#' + eventData.newnote.key).hide("slow", function() {$(this).remove();});
                 }
                 if (localStorage.lastopennote_key == eventData.newnote.key) {
                     delete localStorage.lastopennote_key
@@ -193,8 +195,8 @@ function uiEventListener(eventData, sender, sendResponse) {
             } else if (undeleted) {
                 log("EventListener:noteupdated: undeleted");
                 if (noteRowInIndex(eventData.newnote.key)) {
-                    $('div.noterow#' + eventData.newnote.key).attr("deleteanimation","true");
-                    $('div.noterow#' + eventData.newnote.key).hide("slow", function() {$(this).remove();});
+                    $('#' + eventData.newnote.key).attr("deleteanimation","true");
+                    $('#' + eventData.newnote.key).hide("slow", function() {$(this).remove();});
                 }
                 if (eventData.newnote.systemtags.indexOf("pinned")>=0)
                     needPinnedRefresh = true;
@@ -221,12 +223,12 @@ function uiEventListener(eventData, sender, sendResponse) {
             }
 
             if (pinnedNowOn) {
-                $('div.noterow #' + eventData.newnote.key + "pin").removeClass("unpinned");
-                $('div.noterow #' + eventData.newnote.key + "pin").addClass("pinned");
+                $('#' + eventData.newnote.key + "pin").removeClass("unpinned");
+                $('#' + eventData.newnote.key + "pin").addClass("pinned");
                 needPinnedRefresh = true;
             } else if (pinnedNowOff) {
-                $('div.noterow #' + eventData.newnote.key + "pin").removeClass("pinned");
-                $('div.noterow #' + eventData.newnote.key + "pin").addClass("unpinned");
+                $('#' + eventData.newnote.key + "pin").removeClass("pinned");
+                $('#' + eventData.newnote.key + "pin").addClass("unpinned");
                 needPinnedRefresh = true;
             }
 
@@ -264,17 +266,17 @@ function uiEventListener(eventData, sender, sendResponse) {
                 $("#offline").html("");
         } else if (eventName == "synclistchanged") {
             if (eventData.added) {
-                $('div#' + eventData.added + "syncicon").show();
+                $('#' + eventData.added + "syncicon").show();
                 log("EventListener:synclistchanged, added=" + eventData.added);
             }
             if (eventData.removed) {
-                $('div#' + eventData.removed + "syncicon").hide();
+                $('#' + eventData.removed + "syncicon").hide();
                 log("EventListener:synclistchanged, removed=" + eventData.removed);
             }
             //log("length=" + $('div#' + eventData.removed + "heading").length)
         } else if (eventName == "notedeleted") {
             log("EventListener:notedeleted:" + eventData.key);
-            $('div.noterow#' + eventData.key).remove();
+            $('#' + eventData.key).remove();
             fillTags(false);
             snEditor.hideIfNotInIndex(eventData.key);
         } else {
@@ -287,7 +289,7 @@ function uiEventListener(eventData, sender, sendResponse) {
 }
 
 function noteRowInIndex(key) {
-    return $('div.noterow#' + key).length > 0;
+    return $('#' + key).length > 0;
 }
 
 // shortcuts
@@ -325,29 +327,29 @@ function shorcuts(event) {
 
     if (extData.currentView=="index" || extData.isTab) {
     // - index:
-        var notesheight = $("div#notes").get(0).scrollHeight;
+        var notesheight = $("#notes").get(0).scrollHeight;
 
         if (event.altKey && !event.ctrlKey && !event.shiftKey)
             switch(event.keyCode) {
                 case 38: //alt-up
-                    $("div#notes").scrollTop($("div#notes").scrollTop()-notesheight/20)
+                    $("#notes").scrollTop($("#notes").scrollTop()-notesheight/20)
                 break;
                 case 40: //alt-down
-                    $("div#notes").scrollTop($("div#notes").scrollTop()+notesheight/20)
+                    $("#notes").scrollTop($("#notes").scrollTop()+notesheight/20)
                 break;
                 case 39: //alt-right
                 break;
                 case 65: //alt-a
                     event.preventDefault();
-                    $("div#index #add").click();
+                    $("#add").click();
                     break;
                 case 78: //alt-n
                     event.preventDefault();
-                    $("div#index #notetags").focus();
+                    $("#notetags").focus();
                     break;
                 case 81: //alt-q
                     event.preventDefault();
-                    $("div#index input#q").focus();
+                    $("#q").focus();
                     break;
 
             }
@@ -362,16 +364,16 @@ function shorcuts(event) {
                 case 86: //alt-v
                     if (!extData.isTab) snEditor.insertUrl();break;
                 case 66: //alt-b
-                    $('div#note #backtoindex').click();break;
+                    $('#backtoindex').click();break;
                 case 82: //alt-r
-                    if (!extData.isTab) $('div#note #revert').click();break;
+                    if (!extData.isTab) $('#revert').click();break;
                 case 79: //alt-o
-                    if (!extData.isTab) $('div#note #popout').click();break;
+                    if (!extData.isTab) $('#popout').click();break;
                 case 80: //alt-p
-                    $('div#note #pintoggle').click();
+                    $('#pintoggle').click();
                     break;
                 case 87: //alt-w
-                    $("div#note #wraptoggle").click();
+                    $("#wraptoggle").click();
                     break;
                 case 84: //alt-t
                     event.preventDefault();
@@ -445,8 +447,6 @@ function readyListener() {
         } else {
                 extData.times.startsetup = (new Date())-start;
 
-                _gaq.push(['_trackEvent', 'popup', 'ready']);
-
                 var directlyShowNote = localStorage.lastopennote_key != undefined && localStorage.lastopennote_key != "" && localStorage.lastopennote_open == "true" && localStorage.option_opentonote == "true";
 
                 $("body").show();
@@ -472,6 +472,7 @@ function readyListener() {
                     }
                 } else {
                     $("#note").show();
+                    $("#index").show();
                     $("body").addClass("tab");
                 }
 
@@ -497,7 +498,7 @@ function readyListener() {
 
                 fillTags(true);
                 // bind ADD button
-                $('div#index div#toolbar div#add').click(function(event) {
+                $('#add').click(function(event) {
 
                     if (event.shiftKey) {
                         _gaq.push(['_trackEvent', 'popup', 'addwebnoteclicked']);
@@ -522,7 +523,7 @@ function readyListener() {
                 });
 
                 // bind ADD WEBNOTE button
-                $('div#index div#toolbar div#add_webnote').click(function(event) {
+                $('#add_webnote').click(function(event) {
 
                     if (extData.isTab)
                         return;
@@ -573,8 +574,7 @@ function readyListener() {
                 }).focus(function() {
                     log("focus")
                     $("#toolbar").children().not(this).not("#q_clear").hide();
-                    $(this).addClass("max");
-                    $(this).animate({width:"350px"},{duration: 200, complete: function() {
+                    $(this).addClass("max").animate({width:"350px"},{duration: 200, complete: function() {
                             $("#q_clear").show();
                         }});
                 }).blur(function(event) {
@@ -667,6 +667,8 @@ function readyListener() {
 
             extData.times.endsetup = (new Date())-start;
             
+            _gaq.push(['_trackEvent', 'popup', 'ready', 'startsetup', extData.times.startsetup]);
+            _gaq.push(['_trackEvent', 'popup', 'ready', 'endsetup', extData.times.endsetup]);
             //tooltip("[title]");
         }
 
@@ -728,42 +730,44 @@ function fillTags(callFillIndex) {
 
     chrome.extension.sendRequest({action:"tags"}, function(taginfos) {
         try {
+            var $notetags = $("#notetags");
             // fill dropdown
-            $("#notetags").unbind();
+            $notetags.unbind();
             var stillhavetag = false;
-            var oldval = $("#notetags").val();
-            $("#notetags").html("");
-            var style;
+            var oldval = $notetags.val();            
+            var style, html = "", taginfo;                        
 
-            $.each(taginfos,function(i,taginfo) {
-                style = taginfo.count > 0?"":'style="color:#aaa"';
+            for (var i=0; i<taginfos.length; i++) {
+                taginfo = taginfos[i];
+                style = taginfo.count > 0?"":'style="color:#aaa"';                
                 if (taginfo.tag == "#all#")
-                    $("#notetags").append('<option value="" ' + style +  '>' + chrome.i18n.getMessage("tags_all") + ' [' + taginfo.count + ']</option>');
+                    html += '<option value="" ' + style +  '>' + chrome.i18n.getMessage("tags_all") + ' [' + taginfo.count + ']</option>';
                 else if (taginfo.tag == "#notag#")
-                    $("#notetags").append('<option value="#notag#" ' + style +  '>' + chrome.i18n.getMessage("tags_untagged") + ' [' + taginfo.count + ']</option>');
+                    html += '<option value="#notag#" ' + style +  '>' + chrome.i18n.getMessage("tags_untagged") + ' [' + taginfo.count + ']</option>';
                 else if (taginfo.tag == "#trash#")
-                    $("#notetags").append('<option value="#trash#" ' + style +  '>' + chrome.i18n.getMessage("tags_deleted") + ' [' + taginfo.count + ']</option>');
+                    html += '<option value="#trash#" ' + style +  '>' + chrome.i18n.getMessage("tags_deleted") + ' [' + taginfo.count + ']</option>';
                 else if (taginfo.tag == "#published#")
-                    $("#notetags").append('<option value="#published#" ' + style +  '>' + chrome.i18n.getMessage("tags_published") + ' [' + taginfo.count + ']</option>');
+                    html += '<option value="#published#" ' + style +  '>' + chrome.i18n.getMessage("tags_published") + ' [' + taginfo.count + ']</option>';
                 else if (taginfo.tag == "#shared#")
-                    $("#notetags").append('<option value="#shared#" ' + style +  '>' + chrome.i18n.getMessage("tags_shared") + ' [' + taginfo.count + ']</option>');
+                    html += '<option value="#shared#" ' + style +  '>' + chrome.i18n.getMessage("tags_shared") + ' [' + taginfo.count + ']</option>';
                 else if (taginfo.tag == "#webnote#")
-                    $("#notetags").append('<option value="#webnote#" ' + style +  '>' + chrome.i18n.getMessage("tags_webnote") + ' [' + taginfo.count + ']</option>');
+                    html += '<option value="#webnote#" ' + style +  '>' + chrome.i18n.getMessage("tags_webnote") + ' [' + taginfo.count + ']</option>';
                 else if (taginfo.tag == "#markdown#")
-                    $("#notetags").append('<option value="#markdown#" ' + style +  '>' + chrome.i18n.getMessage("tags_markdown") + ' [' + taginfo.count + ']</option>');
+                    html += '<option value="#markdown#" ' + style +  '>' + chrome.i18n.getMessage("tags_markdown") + ' [' + taginfo.count + ']</option>';
                 else if (extData.builtinTags.indexOf(taginfo.tag.toLowerCase()) < 0) {
-                    $("#notetags").append('<option value="' + taginfo.tag + '" ' + style +  '>' + taginfo.tag + " [" + taginfo.count + "] </option>");
+                    html += '<option value="' + taginfo.tag + '" ' + style +  '>' + taginfo.tag + " [" + taginfo.count + "] </option>";
                 }
                 if (oldval == taginfo.tag)
                     stillhavetag = true;
-            });
+            }
             if (!stillhavetag) {
                 oldval = "#all#";
             }
             log("fillTags done");
            // add handler
-            $("#notetags").val(oldval);
-            $("#notetags").change(function(event) {
+            $notetags.html(html);
+            $notetags.val(oldval);
+            $notetags.change(function(event) {
                 log("#notetags:changed: calling fillIndex");
                 fillIndex();
             });
@@ -796,24 +800,27 @@ function fillIndex() {
 
         $("#index").show();
 
-        var maxFill = $('#q').val()==""?15:1000;
+        var maxFill = $('#q').val()==""?15:1000; // shows nicer if not prefilled
 
         chrome.extension.sendRequest(req, function(notes) {
             try {
                 log("fillIndex(async):request complete, building index");
-                var note;
+                var note, $notes = $('#notes');
 
-                $('div#index div#notes').empty();
-                $('div#notes').unbind("scroll");
-
+                $notes.empty();
+                //$notes.hide();
+                $notes.unbind("scroll");
+                
                 if (notes.length > 0) {
+                    tick();
                     for(var i = 0; i < notes.length; i ++ ) {
                         note = notes[i];
-                        indexAddNote("append",note);
+                        indexAddNote("append",note);                        
                         if (i<maxFill && note.content != undefined)
                             indexFillNote(note);
                     }
-                    $("div.noterow").contextMenu(noteRowCMfn, {
+                    tock("notes");
+                    $notes.find("div.noterow").contextMenu(noteRowCMfn, {
                                                                   theme:'gloss',
                                                                   offsetX: 0,
                                                                   offsetY: 0,
@@ -829,18 +836,24 @@ function fillIndex() {
                                                                   otherBodies: extData.isTab && snEditor?snEditor.$CMbody():null,
                                                                   scrollRemove: "div#notes"
                                                           });
-
+                    $notes.show();
                     snHelpers.checkInView();
                 } else
-                    $('div#index div#notes').html("<div id='nonotes'>" + chrome.i18n.getMessage("no_notes_to_show") + "</div>");
+                    $notes.html("<div id='nonotes'>" + chrome.i18n.getMessage("no_notes_to_show") + "</div>");
 
-                $('div#notes').scrollTop(0);
-                $('div#notes').scroll(snHelpers.checkInView);
+                $notes.scrollTop(0);
+                $notes.scroll(snHelpers.checkInView);
 
                 snEditor.hideIfNotInIndex();
 
                 extData.times.endfillindex= (new Date())-start;
-
+                
+                if (!extData.sentTimeBeacon) {
+                    log("fillIndex(async):sending time beacon");
+                     _gaq.push(['_trackEvent', 'popup', 'ready', 'endfillindex',extData.times.endfillindex]);
+                     extData.sentTimeBeacon = true;
+                }
+                
                 snHelpers.printTimes();
 
                 log("fillIndex(async):done");
@@ -965,12 +978,28 @@ var noteOps = {
  * @param note must at least be a note from and index api call
  */
 function indexAddNote(mode, note){
+    
+    var $notes = $("#notes");
+    
     try {
         var date, prefix, shareds = [], html =  "";
+        
+        var thisclass = "noterow nocontent";
+        // unread
+        if (note.systemtags.indexOf("unread")>0)
+             thisclass += " unread";
 
+        // tab selected
+        if (extData.isTab && snEditor.note && snEditor.note.key == note.key) {
+            thisclass += " selectednote";
+        }
+        if (note.deleted == 1) {
+            thisclass += " noterowdeleted";
+        }
+        
         // assemble noterow html string
         if (mode!= "replace")
-            html = "<div class='noterow' id='" + note.key  + "' >";
+            html = "<div class='" + thisclass + "' id='" + note.key  + "' style='display:none'>";
         // #syncicon
         html+=          "<div id='" + note.key + "syncicon' class='syncicon statusicon' title='" + chrome.i18n.getMessage("syncnote_tooltip") + "' " + (note._syncNote?"":"style='display:none;'") + ">&nbsp;</div>";
         // #time abbr
@@ -993,11 +1022,11 @@ function indexAddNote(mode, note){
             // #shared
             if (note.systemtags.indexOf("shared") >= 0) {
 
-                $.each(note.tags, function (i,tag) {
-                    if (validateEmail(tag)) {
-                        shareds.push(tag);
+                for (var i=0;i<note.tags.length;i++) {
+                    if (validateEmail(note.tags[i])) {
+                        shareds.push(note.tags[i]);
                     }
-                });
+                }
                 if (shareds.length > 0)
                     html+=  "<div id='" + note.key + "shared' class='shared statusicon-clickable' title='" + chrome.i18n.getMessage("sharer_tooltip") + " " + shareds.join(", ") + "'>&nbsp;</div>";
                 else
@@ -1016,88 +1045,77 @@ function indexAddNote(mode, note){
 
         // insert the html string into document
         if (mode=="delteAndPrepend") {
-            $('div.noterow#' + note.key).remove();
-            $('#notes').prepend(html);
+            $notes.find('#' + note.key).remove();
+            $notes.prepend(html);
         } else if (mode=="append") {
-            $('#notes').append(html);
+            $notes.append(html);
         } else if (mode=="replace")
-            $('div.noterow#' + note.key).html(html);
+            $notes.find('#' + note.key).html(html);
 
         // get ui elements into variables
-        var $noterow = $('div.noterow#' + note.key);
+        var $noterow = $notes.find('#' + note.key);
     //    var $noteheading = $('div.noteheading#' + note.key + "heading");
-        var $notetime = $("abbr.notetime#" + note.key + "time");
-        var $notepin = $("div#" + note.key + "pin");
+        var $notetime = $notes.find("#" + note.key + "time");
+        var $notepin = $notes.find("#" + note.key + "pin");
     //    var $notesync = $("div#" + note.key + "syncicon");
 
-        if (localStorage.option_sortby == "createdate") {
-            $noterow.attr("sortkey",note.createdate);
-        } else if (localStorage.option_sortby == "modifydate") {
-            $noterow.attr("sortkey",note.modifydate);
-        } else
-            $noterow.attr("sortkey",note.content?note.content.trim().substring(0,30).toLowerCase():"");
+//        if (localStorage.option_sortby == "createdate") {
+//            $noterow.attr("sortkey",note.createdate);
+//        } else if (localStorage.option_sortby == "modifydate") {
+//            $noterow.attr("sortkey",note.modifydate);
+//        } else
+//            $noterow.attr("sortkey",note.content?note.content.trim().substring(0,30).toLowerCase():"");
 
-        $noterow.attr("pinned",note.systemtags.indexOf("pinned")>=0?"true":"false");
-        $noterow.attr("shared",note.systemtags.indexOf("shared")>=0?"true":"false");
+//        $noterow.attr("pinned",note.systemtags.indexOf("pinned")>=0?"true":"false");
+//        $noterow.attr("shared",note.systemtags.indexOf("shared")>=0?"true":"false");
 
         // bind timeago for time abbr
         $notetime.unbind();
         if (localStorage.option_showdate == "true")
             $notetime.timeago();
 
-        $noterow.attr('filledcontent',"false");
-
         // deleted note
         if (note.deleted == 1) {
             $noterow.attr("title", chrome.i18n.getMessage("click_to_undelete"));
-            return;
+            
+        } else {
+
+            $notepin.attr("title",chrome.i18n.getMessage("click_to_pinunpin"));
+
+            // bind pinned klick
+            $notepin.unbind();
+            $notepin.bind("click",{key: note.key, systemtags: note.systemtags},function(event) {
+                    var key = event.data.key;
+                    var systemtags = event.data.systemtags;
+
+                    event.stopPropagation();
+
+                    if ($(this).hasClass("pinned")) {
+                        note.systemtags.splice(systemtags.indexOf("pinned"),1);
+                    } else {
+                        note.systemtags.push("pinned");
+                    }
+                    chrome.extension.sendRequest({action:"update", key:key, systemtags:systemtags});
+                });
+
+            // bind published click
+            if (note.publishkey) {
+                $("#"+note.key+"published").unbind();
+                $("#"+note.key+"published").bind("click","https://simple-note.appspot.com/publish/"+note.publishkey,snHelpers.genericUrlOpenHandler);
+            }
+            // bind published click
+            if (note.systemtags.indexOf("shared") >= 0) {
+                $("#"+note.key+"shared").unbind();
+                $("#"+note.key+"shared").bind("click","https://simple-note.appspot.com/#note="+note.key,snHelpers.genericUrlOpenHandler);
+            }
         }
-
-        $notepin.attr("title",chrome.i18n.getMessage("click_to_pinunpin"));
-
-        // bind pinned klick
-        $("#"+note.key+"pin").unbind();
-        $("#"+note.key+"pin").bind("click",{key: note.key, systemtags: note.systemtags},function(event) {
-                var key = event.data.key;
-                var systemtags = event.data.systemtags;
-
-                event.stopPropagation();
-
-                if ($(this).hasClass("pinned")) {
-                    note.systemtags.splice(systemtags.indexOf("pinned"),1);
-                } else {
-                    note.systemtags.push("pinned");
-                }
-                chrome.extension.sendRequest({action:"update", key:key, systemtags:systemtags});
-            });
-        //$("#"+note.key+"pin").tipTip({defaultPosition:"top"});
-
-        // bind published click
-        if (note.publishkey) {
-            $("#"+note.key+"published").unbind();
-            $("#"+note.key+"published").bind("click","https://simple-note.appspot.com/publish/"+note.publishkey,snHelpers.genericUrlOpenHandler);
-            //$("#"+note.key+"published").tipTip({defaultPosition:"top"});
-        }
-        // bind published click
-        if (note.systemtags.indexOf("shared") >= 0) {
-            $("#"+note.key+"shared").unbind();
-            $("#"+note.key+"shared").bind("click","https://simple-note.appspot.com/#note="+note.key,snHelpers.genericUrlOpenHandler);
-            //$("#"+note.key+"shared").tipTip({defaultPosition:"top"});
-        }
-
-        // unread
-        if (note.systemtags.indexOf("unread")>0)
-             $noterow.addClass("unread");
-
-        // tab selected
-        if (extData.isTab && snEditor.note && snEditor.note.key == note.key) {
-            $noterow.addClass("selectednote");
-        }
+        
+        $noterow.show();
+        $noterow.css("height", (20 + localStorage.option_abstractlines*14) + "px")
     } catch (e) {
         exceptionCaught(e);
     }
-    // tooltips
-    //$("#" + note.key + "time").tipTip({defaultPosition:"top"});
+    // tooltips    
 }
 
 /*
@@ -1114,10 +1132,7 @@ function indexFillNote(elementOrNote) {
 
         // reflowing triggers scrolls
         if (elementOrNote.attr("requested") == "true")
-            return;
-
-        $('#' + key + "heading").append('<img id="' +key + 'loader" src="images/loader_small.gif"/>');
-        $('#' + key + "heading").attr("align","center");
+            return;        
 
         chrome.extension.sendRequest({action : "note", key :key}, indexFillNoteReqComplete);
 
@@ -1130,8 +1145,7 @@ function indexFillNoteReqComplete(note) {
         try {
             var $noterow = $('#' + note.key);
             // check new inview, might have changed due to reflow
-            $noterow.attr('filledcontent',"true");
-
+            $noterow.removeClass('nocontent');            
             var $noteheading = $('#' + note.key + "heading");
             var $noteabstract = $('#' + note.key + "abstract");
 
@@ -1139,9 +1153,6 @@ function indexFillNoteReqComplete(note) {
                 return ( line.trim().length > 0 && !line.match(extData.webnotereg))
                 });
 
-            // heading
-            $('#' + note.key + 'loader').remove();
-            $noteheading.removeAttr("align"); // from loader
             // set actual heading
             var headingtext = lines[0] != undefined?lines[0].trim():" ";
             var heading = htmlEncode(headingtext,100);
@@ -1155,11 +1166,6 @@ function indexFillNoteReqComplete(note) {
             $noteheading.html(heading); // dont need more than 100 chars
             if (headingtext.length > 25)
                 $noteheading.attr("title",headingtext);
-
-            // deleted note css style
-            if (note.deleted == 1) {
-                $noterow.addClass("noterowdeleted"); // for undelete image on hover
-            }
 
             // abstract
             var abstractlines;
@@ -1179,7 +1185,7 @@ function indexFillNoteReqComplete(note) {
                     if (extData.isTab && snEditor.note)
                         snEditor.saveCaretScroll();
 
-                    $("div.noterow").removeClass("selectednote");
+                    $("#notes div.noterow").removeClass("selectednote");
                     snEditor.setNote(event.data);
                 });
 
@@ -1202,12 +1208,13 @@ function indexFillNoteReqComplete(note) {
                 }
             }
 
+            $noterow.css("height","");
             snHelpers.checkInView();
-            if ($noterow.index()<=$(".selectednote").index())
+            if ($noterow.index()<=$("#notes div.selectednote").index())
                 snHelpers.scrollSelectedIntoView();
 
             //tooltip($("[title]",$noterow));
-
+            
         } catch (e) {
             exceptionCaught(e);
         }
@@ -1253,8 +1260,8 @@ function slideEditor(callback, duration) {
     snEditor.show();
 
     if (!extData.isTab) {
-        $('div#index').animate({left: extData.dimensions.focus.index_left + "px", right: extData.dimensions.focus.index_right + "px"}, {duration: duration, easing: extData.slideEasing});
-        $('div#note').animate({left: extData.dimensions.focus.note_left + "px"}, {duration: duration, easing: extData.slideEasing});
+        $('#index').animate({left: extData.dimensions.focus.index_left + "px", right: extData.dimensions.focus.index_right + "px"}, {duration: duration, easing: extData.slideEasing});
+        $('#note').animate({left: extData.dimensions.focus.note_left + "px"}, {duration: duration, easing: extData.slideEasing});
         $('body').animate({width : extData.dimensions.focus.body_width + "px"}, {duration: duration, easing: extData.slideEasing,
            complete: function() {
                 if (callback) callback();
@@ -1279,10 +1286,10 @@ function slideIndex(callback, duration) {
     snEditor.saveCaretScroll();
 
     $("#index").show();
-    $("#markdownpreview #info").hide();
+    $("#markdowninfo").hide();
     if (!extData.isTab) {
-        $('div#note').animate({left: extData.dimensions.def.note_left + "px"}, {duration:duration, easing: extData.slideEasing});
-        $('div#index').animate({left: extData.dimensions.def.index_left + "px", right: extData.dimensions.def.index_right + "px"}, {duration: duration, easing: extData.slideEasing});
+        $('#note').animate({left: extData.dimensions.def.note_left + "px"}, {duration:duration, easing: extData.slideEasing});
+        $('#index').animate({left: extData.dimensions.def.index_left + "px", right: extData.dimensions.def.index_right + "px"}, {duration: duration, easing: extData.slideEasing});
 
         $('body').animate({width : extData.dimensions.def.body_width + "px"}, {duration: duration, easing: extData.slideEasing,
             complete: function() {
@@ -1323,7 +1330,7 @@ function SNEditor() {
     $("#cmwrapper").css("height","");
     $("#cmiframe").attr("tabindex","2");
     $("#cmwrapper").append("<div id='markdownpreviewspacer'></div>");
-    $("#cmwrapper").append("<div id='markdownpreview'><span id='info'></span></div>");
+    $("#cmwrapper").append("<div id='markdownpreview'><span id='markdowninfo'></span></div>");
 
     this.dirty={content: false, tags: false, pinned: false};
 }
@@ -1390,7 +1397,7 @@ SNEditor.prototype.setFont = function() {
 SNEditor.prototype.getTags = function() {
     log("SNEditor.getTags")
 
-    var vals = $("#as-selections-tagsauto .as-selection-item").get().map(function(e) {return e.textContent.substr(1)});
+    var vals = $("#as-selections-tagsauto li.as-selection-item").get().map(function(e) {return e.textContent.substr(1)});
     var tags = vals.map(function(e) {return e.trim();}).filter(function(e) {return e != ""});
 
     return tags;
@@ -1462,8 +1469,8 @@ SNEditor.prototype.initialize = function() {
         });
 
         // add note pinned (dirty) event listener
-        $('div#note #pintoggle').unbind();
-        $('div#note #pintoggle').bind('click', function(event) {
+        $('#pintoggle').unbind();
+        $('#pintoggle').bind('click', function(event) {
 
             _gaq.push(['_trackEvent', 'popup', 'pintoggled']);
 
@@ -1478,8 +1485,8 @@ SNEditor.prototype.initialize = function() {
         });
 
         // add note markdown event listener
-        $('div#note #markdowntoggle').unbind();
-        $('div#note #markdowntoggle').bind('click', function(event) {
+        $('#markdowntoggle').unbind();
+        $('#markdowntoggle').bind('click', function(event) {
 
             _gaq.push(['_trackEvent', 'popup', 'markdowntoggled']);
 
@@ -1495,8 +1502,8 @@ SNEditor.prototype.initialize = function() {
         });
 
         // bind back button
-        $('div#note #backtoindex').unbind();
-        $('div#note #backtoindex').click(function(event) {
+        $('#backtoindex').unbind();
+        $('#backtoindex').click(function(event) {
             if (that.isNoteDirty())
                 that.saveNote();
 
@@ -1504,8 +1511,8 @@ SNEditor.prototype.initialize = function() {
         });
 
         // bind word wrap
-        $("div#note #wraptoggle").unbind();
-        $("div#note #wraptoggle").bind('click', function(event) {
+        $("#wraptoggle").unbind();
+        $("#wraptoggle").bind('click', function(event) {
 
             _gaq.push(['_trackEvent', 'popup', 'wordwraptoggled']);
 
@@ -1519,8 +1526,8 @@ SNEditor.prototype.initialize = function() {
         this.codeMirror.setTextWrapping(this.isWraptoggle());
 
         // bind preview toggle
-        $("div#note #previewtoggle").unbind();
-        $("div#note #previewtoggle").bind('click', function(event) {
+        $("#previewtoggle").unbind();
+        $("#previewtoggle").bind('click', function(event) {
 
             _gaq.push(['_trackEvent', 'popup', 'previewtoggled']);
 
@@ -1533,8 +1540,8 @@ SNEditor.prototype.initialize = function() {
         this.setPreviewPane();
 
         // bind UNDO button
-        $('div#note #revert').unbind();
-        $('div#note #revert').click(function(event) {
+        $('#revert').unbind();
+        $('#revert').click(function(event) {
             // reset content
             log("SNEditor.initialize:undo clicked");
 
@@ -1567,8 +1574,8 @@ SNEditor.prototype.initialize = function() {
         });
 
         // bind DELETE/CANCEL
-        $('div#note #trash').unbind();
-        $('div#note #trash').click(function() {
+        $('#trash').unbind();
+        $('#trash').click(function() {
             _gaq.push(['_trackEvent', 'popup', 'trashclicked']);
             that.trashNote();
             slideIndex();
@@ -1576,17 +1583,17 @@ SNEditor.prototype.initialize = function() {
 
         // bind PRINT
         if (extData.isTab) {
-            $('div#note #print').unbind();
-            $('div#note #print').click(function() {
+            $('#print').unbind();
+            $('#print').click(function() {
                 _gaq.push(['_trackEvent', 'popup', 'printclicked']);
                 that.print();
             });
-            $('div#note #print').show();
+            $('#print').show();
         }
 
         // bind link clicks
-        $(".sn-link",$editbox).die();
-        $(".sn-link",$editbox).live("click",function(event) {
+        $("span.sn-link",$editbox).die();
+        $("span.sn-link",$editbox).live("click",function(event) {
            if (event.ctrlKey) {
                _gaq.push(['_trackEvent', 'popup', 'linkclicked_unhot']);
                return;
@@ -1597,8 +1604,8 @@ SNEditor.prototype.initialize = function() {
         });
 
         // bind checkboxes
-        $(".checkbox",$editbox).die();
-        $(".checkbox",$editbox).live("click",function(event) {
+        $("span.checkbox",$editbox).die();
+        $("span.checkbox",$editbox).live("click",function(event) {
            var lineH = that.codeMirror.cursorLine();
            var line = that.codeMirror.lineContent(lineH);
            var m = line.replace(/\s*\-\s*(.*)/,"* $1");
@@ -1610,8 +1617,8 @@ SNEditor.prototype.initialize = function() {
            that.saveTimerRearm();
         });
 
-        $(".checkbox-checked",$editbox).die();
-        $(".checkbox-checked",$editbox).live("click",function(event) {
+        $("span.checkbox-checked",$editbox).die();
+        $("span.checkbox-checked",$editbox).live("click",function(event) {
            var lineH = that.codeMirror.cursorLine();
            var line = that.codeMirror.lineContent(lineH);
            var m = line.replace(/\s*\*\s*(.*)/,"- $1");
@@ -1625,8 +1632,8 @@ SNEditor.prototype.initialize = function() {
 
         });
 
-        $(".sn-link-note",$editbox).die();
-        $(".sn-link-note",$editbox).live("click",function(event) {
+        $("span.sn-link-note",$editbox).die();
+        $("span.sn-link-note",$editbox).live("click",function(event) {
             if (event.ctrlKey) {
                _gaq.push(['_trackEvent', 'popup', 'linkclicked_unhot']);
                return;
@@ -1682,16 +1689,15 @@ SNEditor.prototype.initialize = function() {
         });
 
         if (!extData.isTab)
-            $('div#note #popout').click(function(event) {
+            $('#popout').click(function(event) {
                 _gaq.push(['_trackEvent', 'popup', 'popoutclicked']);
                 chrome.tabs.create({url:chrome.extension.getURL("/popup.html?tab=true"), pinned:localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true"}, function(tab) {
                     extData.background.SimplenoteBG.setOpenTab(tab);
                 });
             });
         else {
-            $('div#note #popout').hide();
-            $('div#note #backtoindex').unbind();
-            $('div#note #backtoindex').click(function(event) {
+            $('#popout').hide();
+            $('#backtoindex').unbind().click(function(event) {
                 window.close();
             });
         }
@@ -1817,7 +1823,7 @@ SNEditor.prototype.hideIfNotInIndex = function (key) {
 
     log("SNEditor.hideIfNotInIndex")
 
-    var keys = $("div#index div.noterow").map(function(i,e) {
+    var keys = $("#index div.noterow").map(function(i,e) {
         if ($(this).attr("deleteanimation") == "true")
             return "";
         else
@@ -1831,10 +1837,10 @@ SNEditor.prototype.hideIfNotInIndex = function (key) {
                 if (note && note.deleted != 1) {
                     //that.setNote(note,{focus:false});
                 } else
-                    $("div#note").hide();
+                    $("#note").hide();
                 });
         } else
-            $("div#note").hide();        
+            $("#note").hide();        
     } else if (this.note)
         this.show();    
 
@@ -1844,7 +1850,7 @@ SNEditor.prototype.hideIfNotInIndex = function (key) {
 
 //  ---------------------------------------
 SNEditor.prototype.show = function() {
-    $("div#note").show();
+    $("#note").show();
 }
 
 SNEditor.prototype.focus = function() {
@@ -1922,14 +1928,14 @@ SNEditor.prototype.setNote = function(note, options) {
     if (note.key == "") { // new note
 
         $("#trash").hide();
-        $('div#note #popout').hide();
+        $('#popout').hide();
 
     } else { // existing note
 
         $("#trash").show();
 
         if (!extData.isTab) {
-            $('div#note #popout').show();
+            $('#popout').show();
         }
 
         localStorage.lastopennote_key = note.key;
@@ -1995,9 +2001,9 @@ SNEditor.prototype.setNote = function(note, options) {
     }, options.duration);
 
     if (extData.isTab) {
-        $("div.noterow").removeClass("selectednote");
+        $("#notes div.noterow").removeClass("selectednote");
         if (note.key && note.key != "") {
-            $("div.noterow#"+ note.key).addClass("selectednote");
+            $("#"+ note.key).addClass("selectednote");
             chrome.extension.sendRequest({action:"cm_updatelastopen"});
             snHelpers.scrollSelectedIntoView();
         }
@@ -2148,8 +2154,8 @@ SNEditor.prototype.setupTags = function() {
     $("#as-selections-tagsauto").remove();
     $("#as-results-tagsauto").remove();
     $("#tags").remove();
-    $('div#note').prepend('<input type="text" id="tags" spellcheck="false" tabindex="0"/>');
-    $('div#note input#tags').autoSuggest(function(callback) {
+    $('#note').prepend('<input type="text" id="tags" spellcheck="false" tabindex="0"/>');
+    $('#tags').autoSuggest(function(callback) {
                 chrome.extension.sendRequest({action:"tags",options: {sort:"frequency",predef:false}}, function(taginfos) {
                         taginfos = taginfos.map(function(e) {return {value: e.tag};}).filter(function(e) {return extData.builtinTags.indexOf(e.value.toLowerCase()) < 0});
                         log("SNEditor.setupTags:request complete, numtags=" + taginfos.length);
@@ -2242,39 +2248,39 @@ SNEditor.prototype._saveTimerExecute = function() {
 
 SNEditor.prototype.setPintoggle = function(to) {
     if (to) {
-        $('div#note #pintoggle').addClass("pinned");
-        $('div#note #pintoggle').removeClass("unpinned");
+        $('#pintoggle').addClass("pinned");
+        $('#pintoggle').removeClass("unpinned");
     } else {
-        $('div#note #pintoggle').addClass("unpinned");
-        $('div#note #pintoggle').removeClass("pinned");
+        $('#pintoggle').addClass("unpinned");
+        $('#pintoggle').removeClass("pinned");
     }
 }
 
 SNEditor.prototype.isPintoggle = function() {
-    return $('div#note #pintoggle').hasClass("pinned");
+    return $('#pintoggle').hasClass("pinned");
 }
 
 SNEditor.prototype.setWraptoggle = function(to) {
     if (to) {
-        $('div#note #wraptoggle').addClass("wrap_on");
-        $('div#note #wraptoggle').removeClass("wrap_off");
+        $('#wraptoggle').addClass("wrap_on");
+        $('#wraptoggle').removeClass("wrap_off");
     } else {
-        $('div#note #wraptoggle').addClass("wrap_off");
-        $('div#note #wraptoggle').removeClass("wrap_on");
+        $('#wraptoggle').addClass("wrap_off");
+        $('#wraptoggle').removeClass("wrap_on");
     }
 }
 
 SNEditor.prototype.isWraptoggle = function() {
-    return $('div#note #wraptoggle').hasClass("wrap_on");
+    return $('#wraptoggle').hasClass("wrap_on");
 }
 
 SNEditor.prototype.setPreviewtoggle = function(to) {
     if (to) {
-        $('div#note #previewtoggle').addClass("preview_on");
-        $('div#note #previewtoggle').removeClass("preview_off");
+        $('#previewtoggle').addClass("preview_on");
+        $('#previewtoggle').removeClass("preview_off");
     } else {
-        $('div#note #previewtoggle').addClass("preview_off");
-        $('div#note #previewtoggle').removeClass("preview_on");
+        $('#previewtoggle').addClass("preview_off");
+        $('#previewtoggle').removeClass("preview_on");
     }
     this.setPreviewPane();
 
@@ -2283,7 +2289,7 @@ SNEditor.prototype.setPreviewtoggle = function(to) {
 }
 
 SNEditor.prototype.isPreviewtoggle = function() {
-    return $('div#note #previewtoggle').hasClass("preview_on");
+    return $('#previewtoggle').hasClass("preview_on");
 }
 
 SNEditor.prototype.setPreviewPane = function() {
@@ -2358,8 +2364,8 @@ SNEditor.prototype.updateMarkdown = function(input,nocache) {
             this.setMarkdownHtml(snEditor.markupCache[key].html, server, serverTitle)
         } else {
             //$("#markdownpreview").addClass("loading");            
-            $("#markdownpreview #info").css("right", (cssprop("#note","right") + 35) + "px");
-            $("#markdownpreview #info").addClass("loading");
+            $("#markdowninfo").css("right", (cssprop("#note","right") + 35) + "px");
+            $("#markdowninfo").addClass("loading");
                 
             $.ajax({
                     url: "https://simple-note.appspot.com/markdown/" + key + "/" + version,
@@ -2380,7 +2386,7 @@ SNEditor.prototype.updateMarkdown = function(input,nocache) {
                             snEditor.setMarkdownHtml(converter.makeHtml(snEditor.codeMirror.getCode()), local + " (" + textStatus + ")", "Server error, using local preview.");
                         }
                         //$("#markdownpreview").removeClass("loading");
-                        $("#markdownpreview #info").removeClass("loading");
+                        $("#markdowninfo").removeClass("loading");
                     }
             });
         }
@@ -2389,18 +2395,18 @@ SNEditor.prototype.updateMarkdown = function(input,nocache) {
 }
 
 SNEditor.prototype.clearMarkdown = function() {
-    $("#markdownpreview").html("<span id='info'></span>");
+    $("#markdownpreview").html("<span id='markdowninfo'></span>");
 }
 
 SNEditor.prototype.setMarkdownHtml = function(html, info, moreinfo) {
-    $("#markdownpreview").html("<span id='info'>" + info + "</span>" + html);
+    $("#markdownpreview").html("<span id='markdowninfo'>" + info + "</span>" + html);
     if (moreinfo) {
-        $("#markdownpreview #info").attr("title",moreinfo);
-        //tooltip("#markdownpreview #info",{position: "bottom left"});
+        $("#markdowninfo").attr("title",moreinfo);
+        //tooltip("#markdownpreview #markdowninfo",{position: "bottom left"});
     }
 
-    $("#markdownpreview #info").css("right", (cssprop("#note","right") + 35) + "px");
-    $("#markdownpreview #info").click(function(event) {
+    $("#markdowninfo").css("right", (cssprop("#note","right") + 35) + "px");
+    $("#markdowninfo").click(function(event) {
         snEditor.updateMarkdown(undefined,true);
         event.stopPropagation();
     });
@@ -2422,12 +2428,12 @@ SNEditor.prototype.print = function() {
 
 SNEditor.prototype.showRevert = function() {
     if (!extData.isTab)
-        $('div#note #revert').show();    
+        $('#revert').show();    
     this.adjustTagsWidth();
 }
 
 SNEditor.prototype.hideRevert = function() {
-    $('div#note #revert').hide();    
+    $('#revert').hide();    
     this.adjustTagsWidth();
 }
 
@@ -2477,10 +2483,9 @@ var snHelpers = {
     //  ---------------------------------------
     // from inview.js
     checkInView: function() {
-        var elements = $('div.noterow').get(), elementsLength, i = 0, viewportSize, viewportOffset;
-        elements = elements.filter(function (e) {
-            return $(e).attr('filledcontent') != "true";
-        });
+        //tick();
+        var elements = $('#notes div.nocontent').get(), elementsLength, i = 0, viewportSize, viewportOffset;
+        
         elementsLength = elements.length;
 
         if (elementsLength) {
@@ -2500,8 +2505,7 @@ var snHelpers = {
                     height: $element.height(),
                     width: $element.width()
                 },
-                elementOffset = $element.offset(),
-                loaded        = $element.attr('filledcontent') == "true",
+                elementOffset = $element.offset(),                
                 inview        = false;
 
                 //log("checkInView:elementSize=[" + elementSize.height + "," + elementSize.width + "], elementOffset=[" + elementOffset.left + "," + elementOffset.top + "]");
@@ -2514,15 +2518,16 @@ var snHelpers = {
     //            console.log(elementOffset);
     //            console.log(elementOffset);
 
-                if (!loaded && inview) {
+                if (inview) {
                     indexFillNote($element);
                 }
             }
         }
+        //tock("checkinview");
     },
 
     scrollSelectedIntoView: function() {
-        var $noterow = $(".selectednote");
+        var $noterow = $("#notes div.selectednote");
         if ($noterow.length == 1 && noteRowInIndex($noterow.attr("id"))) {
             var $notes = $("#notes");
 
@@ -2562,3 +2567,5 @@ var snHelpers = {
 }
 
 $(document).ready(readyListener);
+//$(window).load(readyListener);
+$(window).resize(snHelpers.checkInView)

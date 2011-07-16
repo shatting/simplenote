@@ -168,7 +168,7 @@ var SimplenoteAPI2 = {
                 // this.credentials full valid set now
                  
                 // set the browser user
-                that.setUser(credentials.email,credentials.password, callbacks.success);
+                that.setUser(callbacks.success);
                                 
             },
             error: function (jqXHR, textStatus, errorThrown) {
@@ -656,11 +656,11 @@ var SimplenoteAPI2 = {
         });
     },
 
-    setUser : function(email,password,callback) {
+    setUser : function(callback) {
         jQuery.ajax({
             url: "https://simple-note.appspot.com/user",            
             type: "POST",            
-            data:  "email=" + email + "&password=" + password + "&remember=1",
+            data:  "email=" + SimplenoteAPI2.credentials.email + "&password=" + SimplenoteAPI2.credentials.password + "&remember=1",
             dataType: "text",
             complete: function(jqXHR, textStatus) {
                 if (callback)

@@ -270,7 +270,7 @@ div.noterow {
     cursor:pointer;
     
     box-shadow: 4px 4px 3px -4px rgba(0, 0, 0, 0.2);
-    -webkit-transition: all 70ms ease-in-out;
+    ''-webkit-transition: all 7000ms ease-in-out;
     
     margin-right: 4px;
     margin-bottom: 4px;
@@ -284,10 +284,17 @@ div.noterow {
     border-left: 4px solid #aaa;
     ''border-radius: 0px 3px 3px 0px;    
     margin-left: -3px;
+    opacity: 1;
 }
 
 .tab div.noterow {
     margin-left: 4px;
+}
+
+div.nocontent {
+    opacity: 0.5;
+    -webkit-transition: opacity 7s ease-in-out;
+    background: url(/images/loader_small.gif) no-repeat 50%;
 }
 
 div.noterow:hover {
@@ -612,7 +619,7 @@ div.statusicon-clickable:hover {
 #markdownpreview hr { display: block; border-width: 0; height: 3px; background: #aaa; background: rgba(0, 0, 0, 0.3); margin-bottom: 17px; }
 #markdownpreview pre { white-space: pre-wrap; }
 
-#markdownpreview #info {    
+#markdownpreview #markdowninfo {    
     color: #CACFDE;
     position: fixed;
     right: 30px;
@@ -624,14 +631,14 @@ div.statusicon-clickable:hover {
     border-radius: 2px;
 }
 
-#markdownpreview #info:hover, #markdownpreview.loading #info {    
+#markdownpreview #markdowninfo:hover, #markdownpreview.loading #markdowninfo {    
     color: #9a9c9f;
     background: -webkit-linear-gradient(right, white 70%, #F6F6F9 90%, #EDEDF3);
     -webkit-box-shadow: 1px 1px 3px #EDEDF3;    
     border: 1px solid #EDEDF3;
 }
 
-#markdownpreview #info.loading {
+#markdownpreview #markdowninfo.loading {
     background: transparent url(/images/loader_small.gif) no-repeat 50%;
     width: 18px;
 }

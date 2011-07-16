@@ -21,10 +21,9 @@ SimplenoteSM = {
     },
     
     tokenAcquired: function(credentials) {
+        localStorage.credentialsValid = "true";
         localStorage.token = credentials.token;
         localStorage.tokenTime = credentials.tokenTime.getTime();
-
-        localStorage.credentialsValid = "true";
     },
 
     setLogin: function(email,password) {
