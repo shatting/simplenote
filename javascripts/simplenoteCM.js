@@ -412,7 +412,10 @@ var SimplenoteCM = {
 
         SimplenoteDB.getNote(key,function(oldnote) {
             if (oldnote.content) {
-                oldnote.content += "\n" + string + "\n";
+                if (oldnote.systemtags.indexOf("markdown") > -1) {
+                    oldnote.content += "  \n" + string + "\n";
+                } else
+                    oldnote.content += "\n" + string + "\n";
                 oldnote.source = "cm";
                 SimplenoteDB.updateNote(oldnote, function(note) {
                     try {

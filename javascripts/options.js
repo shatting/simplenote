@@ -38,6 +38,7 @@ $(document).ready(function() {
   setCBval("#alwaystab", localStorage.option_alwaystab != undefined && localStorage.option_alwaystab == "true");
   setCBval("#pinnedtab", localStorage.option_pinnedtab == undefined || localStorage.option_pinnedtab == "true");
   setCBval("#showdate", localStorage.option_showdate == undefined || localStorage.option_showdate == "true");
+  setCBval("#gpuaccel", localStorage.option_gpuaccel != undefined && localStorage.option_gpuaccel == "true");
     
   if (localStorage.option_sortby != undefined)
       $("#sort").val(localStorage.option_sortby);
@@ -120,6 +121,7 @@ function save_options() {
   if ((localStorage.option_opentonote == "true") != getCBval('#opentonote'))
     localStorage.lastopennote_open = "false";
   localStorage.option_opentonote = getCBval('#opentonote');
+  localStorage.option_gpuaccel = getCBval('#gpuaccel');
 
   // editor caret
   // clear carets

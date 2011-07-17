@@ -6,7 +6,7 @@ body {
   width: 0px;
   overflow: hidden;  
   display: none;
-  background: white;
+  background: white;  
 }
 
 
@@ -33,7 +33,7 @@ div#index {
     bottom: 0px;
     left: 0px;
     right: 0px;
-    border-radius: 0 4px 4px 0;
+    border-radius: 0 4px 4px 0;    
 }
 
 .tab div#index {
@@ -82,6 +82,7 @@ div#note {
     background: -webkit-linear-gradient(right, #EDEDF3, #F6F6F9 10%, white 70%, #F6F6F9 90%, #EDEDF3);
     box-shadow: 8px 10px 8px -5px rgba(0, 0, 0, 0.8);
     border-radius: 12px 2px 0px 2px;
+    
 }
 
 /* index div children */
@@ -476,6 +477,7 @@ div.statusicon-clickable:hover {
     top: 32px;
     right: 2px;
     left: 5px;
+    box-shadow: 2px 2px 7px -1px rgba(0, 0, 0, 0.5);
 }
 
 .tab #cmwrapper {     
@@ -496,13 +498,15 @@ div.statusicon-clickable:hover {
 }
 
 #cmiframe { 
-    padding-left: 2px;
-    padding-bottom: 2px;
     border-radius: 12px 0 0 0;
+/*    padding-left: 2px;    
+    padding-top: 4px;*/
+    padding-bottom: 2px;
     padding-right: 2px;
-    padding-top: 4px;
     position: absolute;
-    -webkit-box-sizing: border-box;    
+    -webkit-box-sizing: border-box;
+    box-shadow: rgba(128, 128, 128, 0.2) 10px 0px 20px -10px inset, rgba(128, 128, 128, 0.2) 0px 5px 20px -10px inset;
+    
 }
 
 #markdownpreviewspacer.max {
@@ -532,7 +536,7 @@ div.statusicon-clickable:hover {
     position:absolute;
     width: 12px;
     top: -1px;
-    bottom: -1px;    
+    bottom: 0px;    
     background: #F7F8FF url(/images/fade_out.png) no-repeat 50% 50%;
     left: 50%;
     cursor:pointer;
@@ -552,8 +556,8 @@ div.statusicon-clickable:hover {
 }
 
 #markdownpreview.max {
-    left:0%;
-    border-top-left-radius: 12px 12px;
+    left:0%;    
+    border-top-left-radius: 6px 12px;
 }
 
 #markdownpreview {
@@ -571,11 +575,14 @@ div.statusicon-clickable:hover {
     cursor:default;
     background-color: white;    
     margin-right: 2px;
+    box-shadow: rgba(128, 128, 128, 0.2) 10px 0px 20px -10px inset, rgba(128, 128, 128, 0.2) 0px 5px 20px -10px inset;
 }
 
 
 
-#markdownpreview { font-family: "Helvetica Neue", Arial, Helvetica, Arimo, FreeSans, "Nimbus Sans", "Phetsarath OT", Malayalam, "Gargi_1.7", sans-serif; color: #333333; text-rendering: optimizeLegibility;}
+#markdownpreview { font-family: "Helvetica Neue", Arial, Helvetica, Arimo, FreeSans, "Nimbus Sans", "Phetsarath OT", Malayalam, "Gargi_1.7", sans-serif; color: #333333; 
+                   ''text-rendering: optimizeLegibility;
+}
 
 #markdownpreview h1 { font-family: "museo-sans-1","museo-sans-2", Helvetica Neue, Helvetica, Arial, sans-serif; font-weight: 100; font-size: 36px; text-shadow: 0 1px 0 #fff; line-height: 1.2; color: #9191A1; margin: 0 0 1em 0; padding: 0 23% 2em 0; text-transform: lowercase; border-bottom: 1px solid rgba(0, 0, 0, 0.1); background: url(/img/header.png) no-repeat right top; }
 
@@ -795,12 +802,23 @@ div#note .toolbarbutton {
     background: url(/images/grabhandle.png) no-repeat 50%;*/
     border: 1px solid #bbb;
     border-top: 1px solid #999;
-    border-bottom: 1px solid #999;
+    border-bottom: 1px solid #999;  
     -webkit-border-radius: 6px;   
     background: -webkit-linear-gradient(left, white 70%, #F6F6F9 90%, #EDEDF3);
     box-shadow: 1px 1px 2px #EDEDF3;    
     
 }
+
+.scroller-vertical {
+    background: url(/images/middlemousescroll_vertical.png) no-repeat;
+    position: fixed;
+    z-index: 1000;
+    opacity: 0.5;    
+    width : 48px;
+    height : 48px;
+    display : none;
+}
+
 
 /*::-webkit-scrollbar {
 width:15px;

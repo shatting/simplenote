@@ -1,6 +1,6 @@
 html {
     overflow: auto;
-    border-radius: 12px 0px 0px 0px;
+    border-radius: 12px 0px 0px 0px;    
 }
 
 .editbox {
@@ -9,7 +9,7 @@ html {
   font-family: monospace;
   font-size: 14pt;
   color: #111;
-  line-height: 1.5;
+  line-height: 1.5;  
 }
 
 .editbox p {
@@ -97,12 +97,6 @@ input[type=text], input[type=checkbox], select {
   cursor:pointer;
 }
 
-.editbox::-webkit-scrollbar {
-    width: 14px;
-    height: 14px;    
-    background: transparent;    
-}
-
 /*.editbox::-webkit-scrollbar-track-piece  {
     background: transparent;    
 }
@@ -129,6 +123,8 @@ input[type=text], input[type=checkbox], select {
 
 ::-webkit-scrollbar-track-piece  {    
     background-color: transparent;    
+    margin-top: 4px;
+    margin-left: 4px;
 }
 
 ::-webkit-scrollbar-thumb {                
@@ -137,7 +133,7 @@ input[type=text], input[type=checkbox], select {
     border-bottom: 1px solid #999;
     -webkit-border-radius: 6px;   
     background: -webkit-linear-gradient(left, white 70%, #F6F6F9 90%, #EDEDF3);
-    ''box-shadow: 1px 1px 2px #EDEDF3;    
+    ''box-shadow: 1px 1px 2px #EDEDF3;     
 }
     
 ::-webkit-scrollbar-thumb:horizontal {            
@@ -149,6 +145,10 @@ input[type=text], input[type=checkbox], select {
     background: url(/images/grabhandle.png) no-repeat 50%;
 
     background: -webkit-linear-gradient(left, white 70%, #F6F6F9 90%, #EDEDF3);
+}
+
+.editbox::-webkit-scrollbar-corner {
+    background: transparent;
 }
 
 @font-face {

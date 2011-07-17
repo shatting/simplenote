@@ -36,6 +36,7 @@ var CodeMirror = (function(){
     path: "",
     parserfile: [],
     basefiles: ["util.js", "stringstream.js", "select.js", "undo.js", "editor.js", "tokenize.js"],
+    addscripts: [],
     iframeClass: null,
     passDelay: 200,
     passTime: 50,
@@ -102,13 +103,14 @@ var CodeMirror = (function(){
 
     var sp = " spellcheck=\"" + (options.disableSpellcheck ? "false" : "true") + "\"";
     var html = ["<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\"><html" + sp + "><head>"];
+    var html = ["<!DOCTYPE HTML><html" + sp + "><head>"]; //TODO sheck if this change is ok
     // Hack to work around a bunch of IE8-specific problems.
     html.push("<meta http-equiv=\"X-UA-Compatible\" content=\"IE=EmulateIE7\"/>");
     var queryStr = options.noScriptCaching ? "?nocache=" + new Date().getTime().toString(16) : "";
     forEach(options.stylesheet, function(file) {
       html.push("<link rel=\"stylesheet\" type=\"text/css\" href=\"" + file + queryStr + "\"/>");
     });
-    forEach(options.basefiles.concat(options.parserfile), function(file) {
+    forEach(options.basefiles.concat(options.parserfile).concat(options.addscripts), function(file) {
       if (!/^https?:/.test(file) && !/^\//.test(file)) file = options.path + file;
       html.push("<script type=\"text/javascript\" src=\"" + file + queryStr + "\"><" + "/script>");
     });
