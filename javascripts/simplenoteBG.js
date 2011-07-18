@@ -1,9 +1,13 @@
+loaded = false;
+
 var SimplenoteBG = {
+    
+    extData : extData,
     
     tab : undefined,
     
     log : function(s) {
-        if (extData && extData.debugFlags.BG)
+        if (this.extData && this.extData.debugFlags.BG)
             logGeneral(s,"SimplenoteBG");
     },
     
@@ -367,8 +371,10 @@ $(document).ready(function() {
     
     SimplenoteBG.startup();
     
+    loaded = true;
+    
     setTimeout(function() {
-        SimplenoteLS._maintain();
+        SimplenoteLS._maintain();        
         SimplenoteBG.backgroundSync(true, function() {
             SimplenoteCM.populate();
         } );

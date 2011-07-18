@@ -17,8 +17,7 @@ body.message {
 
 
 body.tab {
-    background-image: url(/images/texture.png);  
-    background: #4F4F59;
+    background: #4F4F59 url(/images/texture.png);    
 }
 
 /* main divs */
@@ -302,8 +301,16 @@ div.noterow:hover {
     ''background: #4F92EB -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #5CA0FF), color-stop(100%, #3C7ECF));
     background: #4F92EB;
     border-color: #5CA0FF;
+    ''background: -webkit-linear-gradient(top, white 70%, #F6F6F9 90%, #EDEDF3);
+    background: white;
+    border-color: #aaa;    
     border-bottom-color: #999;    
     border-left-color: #aaa;
+}
+div.noterow:active {
+    background: white;
+    box-shadow: 2px 2px 4px white;
+    background: -webkit-linear-gradient(top, white 70%, #F6F6F9 90%, #EDEDF3);
 }
 
 div.highlightednote {    
@@ -312,10 +319,10 @@ div.highlightednote {
     border-left-color: #AAA;
     text-shadow: 0.9px 0.9px 2px white;
 }
-
+/*
 div.noterow:hover div.noteheading { color: #fff}
 div.noterow:hover div.abstract { color: #ccc}
-div.noterow:hover abbr.notetime { color: #ddd}
+div.noterow:hover abbr.notetime { color: #ddd}*/
 
 div.unread {
     background: #aaeeaa;
@@ -391,27 +398,27 @@ div.statusicon, div.statusicon-clickable {
     background-repeat: no-repeat;
 }
 
-div.noterow:hover div.pinned    { background-image: url(/images/pinned_inv.png);   }
-div.noterow:hover div.pinned:hover { background-image: url(/images/pinned.png);   }
+/*div.noterow:hover div.pinned    { background-image: url(/images/pinned_inv.png);   }*/
+div.noterow div.pinned:hover { background-image: url(/images/pinned_inv.png);   }
 div.noterow div.pinned    { background-image: url(/images/pinned.png);   }
 
-div.noterow:hover div.unpinned    { background-image: url(/images/unpinned_inv.png);   }
-div.noterow:hover div.unpinned:hover { background-image: url(/images/unpinned.png);   }
+/*div.noterow:hover div.unpinned    { background-image: url(/images/unpinned_inv.png);   }*/
+div.noterow div.unpinned:hover { background-image: url(/images/unpinned_inv.png);   }
 div.noterow div.unpinned  { background-image: url(/images/unpinned.png); }
 
-div.noterow:hover div.published { background-image: url(/images/published_inv.png);  }
-div.noterow:hover div.published:hover { background-image: url(/images/published.png);  }
+/*div.noterow:hover div.published { background-image: url(/images/published_inv.png);  }*/
+div.noterow div.published:hover { background-image: url(/images/published_inv.png);  }
 div.published           { background-image: url(/images/published.png);}
 
-div.noterow:hover div.shared { background-image: url(/images/shared_inv.png);  }
-div.noterow:hover div.shared:hover { background-image: url(/images/shared.png);  }
+/*div.noterow:hover div.shared { background-image: url(/images/shared_inv.png);  }*/
+div.noterow div.shared:hover { background-image: url(/images/shared_inv.png);  }
 div.shared              { background-image: url(/images/shared.png);   }
 
-div.noterow:hover div.webnoteicon { background-image: url(/images/webnote_inv.png);  }
-div.noterow:hover div.webnoteicon:hover { background-image: url(/images/webnote.png);  }
+/*div.noterow:hover div.webnoteicon { background-image: url(/images/webnote_inv.png);  }*/
+div.noterow div.webnoteicon:hover { background-image: url(/images/webnote_inv.png);  }
 div.webnoteicon { background-image: url(/images/webnote.png);  }
 
-div.noterow:hover div.syncicon { background-image: url(/images/sync_16_inv.png);  }
+/*div.noterow:hover div.syncicon { background-image: url(/images/sync_16_inv.png);  }*/
 div.syncicon {
     background: transparent url(/images/sync_16.png) no-repeat;
     width: 16px;

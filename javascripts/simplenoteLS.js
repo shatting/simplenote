@@ -10,9 +10,12 @@ var SimplenoteLS = {
     keysKey         : "_keys",
     syncKeysKey     : "_syncKeys",
     indexTimeKey    : "_indexTime",
+    storage         : localStorage,
+    extData         : extData,
+    chrome          : chrome,
 
     log : function(s) {
-        if (extData.debugFlags.LS)
+        if (this.extData.debugFlags.LS)
             logGeneral(s,"SimplenoteLS");
     },
 
@@ -225,7 +228,7 @@ var SimplenoteLS = {
                         add &= note.systemtags.indexOf("shared") >= 0;
                         break;
                     case "#webnote#":
-                        add &= note.content != undefined && note.content.match(extData.webnotereg) != undefined;
+                        add &= note.content != undefined && note.content.match(this.extData.webnotereg) != undefined;
                         break;
                     case "#markdown#":
                         add &= note.systemtags.indexOf("markdown") >= 0;
@@ -367,8 +370,9 @@ var SimplenoteLS = {
         var thisnote;
         var thistags;
         var thissystemtags;
-        var thistagfound;
-        $.each(keys,function(keyindex,key) {
+        var thistagfound, key, thistag;
+        for (var k=0; k<keys.length;k++) {
+            key = keys[k];
             thisnote = SimplenoteLS._getVal(key);
             if (thisnote.deleted != 1) {
                 predeftags[0].count++;
@@ -377,7 +381,8 @@ var SimplenoteLS = {
                 if (thistags==undefined || thistags.length == 0) // undefined for syncCreated notes
                     predeftags[1].count++;
                 else {
-                    $.each(thistags, function(thistagindex,thistag) {
+                    for (var j=0; j<thistags.length; j++) {
+                        thistag = thistags[j];
                         thistagfound = false
                         for (var i = 0; i<tags.length; i++) {
                             if (tags[i].tag == thistag) {
@@ -388,7 +393,7 @@ var SimplenoteLS = {
                         }
                         if (!thistagfound)
                             tags.push({tag:thistag,count:1});
-                    });
+                    }
                 }
                 if (thissystemtags != undefined && thissystemtags.indexOf("shared") >= 0)
                     predeftags[4].count++;
@@ -396,14 +401,14 @@ var SimplenoteLS = {
                     predeftags[3].count++;
                 if (thissystemtags != undefined && thissystemtags.indexOf("markdown") >= 0)
                     predeftags[6].count++;
-                if (thisnote.content != undefined && thisnote.content.match(extData.webnotereg)) {
+                if (thisnote.content != undefined && thisnote.content.match(this.extData.webnotereg)) {
                     predeftags[5].count++;
                     predeftags[0].count--;
                 }
             } else {
                 predeftags[2].count++;
             }
-        });
+        }
 
         if (options.sort == "frequency")
             tags.sort(function(t1,t2) {var diff = - t1.count + t2.count;return diff!=0?diff:(t2.tag<t1.tag?1:-1);});
@@ -441,7 +446,7 @@ var SimplenoteLS = {
             uiEvent("synclistchanged", {added:key});            
         }
         if (keys.length > 0)
-            chrome.browserAction.setIcon({path: "/images/icon_24_sync.png"});
+            this.chrome.browserAction.setIcon({path: "/images/icon_24_sync.png"});
     },
 
     removeFromSyncList : function(key) {
@@ -457,7 +462,7 @@ var SimplenoteLS = {
             uiEvent("synclistchanged", {removed:key});            
         }
         if (keys.length == 0)
-            chrome.browserAction.setIcon({path: "/images/icon_24.png"});        
+            this.chrome.browserAction.setIcon({path: "/images/icon_24.png"});        
     },
 
 //    sanitizeSyncList : function() {
@@ -532,7 +537,7 @@ var SimplenoteLS = {
     },
 
     _getVal: function(key) {
-        var raw = localStorage[key];
+        var raw = this.storage[key];
         if (raw != undefined)
             return JSON.parse(raw);
         else
@@ -540,11 +545,11 @@ var SimplenoteLS = {
     },
 
     _setVal: function(key,val) {
-        localStorage[key] = JSON.stringify(val);
+        this.storage[key] = JSON.stringify(val);
     },
 
     _delVal: function(key) {
-        delete localStorage[key];
+        delete this.storage[key];
     }
 
 }

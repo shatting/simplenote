@@ -228,9 +228,11 @@ var SimplenoteCM = {
     append_pinned_root: null,
 
     cascading: true,
-
+    
+    extData : extData,
+    
     log : function(s) {
-        if (extData.debugFlags.CM)
+        if (this.extData && this.extData.debugFlags.CM)
             logGeneral(s,"SimplenoteCM");
     },
 

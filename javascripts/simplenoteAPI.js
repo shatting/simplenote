@@ -24,9 +24,10 @@ $.ajaxSetup({
 });
 
 var SimplenoteAPI2 = {
-
+    extData : extData,
+    
     log : function(s) {
-        if (extData.debugFlags.API)
+        if (this.extData && this.extData.debugFlags.API)
             logGeneral(s,"SimplenoteAPI2");
     },
 

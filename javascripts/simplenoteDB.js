@@ -5,10 +5,11 @@
 var SimplenoteDB = {
     _isOffline : false,
 
+    extData : extData,
     //cypherReg : /^\-\-SYNCPADAES\-\-\n(.*)\n\-\-SYNCPADAES\-\-$/m,
 
     log : function(s) {
-        if (extData.debugFlags.DB)
+        if (this.extData && this.extData.debugFlags.DB)
             logGeneral(s,"SimplenoteDB");
     },
 
