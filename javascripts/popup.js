@@ -64,10 +64,11 @@ $.extend(extData,{
 
 //  ---------------------------------------
 
-var snEditor;
+var snEditor, snIndex;
 
 //  ---------------------------------------
 function log(s) {
+          
     if (extData.debugFlags.popup)
         logGeneral(s,"popup.js",console);
     if (extData.debugFlags.popup2BG)
@@ -151,7 +152,8 @@ function uiEventListener(eventData, sender, sendResponse) {
                 $("#sync").html(chrome.i18n.getMessage("sync_in_progress"));
             } else if (eventData.status == "done") {
                 if (eventData.changes.hadchanges) {
-                    fillTags(true);
+                    snIndex.requestTags();
+                    snIndex.requestNotes();
                     $("#sync").html(chrome.i18n.getMessage("sync_done_had_changes"));
                 } else {
                     $("#sync").html(chrome.i18n.getMessage("sync_done"));
@@ -162,52 +164,65 @@ function uiEventListener(eventData, sender, sendResponse) {
 
         } else if (eventName == "noteadded") {
             log("EventListener:" + eventName);
-            fillTags(true);
+            snIndex.requestTags();
+            snIndex.requestNotes();
     //        if (!eventData.note.key.match(/created/))
     //             SNEditor.setNote(eventData.note);
         } else if (eventName == "noteupdated") {
-            log("EventListener:noteupdated, source=" + eventData.source + ", changed=[" + eventData.changes.changed.join(",") + "], syncNote=" + (eventData.newnote._syncNote?"true":"false"));
-            var pinnedNowOn = eventData.changes.changed.indexOf("systemtags")>=0 && eventData.oldnote.systemtags.indexOf("pinned")<0 && eventData.newnote.systemtags.indexOf("pinned")>=0;
-            var pinnedNowOff = eventData.changes.changed.indexOf("systemtags")>=0 && eventData.oldnote.systemtags.indexOf("pinned")>=0 && eventData.newnote.systemtags.indexOf("pinned")<0;
+            var newNote = new Note(eventData.newnote);
+            var oldNote = new Note(eventData.oldnote);
+            
+            log("EventListener:noteupdated, source=" + eventData.source + ", changed=[" + eventData.changes.changed.join(",") + "], syncNote=" + newNote.isSyncNote());
+            
+            var delta = newNote.deltaTo(oldNote);
+            
+            console.log(JSON.stringify(delta))
+            
+            var pinnedNowOn = !oldNote.isPinned() && newNote.isPinned();
+            var pinnedNowOff = oldNote.isPinned() && !newNote.isPinned();
+            var pinnedChanged = pinnedNowOn || pinnedNowOff;
+            
             var modifyChanged = eventData.changes.changed.indexOf("modifydate")>=0;
-            var deleted = eventData.changes.changed.indexOf("deleted")>=0 && eventData.oldnote.deleted == 0 && eventData.newnote.deleted == 1;
-            var undeleted = eventData.changes.changed.indexOf("deleted")>=0 && eventData.oldnote.deleted == 1 && eventData.newnote.deleted == 0;
-            var markdownchanged = eventData.changes.changed.indexOf("systemtags")>=0 && (eventData.oldnote.systemtags.indexOf("markdown") >= 0 != eventData.newnote.systemtags.indexOf("markdown") >= 0);
+            var deleted = !oldNote.isDeleted() && newNote.isDeleted();
+            var undeleted = oldNote.isDeleted() && !newNote.isDeleted();
+            var markdownchanged = oldNote.isMarkdown() != newNote.isMarkdown();
 
             var needTagsRefresh = false;
             var needIndexRefresh = false;
             var needPinnedRefresh = false;
             var needLastOpenRefresh = false;
-//            console.log(eventData.oldnote)
-//            console.log(eventData.newnote)
+
             if (deleted) {
                 log("EventListener:noteupdated: deleted");
-                if (snHelpers.noteRowInIndex(eventData.newnote.key)) {
-                    $('#' + eventData.newnote.key).attr("deleteanimation","true");
-                    $('#' + eventData.newnote.key).hide("slow", function() {$(this).remove();});
+                
+                if (newNote.$isIndexNote()) {
+                    newNote.$remove();                    
                 }
-                if (localStorage.lastopennote_key == eventData.newnote.key) {
-                    delete localStorage.lastopennote_key
+                if (newNote.isLastOpen()) {
+                    snLastOpen.noteDeleted(newNote.key)
                     needLastOpenRefresh = true;
                 }
-                if (eventData.newnote.systemtags.indexOf("pinned")>=0)
+                if (pinnedChanged)
                     needPinnedRefresh = true;
 
                 needTagsRefresh = true;
+                
             } else if (undeleted) {
                 log("EventListener:noteupdated: undeleted");
-                if (snHelpers.noteRowInIndex(eventData.newnote.key)) {
-                    $('#' + eventData.newnote.key).attr("deleteanimation","true");
-                    $('#' + eventData.newnote.key).hide("slow", function() {$(this).remove();});
-                }
-                if (eventData.newnote.systemtags.indexOf("pinned")>=0)
+                
+                if (newNote.$isIndexNote())
+                    newNote.$remove();                
+                
+                if (pinnedChanged)
                     needPinnedRefresh = true;
 
                 needTagsRefresh = true;
-            } else if (eventData.changes.changed.indexOf("tags")>=0) {
+                
+            } else if (!newNote.tagsSame(oldNote)) {
                 log("EventListener:noteupdated:tags");
+                needTagsRefresh = true;
                 needIndexRefresh = true;
-            } else if (modifyChanged || pinnedNowOn || pinnedNowOff) {
+            } else if (modifyChanged || pinnedChanged) {
                 if (modifyChanged)
                     log("EventListener:noteupdated:modifychanged");
                 else if (pinnedNowOn)
@@ -215,7 +230,7 @@ function uiEventListener(eventData, sender, sendResponse) {
                 else if (pinnedNowOff)
                     log("EventListener:noteupdated:pinnednowoff");
 
-                if (($("#" + eventData.newnote.key).index()>0 || pinnedNowOff) && localStorage.option_sortby != "createdate") {
+                if ((newNote.$isIndexNote() || pinnedNowOff) && localStorage.option_sortby != "createdate") {
                     needIndexRefresh = true;
                 } else {
                     indexAddNote("replace", eventData.newnote);
@@ -224,37 +239,25 @@ function uiEventListener(eventData, sender, sendResponse) {
                 }
             }
 
-            if (pinnedNowOn) {
-                $('#' + eventData.newnote.key + "pin").removeClass("unpinned");
-                $('#' + eventData.newnote.key + "pin").addClass("pinned");
-                needPinnedRefresh = true;
-            } else if (pinnedNowOff) {
-                $('#' + eventData.newnote.key + "pin").removeClass("pinned");
-                $('#' + eventData.newnote.key + "pin").addClass("unpinned");
-                needPinnedRefresh = true;
-            }
+            newNote.$update();
 
-            if (extData.isTab && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key) {
-                if (pinnedNowOn || pinnedNowOff)
-                    snEditor.setPintoggle(eventData.newnote.systemtags.indexOf("pinned")>=0);
-
-                if (markdownchanged) {
-                    snEditor.setMarkdownToggle(eventData.newnote.systemtags.indexOf("markdown") >= 0);
-                    snEditor.updateMarkdown(eventData.newnote);
+            if (extData.isTab && newNote.$isEditorNote()) {
+                if (markdownchanged) {                    
+                    snEditor.updateMarkdown(newNote);
                     needTagsRefresh = true;
                 } else if (eventData.changes.changed.indexOf("version") >= 0 && eventData.newnote.systemtags.indexOf("markdown")>=0) {
-                    snEditor.updateMarkdown(eventData.newnote);
+                    snEditor.updateMarkdown(newNote);
                 }
             }
-            if (eventData.source != "local" && snEditor && snEditor.note && snEditor.note.key == eventData.newnote.key) {
-                    var contentChanged = eventData.changes.added.indexOf("content")>=0;
-                    var tagsChanged = eventData.changes.changed.indexOf("tags")>=0;
-                    if ( (pinnedNowOn || pinnedNowOff || contentChanged || tagsChanged) && eventData.newnote.content != undefined)
+            if (eventData.source != "local" &&  newNote.$isEditorNote()) {
+                    var contentChanged = eventData.changes.added.indexOf("content")>=0;                                            
+                    if (contentChanged && newNote.has)
                         snEditor.setNote(eventData.newnote);
             }
-
-            if (needIndexRefresh || needTagsRefresh)
-                fillTags(needIndexRefresh);
+            if (needTagsRefresh)
+                snIndex.requestTags();
+            if (needIndexRefresh)                
+                snIndex.requestNotes();                                    
             if (needPinnedRefresh)
                 snEditor.needCMRefresh("pinned");
             if (needLastOpenRefresh)
@@ -263,23 +266,18 @@ function uiEventListener(eventData, sender, sendResponse) {
         } else if (eventName == "offlinechanged") {
             log("EventListener:offline:" + eventData.status);
             if (eventData.status)
-                $("#offline").html("offline mode");
+                $("#offline").html("offline");
             else
                 $("#offline").html("");
-        } else if (eventName == "synclistchanged") {
-            if (eventData.added) {
-                $('#' + eventData.added + "syncicon").show();
-                log("EventListener:synclistchanged, added=" + eventData.added);
-            }
-            if (eventData.removed) {
-                $('#' + eventData.removed + "syncicon").hide();
-                log("EventListener:synclistchanged, removed=" + eventData.removed);
-            }
-            //log("length=" + $('div#' + eventData.removed + "heading").length)
+        } else if (eventName == "synclistchanged") {            
+            log("igonring synclistchanged")
         } else if (eventName == "notedeleted") {
             log("EventListener:notedeleted:" + eventData.key);
             $('#' + eventData.key).remove();
-            fillTags(false);
+            snIndex.requestTags();
+            
+            snLastOpen.noteDeleted(eventData.key);            
+            
             snEditor.hideIfNotInIndex(eventData.key);
         } else {
             log("EventListener:");
@@ -289,8 +287,9 @@ function uiEventListener(eventData, sender, sendResponse) {
         exceptionCaught(e);
     }
 }
+
 // shortcuts
-var shorcuts = function (event) {
+var shortcutListener = function (event) {
 
     if ($("#q").is(":focus")) {
         switch(event.keyCode) {
@@ -391,6 +390,8 @@ var shorcuts = function (event) {
 //  ---------------------------------------
 function readyListener() {
 
+    tick("ready");
+    
     extData.times.ready = (new Date())-start;
 
     try {
@@ -441,218 +442,67 @@ function readyListener() {
             }
 
         } else {
-                extData.times.startsetup = (new Date())-start;
+            extData.times.startsetup = (new Date())-start;           
 
-                var directlyShowNote = localStorage.lastopennote_key != undefined && localStorage.lastopennote_key != "" && localStorage.lastopennote_open == "true" && localStorage.option_opentonote == "true";
+            //$("body").show();
 
-                //$("body").show();
+            if (localStorage.option_gpuaccel == "true")
+                $("#notes").css("-webkit-transform","translateZ(0)");
 
-                if (localStorage.option_gpuaccel == "true")
-                    $("#notes").css("-webkit-transform","translateZ(0)");
-                
-                if (!extData.isTab) {
-                    $("#print").hide();
+            if (!extData.isTab) {
+                $("#print").hide();
 
-                    if (!directlyShowNote) {
-                        $("body").css("width", extData.dimensions.def.body_width + "px");
-                        $("body").css("height", extData.dimensions.def.body_height + "px");
-                    } else {
-                        $("body").css("width", extData.dimensions.focus.body_width + "px");
-                        $("body").css("height", extData.dimensions.focus.body_height + "px");
-
-                        $("#revert").hide();
-                        $("#trash").show();
-                        $('#popout').show();
-
-                        $("#note").css("left", extData.dimensions.focus.note_left + "px");
-
-                        $("#note").show();
-
-                    }
+                if (!snLastOpen.isOpen()) {
+                    $("body").css("width", extData.dimensions.def.body_width + "px");
+                    $("body").css("height", extData.dimensions.def.body_height + "px");
                 } else {
+                    $("body").css("width", extData.dimensions.focus.body_width + "px");
+                    $("body").css("height", extData.dimensions.focus.body_height + "px");
+
+                    $("#revert").hide();
+                    $("#trash").show();
+                    $('#popout').show();
+
+                    $("#note").css("left", extData.dimensions.focus.note_left + "px");
+
                     $("#note").show();
-                    $("#index").show();
-                    $("body").addClass("tab");
+
                 }
+            } else {
+                $("#note").show();
+                $("#index").show();
+                $("body").addClass("tab");
+            }
 
-                popupi18n();                                
+            popupi18n();                                                
 
-                if (directlyShowNote) {
-                    snEditor = new SNEditor(function() {
-                        log("(ready): sending request for open to note");
-                        chrome.extension.sendRequest({action:"note", key:localStorage.lastopennote_key},
-                            function(note) {                            
-                                if (note)
-                                    snEditor.setNote(note,{
-                                        duration:0,
-                                        focus: true
-                                    });                            
-                            });
-                    });
-                } else {
-                    snEditor = new SNEditor();
-                }
-                
-                
-                fillTags(true);
-                
-                $("body").show();
-                
-                // bind ADD button
-                $('#add').click(function(event) {
-
-                    if (event.shiftKey) {
-                        _gaq.push(['_trackEvent', 'popup', 'addwebnoteclicked']);
-
-                        if (extData.isTab) {
-                            return;
-                        }
-                        chrome.extension.sendRequest({
-                            action: "webnotes",
-                            request: {
-                                action: "new"
-                            }
-                        }, function(ok) {
-                            if (ok)
-                                extData.popup.close();
-                        });
-                    } else {
-                        _gaq.push(['_trackEvent', 'popup', 'addclicked']);
-                        snEditor.setNote();
-                    }
-
+            if (snLastOpen.isOpen()) {
+                extData.currentView = "editor";
+                snEditor = new SNEditor(function() {                    
+                    log("(ready): sending request for open to note");
+                    snEditor.setNote(SimplenoteLS.getNote(snLastOpen.key()),{
+                                    duration:0,
+                                    focus: true
+                                });
+//                    NoteFactory(snLastOpen.key(), function(note) {                            
+//                            if (note)
+//                                snEditor.setNote(note,{
+//                                    duration:0,
+//                                    focus: true
+//                                });                            
+//                        });
                 });
+            } else {
+                snEditor = new SNEditor();
+            }
 
-                // bind ADD WEBNOTE button
-                $('#add_webnote').click(function(event) {
+            snIndex = new SNIndex(); 
+            snIndex.snNotelist.request(true);
 
-                    if (extData.isTab)
-                        return;
-
-                    _gaq.push(['_trackEvent', 'popup', 'addwebnoteclicked']);
-
-                    chrome.extension.sendRequest({
-                        action: "webnotes",
-                        request: {
-                            action: "new"
-                        }
-                    }, function(ok) {
-                        if (ok)
-                            extData.popup.close();
-                    });
-                });
-
-                // bind SYNC div
-                $("#sync").click( function() {
-                    _gaq.push(['_trackEvent', 'popup', 'syncclicked']);
-                    chrome.extension.sendRequest({
-                        action: "sync",
-                        fullsync:true
-                    });
-                })
-                $("#snlink").click( function(event) {
-                    _gaq.push(['_trackEvent', 'popup', 'snlinkclicked']);
-                    openURLinTab("https://simple-note.appspot.com/",event.ctrlKey || event.altKey);
-                })
-
-                // bind SEARCH field
-                $('#q').bind("keyup", function(event) {
-                    if (event.which == 13) {
-                        snEditor.setNote({
-                            content:$(this).val() + "\n",
-                            tags:[],
-                            systemtags:[],
-                            key:""
-                        },{
-                            isnewnote: true,
-                            focus: true
-                        });
-                    } else if (event.which == 27) {
-                        //event.stopPropagation();
-                    } else
-                        fillIndex();
-
-                }).focus(function() {
-                    log("focus")
-                    $("#toolbar").children().not(this).not("#q_clear").hide();
-                    $(this).addClass("max").animate({width:"350px"},{duration: 200, complete: function() {
-                            $("#q_clear").show();
-                        }});
-                }).blur(function(event) {
-//                            if (clearclicked) {
-//                                clearclicked = false;
-//                                return
-//                            }
-                    log("blur")
-                    $(this).removeClass("max");
-                    $(this).animate({width:"197px"},{duration: 200, complete: function() {
-                            $("#toolbar").children().not(this).not("#q_clear").show();
-                            if ($("#q").val().trim() == "")
-                                $("#q_clear").hide();
-
-                        }});
-                });
-//                        var clearclicked = false;
-                $("#q_clear").bind("mousedown",function(event) {
-//                            clearclicked = true;
-                    log("mousedown")
-                    $('#q').val("");
-                    $("#q_clear").hide();
-                    $("#q").blur()
-                    event.stopPropagation();
-                    $("body").focus();
-                    fillIndex();
-
-                });
-
-                $.timeago.settings.strings= {
-                    prefixAgo: null,
-                    prefixFromNow: null,
-                    suffixAgo: "",
-                    suffixFromNow: "from now",
-                    seconds:    chrome.i18n.getMessage("seconds"),
-                    minute:     chrome.i18n.getMessage("minute"),
-                    minutes:    chrome.i18n.getMessage("minutes"),
-                    hour:       chrome.i18n.getMessage("hour"),
-                    hours:      chrome.i18n.getMessage("hours"),
-                    day:        chrome.i18n.getMessage("day"),
-                    days:       chrome.i18n.getMessage("days"),
-                    month:      chrome.i18n.getMessage("month"),
-                    months:     chrome.i18n.getMessage("months"),
-                    year:       chrome.i18n.getMessage("year"),
-                    years:      chrome.i18n.getMessage("years"),
-                    numbers: []
-                }
-
+            $("body").show();                
 //                if (localStorage.option_color_index)
 //                    $("body").css("background-color",localStorage.option_color_index);
 
-                //$("div#note").resizable();
-                if (extData.isTab) {
-                    //$("div#note").css("left","421px");
-                    //$("#container").splitter();
-
-//                    $("div#slider").show();
-//                    $("div#note").css("left","421px");
-//
-//                    $("div#note").resizable({handles: {"w": $("div#slider").get(0)},
-//                            resize: function(event, ui)
-//                            {
-//                                var left = ui.position.left;
-//                                $('div#index').css("width", (left-24)+"px");
-//                                $('div#slider').css("left", (left-22)+"px");
-//                            },
-//                            stop: function(event, ui)
-//                            {
-//                                var left = ui.position.left;
-//                                $('div#index').css("width", (left-24)+"px");
-//                                $('div#slider').css("left", (left-22)+"px");
-//                            }
-//                    });
-//                    console.log(cssprop("div#note","left"))
-//                    console.log($("div#index").css("right"))
-                    //$("div#index").css("width",cssprop("div#note","left")-4)
-                }
 
             setTimeout(function() {
                 log("(ready, delayed): requesting full sync.");
@@ -667,7 +517,7 @@ function readyListener() {
             },1000);
 
             extData.times.endsetup = (new Date())-start;
-            
+
             _gaq.push(['_trackEvent', 'popup', 'ready', 'startsetup', extData.times.startsetup]);
             _gaq.push(['_trackEvent', 'popup', 'ready', 'endsetup', extData.times.endsetup]);
             //tooltip("[title]");
@@ -675,204 +525,166 @@ function readyListener() {
         }
 
         scheduleGA();
+                
 
     } catch (e) {
         exceptionCaught(e);
     }
+    
+    function popupi18n() {
+        $("#q").attr("placeholder",chrome.i18n.getMessage("search_placeholder"));
+        $("#q").attr("title",chrome.i18n.getMessage("search_tooltip","alt-q"));
+        $("#notetags").attr("title",chrome.i18n.getMessage("tagselect_tooltip","alt-n"));
+        $("#add").attr("title",chrome.i18n.getMessage("add_tooltip","alt-a"));
+        $("#add_webnote").attr("title",chrome.i18n.getMessage("add_webnote_tooltip"));
+        $("#snlink").attr("title",chrome.i18n.getMessage("snlink_tooltip"));
+        $("#sync").attr("title",chrome.i18n.getMessage("sync_tooltip"));
+        $("#pintoggle").attr("title",chrome.i18n.getMessage("pin_tooltip","alt-p"));
+        $("#popout").attr("title",chrome.i18n.getMessage("popout_tooltip","alt-o"));
+        $("#trash").attr("title",chrome.i18n.getMessage("trash_tooltip"," (ctrl-alt-d)"));
+        $("#wraptoggle").attr("title",chrome.i18n.getMessage("wordwrap_tooltip","alt-w"));
+        $("#revert").attr("title",chrome.i18n.getMessage("revert_tooltip","alt-r"));
+        $("#print").attr("title",chrome.i18n.getMessage("print_tooltip"));
+
+        if (extData.isTab)
+            $('#backtoindex').attr("title",chrome.i18n.getMessage("close_tab_tooltip",["alt-b","alt-x"]));
+        else
+            $("#backtoindex").attr("title",chrome.i18n.getMessage("backtoindex_tooltip",["alt-b","alt-x"]));
+    
+    }
+    
+    function displayStatusMessage(message) {
+        $('#toolbar').hide();
+        $('#statusbar').hide();
+        $('#note').show();
+        $("body").show();
+        $("#index").show();
+
+        $('#notes').html(message);
+        $('body').addClass("message");
+
+        $('a').attr('target', '_blank').click(function() {window.close();});
+    }
 }
 
-function popupi18n() {
-    $("#q").attr("placeholder",chrome.i18n.getMessage("search_placeholder"));
-    $("#q").attr("title",chrome.i18n.getMessage("search_tooltip","alt-q"));
-    $("#notetags").attr("title",chrome.i18n.getMessage("tagselect_tooltip","alt-n"));
-    $("#add").attr("title",chrome.i18n.getMessage("add_tooltip","alt-a"));
-    $("#add_webnote").attr("title",chrome.i18n.getMessage("add_webnote_tooltip"));
-    $("#snlink").attr("title",chrome.i18n.getMessage("snlink_tooltip"));
-    $("#sync").attr("title",chrome.i18n.getMessage("sync_tooltip"));
-    $("#pintoggle").attr("title",chrome.i18n.getMessage("pin_tooltip","alt-p"));
-    $("#popout").attr("title",chrome.i18n.getMessage("popout_tooltip","alt-o"));
-    $("#trash").attr("title",chrome.i18n.getMessage("trash_tooltip"," (ctrl-alt-d)"));
-    $("#wraptoggle").attr("title",chrome.i18n.getMessage("wordwrap_tooltip","alt-w"));
-    $("#revert").attr("title",chrome.i18n.getMessage("revert_tooltip","alt-r"));
-    $("#print").attr("title",chrome.i18n.getMessage("print_tooltip"));
+function SNIndex() {
+    this.$ui = $("#index");
+    
+    this.snToolbar = new SNToolbar(this);                    
+    this.snNotelist = new SNNotelist(this);    
+    
+    // bind SYNC div
+    $("#sync").click( function() {
+        _gaq.push(['_trackEvent', 'popup', 'syncclicked']);
+        chrome.extension.sendRequest({
+            action: "sync",
+            fullsync:true
+        });
+    })
+    $("#snlink").click( function(event) {
+        _gaq.push(['_trackEvent', 'popup', 'snlinkclicked']);
+        openURLinTab("https://simple-note.appspot.com/",event.ctrlKey || event.altKey);
+    })    
+}
 
-    if (extData.isTab)
-        $('#backtoindex').attr("title",chrome.i18n.getMessage("close_tab_tooltip",["alt-b","alt-x"]));
-    else
-        $("#backtoindex").attr("title",chrome.i18n.getMessage("backtoindex_tooltip",["alt-b","alt-x"]));
+SNIndex.prototype.requestNotes = function() {
+    this.snNotelist.request();
+}
+
+SNIndex.prototype.requestTags = function() {
+    this.snToolbar.snTagselect.request();
+}
+
+function SNToolbar(snIndex) {
+    this.$ui = $("#toolbar");
+    
+    this.snSearchfield = new SNSearchfield(snIndex);
+    this.snTagselect = new SNTagselect(snIndex);
+    this.snIndex = snIndex;
+    
+    // bind ADD button
+    $('#add').click(function() {
+        _gaq.push(['_trackEvent', 'popup', 'addclicked']);
+        snEditor.setNote();
+    });
+
+    // bind ADD WEBNOTE button
+    $('#add_webnote').click(function() {
+
+        _gaq.push(['_trackEvent', 'popup', 'addwebnoteclicked']);
+
+        chrome.extension.sendRequest({
+            action: "webnotes",
+            request: {
+                action: "new"
+            }
+        }, function(ok) {
+            if (ok)
+                extData.popup.close();
+        });
+    });
     
 }
 
-/*
- * Displays a status message.
- * @param message The HTML content of the status message to display. All links
- *     in the message are be adjusted to open in a new window and close the
- *     popup.
- */
-function displayStatusMessage(message) {
-    $('#toolbar').hide();
-    $('#statusbar').hide();
-    $('#note').show();
-    $("body").show();
-    $("#index").show();
-
-    $('#note').html(message);
-    $('body').addClass("message");
-
-    $('a').attr('target', '_blank').click(function() {window.close();});
+SNToolbar.prototype.setHeight = function(to) {
+        
+    this.$ui.animate({height: to + "px"});
+    this.snIndex.snNotelist.$ui.animate({top: to + 6 + "px"}); 
+    
 }
 
-/*
- * Fills the Tags dropdown with all tags from the DB.
- *
- * @param callFillIndex boolean, call fillIndex() after tags are filled or not
- */
-function fillTags(callFillIndex) {
-    log("fillTags");
-
-    chrome.extension.sendRequest({action:"tags"}, function(taginfos) {
-        try {
-            var $notetags = $("#notetags");
-            // fill dropdown
-            $notetags.unbind();
-            var stillhavetag = false;
-            var oldval = $notetags.val();            
-            var style, html = "", taginfo;                        
-
-            for (var i=0; i<taginfos.length; i++) {
-                taginfo = taginfos[i];
-                style = taginfo.count > 0?"":'style="color:#aaa"';                
-                if (taginfo.tag == "#all#")
-                    html += '<option value="" ' + style +  '>' + chrome.i18n.getMessage("tags_all") + ' [' + taginfo.count + ']</option>';
-                else if (taginfo.tag == "#notag#")
-                    html += '<option value="#notag#" ' + style +  '>' + chrome.i18n.getMessage("tags_untagged") + ' [' + taginfo.count + ']</option>';
-                else if (taginfo.tag == "#trash#")
-                    html += '<option value="#trash#" ' + style +  '>' + chrome.i18n.getMessage("tags_deleted") + ' [' + taginfo.count + ']</option>';
-                else if (taginfo.tag == "#published#")
-                    html += '<option value="#published#" ' + style +  '>' + chrome.i18n.getMessage("tags_published") + ' [' + taginfo.count + ']</option>';
-                else if (taginfo.tag == "#shared#")
-                    html += '<option value="#shared#" ' + style +  '>' + chrome.i18n.getMessage("tags_shared") + ' [' + taginfo.count + ']</option>';
-                else if (taginfo.tag == "#webnote#")
-                    html += '<option value="#webnote#" ' + style +  '>' + chrome.i18n.getMessage("tags_webnote") + ' [' + taginfo.count + ']</option>';
-                else if (taginfo.tag == "#markdown#")
-                    html += '<option value="#markdown#" ' + style +  '>' + chrome.i18n.getMessage("tags_markdown") + ' [' + taginfo.count + ']</option>';
-                else if (extData.builtinTags.indexOf(taginfo.tag.toLowerCase()) < 0) {
-                    html += '<option value="' + taginfo.tag + '" ' + style +  '>' + taginfo.tag + " [" + taginfo.count + "] </option>";
-                }
-                if (oldval == taginfo.tag)
-                    stillhavetag = true;
-            }
-            if (!stillhavetag) {
-                oldval = "#all#";
-            }
-            log("fillTags done");
-           // add handler
-            $notetags.html(html);
-            $notetags.val(oldval);
-            $notetags.change(function(event) {
-                log("#notetags:changed: calling fillIndex");
-                fillIndex();
+function SNSearchfield(snIndex) {
+    
+    this.$ui = $("#q");
+    this.initialwidth = this.$ui.css("width");
+    this.snIndex = snIndex;
+    
+    var that = this;
+        
+    
+    // bind SEARCH field
+    this.$ui.bind("keyup", function(event) {
+        if (event.which == 13) {
+            snEditor.setNote({
+                content:$(this).val() + "\n",
+                tags:[],
+                systemtags:[],
+                key:""
+            },{
+                isnewnote: true,
+                focus: true
             });
+        } else if (event.which == 27) {
+            //event.stopPropagation();
+        } else
+            that.snIndex.snNotelist.request();
 
-            if (callFillIndex)
-                fillIndex();
-        } catch (e) {
-            exceptionCaught(e);
-        }
+    }).focus(function() {
+        log("#q focus")
+        //$("#toolbar").children().not(this).not("#q_clear").hide();
+        $(this).addClass("max").animate({width:"300px"},{duration: 200, complete: function() {
+                $("#q_clear").show();
+            }});
+    }).blur(function(event) {
+        log("blur")
+        $(this).removeClass("max");
+        $(this).animate({width:that.initialwidth},{duration: 200, complete: function() {
+                $("#toolbar").children().not(this).not("#q_clear").show();
+                if (that.$ui.val().trim() == "")
+                    $("#q_clear").hide();
+
+            }});
     });
-}
-/*
- * Fills the index pane with noterows.
- */
-function fillIndex() {
-    try {
-        var req =               {action : "getnotes", deleted : 0};
-        req     = mergeobj(req, {tag : $("#notetags").val()});
-        req     = mergeobj(req, {contentquery : $('#q').val()});
-        req     = mergeobj(req, {sort:localStorage.option_sortby, sortdirection:localStorage.option_sortbydirection});
-        if ((localStorage.option_hidewebnotes == undefined || localStorage.option_hidewebnotes == "true") && (req.tag == "" || req.tag == "#all#"))
-            req     = mergeobj(req, {notregex: extData.webnoteregstr});
 
-        log("fillIndex: " + JSON.stringify(req));
-
-//        if ($("#q").val() != "") {
-//            $("#q_clear").show();
-//        } else
-//            $("#q_clear").hide();
-
-        $("#index").show();
-
-        var maxFill = $('#q').val()==""?15:1000; // shows nicer if not prefilled
-
-        chrome.extension.sendRequest(req, function(notes) {
-            try {
-                log("fillIndex(async):request complete, building index");
-                var note, $notes = $('#notes');
-
-                $notes.empty();
-                //$notes.hide();
-                $notes.unbind("scroll");
-                
-                if (notes.length > 0) {
-                    tick();
-                    for(var i = 0; i < notes.length; i ++ ) {
-                        note = notes[i];
-                        indexAddNote("append",note);                        
-                        if (i<maxFill && note.content != undefined)
-                            indexFillNote(note);
-                    }
-                    tock("notes");
-                    $notes.find("div.noterow").contextMenu(noteRowCMfn, {
-                                                                  theme:'gloss',
-                                                                  offsetX: 0,
-                                                                  offsetY: 0,
-                                                                  direction:'down',
-                                                                  showSpeed: 10,
-                                                                  onBeforeShow:function() {
-                                                                      $(this.target).addClass("highlightednote");
-                                                                  },
-                                                                  hideSpeed:10,
-                                                                  onBeforeHide:function() {                                                                      
-                                                                      $(this.target).removeClass("highlightednote");
-                                                                  },
-                                                                  otherBodies: extData.isTab && snEditor?snEditor.$CMbody():null,
-                                                                  scrollRemove: "div#notes"
-                                                          });
-                    // bind timeago for time abbr                    
-                    if (localStorage.option_showdate == "true")
-                        $("#index abbr.notetime").timeago();
-                    
-                    $notes.show();
-                    snHelpers.checkInView();
-                } else
-                    $notes.html("<div id='nonotes'>" + chrome.i18n.getMessage("no_notes_to_show") + "</div>");
-
-                $notes.scrollTop(0);
-                $notes.scroll(snHelpers.checkInView);
-
-                snEditor.hideIfNotInIndex();
-
-                extData.times.endfillindex= (new Date())-start;
-                
-                if (!extData.sentTimeBeacon) {
-                    log("fillIndex(async):sending time beacon");
-                     _gaq.push(['_trackEvent', 'popup', 'ready', 'endfillindex',extData.times.endfillindex]);
-                     extData.sentTimeBeacon = true;
-                }
-                
-                snHelpers.printTimes();
-
-                log("fillIndex(async):done");
-
-
-            } catch (e) {
-                exceptionCaught(e);
-            }
-
-        });
-    } catch (e) {
-        exceptionCaught(e);
-    }
+    $("#q_clear").bind("mousedown",function(event) {
+        log("q_clear mousedown")
+        that.$ui.val("");
+        $("#q_clear").hide();
+        that.$ui.blur()
+        event.stopPropagation();
+        $("body").focus();
+        that.snIndex.snNotelist.request();
+    });
 }
 
 function tooltip(sel,opts) {
@@ -891,377 +703,617 @@ function tooltip(sel,opts) {
     $(sel).tooltip(opts).dynamic({bottom: {direction: 'down', bounce: true}});
 }
 
-function noteRowCMfn(contextmenu) {
+function SNTagselect(snIndex) {
+    this.$ui = $("#notetags");
+    this.snIndex = snIndex;
+    // tags stuff
+    this.indextag = "#all#";
+    this.taginfos = [];
+    
+    //this.request();
+    this.request(true);
+        
+}
 
-    var notename = $("#" + $(contextmenu.target).attr("id") + "heading").text();
-    var istrash = $(contextmenu.target).hasClass("noterowdeleted");
+SNTagselect.prototype.setTag = function(to) {
+    this.indextag = to;
+    this.$ui.val(to);
+}
 
-    var i = {};
-    if (!istrash) {
-        i[chrome.i18n.getMessage("trash_tooltip","")] = {
-            onclick: function() {
-                _gaq.push(['_trackEvent', 'popup', 'cm', 'trash']);
-                noteOps.trashNote($(this).attr("id"));
-            },
-            icon: "/images/trash.png"
-        };
-        var j = {};
-        j[chrome.i18n.getMessage("finally_delete")] = {
-            onclick: function() {
-                _gaq.push(['_trackEvent', 'popup', 'cm', 'finally_delete']);
-                if (confirm("Permanently delete note '" + notename + "'?"))
-                    chrome.extension.sendRequest({action : "update", key : $(this).attr("id"), deleted: 1},
-                        function(note) {
-                            chrome.extension.sendRequest({action : "delete", key : note.key},
-                                function() {
-                                    snEditor.hideIfNotInIndex(key);
-                                    snHelpers.checkInView();
-                                });
-                        });
-            },
-            icon: "/images/delete.gif"
-        };
-        return [i,j];
-    } else {
-        i[chrome.i18n.getMessage("recover_from_trash")] = {
-            onclick: function() {
-                _gaq.push(['_trackEvent', 'popup', 'cm', 'recover_trash']);
-                noteOps.untrashNote($(this).attr("id"));
-            },
-            icon: "/images/untrash.png"
-        };
-        var j = {};
-        j[chrome.i18n.getMessage("finally_delete")] = {
-            onclick: function() {
-                _gaq.push(['_trackEvent', 'popup', 'cm', 'finally_delete']);
-                if (confirm("Permanently delete note '" + notename + "'?"))
-                    chrome.extension.sendRequest({action : "delete", key : $(this).attr("id")},
-                        function() {
-                            snEditor.hideIfNotInIndex(key);
-                            snHelpers.checkInView();
-                        });
-            },
-            icon: "/images/delete.gif"
-        };
-        var k = {};
-        k[chrome.i18n.getMessage("empty_trash")] = {
-            onclick: function() {
-                _gaq.push(['_trackEvent', 'popup', 'cm', 'empty_trash']);
-                if (confirm("Empty trash?"))
-                    chrome.extension.sendRequest({action : "emptytrash"},
-                        function() {
-                            fillTags(true);
-                        });
+
+SNTagselect.prototype.request = function(useLS) {    
+    tock("requestTags");
+    var that = this;
+    
+    if (!useLS) {
+        chrome.extension.sendRequest({action:"tags"}, function(taginfos) {       
+            try {            
+                that.fillWith(taginfos);
+            } catch (e) {
+                exceptionCaught(e);
             }
-        };
-        return [i,j,$.contextMenu.separator,k];
-    }
-
+        });
+    } else
+        this.fillWith(SimplenoteLS.getTags());
+    
 }
 
-var noteOps = {
+SNTagselect.prototype.fillWith = function(taginfos) {
+    tock("buildTagList");
+    var that = this;
+    
+    this.taginfos = taginfos;
+    // fill dropdown
+    var stillhavetag = false;
+    var style, html = "", taginfo;                        
 
-    trashNote: function(key) {
-        chrome.extension.sendRequest({action : "update", key : key, deleted: 1},
-            function() {
-                snEditor.hideIfNotInIndex();
-                snHelpers.checkInView();
-            });
-    },
+    for (var i=0; i<taginfos.length; i++) {
+        taginfo = taginfos[i];
+        style = taginfo.count > 0?"":'style="color:#aaa; text-shadow:1px 1px 1px rgba(0,0,0,0.1)"';                
+        if (taginfo.tag == "#all#")
+            html += '<option value="" ' + style +  '>' + chrome.i18n.getMessage("tags_all") + ' [' + taginfo.count + ']</option>';
+        else if (taginfo.tag == "#notag#")
+            html += '<option value="#notag#" ' + style +  '>' + chrome.i18n.getMessage("tags_untagged") + ' [' + taginfo.count + ']</option>';
+        else if (taginfo.tag == "#trash#")
+            html += '<option value="#trash#" ' + style +  '>' + chrome.i18n.getMessage("tags_deleted") + ' [' + taginfo.count + ']</option>';
+        else if (taginfo.tag == "#published#")
+            html += '<option value="#published#" ' + style +  '>' + chrome.i18n.getMessage("tags_published") + ' [' + taginfo.count + ']</option>';
+        else if (taginfo.tag == "#shared#")
+            html += '<option value="#shared#" ' + style +  '>' + chrome.i18n.getMessage("tags_shared") + ' [' + taginfo.count + ']</option>';
+        else if (taginfo.tag == "#webnote#")
+            html += '<option value="#webnote#" ' + style +  '>' + chrome.i18n.getMessage("tags_webnote") + ' [' + taginfo.count + ']</option>';
+        else if (taginfo.tag == "#markdown#")
+            html += '<option value="#markdown#" ' + style +  '>' + chrome.i18n.getMessage("tags_markdown") + ' [' + taginfo.count + ']</option>';
+        else if (extData.builtinTags.indexOf(taginfo.tag.toLowerCase()) < 0) {
+            html += '<option value="' + taginfo.tag + '" ' + style +  '>' + taginfo.tag + " [" + taginfo.count + "] </option>";
+        }
+        if (this.indextag == taginfo.tag)
+            stillhavetag = true;
+    }
+    if (!stillhavetag) {
+        this.indextag = "#all#";
+    }
+    
+   // add handler
+    this.$ui.unbind();
+    this.$ui.html(html);
+    this.$ui.val(this.indextag);
+    this.$ui.change(function(event) {
+        log("#notetags:changed: calling requestNotes");
+        that.indextag = $(this).val();
+        that.snIndex.snNotelist.request(true);
+    });
 
-    untrashNote: function(key) {
-        chrome.extension.sendRequest({action : "update", key : key, deleted : 0},
-            function() {
-                snEditor.hideIfNotInIndex();
-                snHelpers.checkInView();
-            });
+    if (!stillhavetag) {
+        this.requestNotes();
+    }
+
+    tock("buildTagList ende");    
+}
+
+function SNNotelist(snIndex) {
+    this.$ui = $("#notes");
+    var that = this;
+    // properties
+    this.scrolltoselected = true;
+    
+    // get globals for speed
+    this.extData = extData;
+    this.snIndex = snIndex;
+    this.snEditor = snEditor;
+    this.storage = localStorage;
+    this.click_to_undelete = chrome.i18n.getMessage("click_to_undelete");
+    this.click_to_pinunpin = chrome.i18n.getMessage("click_to_pinunpin");
+    this.syncnote_tooltip = chrome.i18n.getMessage("syncnote_tooltip");    
+    this.created = chrome.i18n.getMessage("created");
+    this.modified = chrome.i18n.getMessage("modified");
+    this.published_tooltip = chrome.i18n.getMessage("published_tooltip");
+    this.sharer_tooltip = chrome.i18n.getMessage("sharer_tooltip");
+    this.sharee_tooltip = chrome.i18n.getMessage("sharee_tooltip");
+    
+    $.timeago.settings.strings= {
+        prefixAgo: null,
+        prefixFromNow: null,
+        suffixAgo: "",
+        suffixFromNow: "from now",
+        seconds:    chrome.i18n.getMessage("seconds"),
+        minute:     chrome.i18n.getMessage("minute"),
+        minutes:    chrome.i18n.getMessage("minutes"),
+        hour:       chrome.i18n.getMessage("hour"),
+        hours:      chrome.i18n.getMessage("hours"),
+        day:        chrome.i18n.getMessage("day"),
+        days:       chrome.i18n.getMessage("days"),
+        month:      chrome.i18n.getMessage("month"),
+        months:     chrome.i18n.getMessage("months"),
+        year:       chrome.i18n.getMessage("year"),
+        years:      chrome.i18n.getMessage("years"),
+        numbers: []
+    }
+    
+    this.$ui.delegate(".statusicon-clickable","click",statusIconClickHandler)
+            .delegate(".noterow","click",noteRowClickHandler);
+        
+    //this.request();    
+    
+    function statusIconClickHandler(event) {
+        
+        if (event.which != 1) {
+            return;
+        }
+        
+        var $src = $(event.srcElement);
+        var note = that.getNote($src.parent(".noterow").attr("id"));
+        
+        if (!note)
+            return;
+        
+        if ($src.hasClass("pin-toggle") && $src.hasClass("active")) {                                                
+            note.systemtags.splice(note.systemtags.indexOf("pinned"),1);
+            chrome.extension.sendRequest({action:"update", key:note.key, systemtags:note.systemtags});
+        } else if ($src.hasClass("pin-toggle")) {
+            note.systemtags.push("pinned");
+            chrome.extension.sendRequest({action:"update", key:note.key, systemtags:note.systemtags});
+        } else if ($src.hasClass("published-toggle")) {                
+            openURLinTab("https://simple-note.appspot.com/publish/"+note.publishkey, event.ctrlKey || event.altKey );                
+             // bind published click
+        } else if ($src.hasClass("shared-toggle")) {
+            openURLinTab("https://simple-note.appspot.com/#note="+note.key, event.ctrlKey || event.altKey );                
+        } else if ($src.hasClass("webnote-icon")) {
+            var wnm = note.content.match(extData.webnotereg);
+            if (wnm)                
+                openURLinTab(wnm[1], event.ctrlKey || event.altKey );                
+        } 
+        
+        event.stopPropagation();
+        event.preventDefault();
+        
+    }
+    
+    function noteRowClickHandler(event) {     
+        if (event.which != 1) {
+            return;
+        }
+        
+        var $src = $(event.srcElement);        
+        var note = that.getNote($src.parent(".noterow").attr("id"));
+        if (!note)
+            note = that.getNote($src.attr("id"));
+        
+        if (note.deleted == 0) {
+            
+            if (extData.isTab && snEditor.note) {
+                if (snEditor.note.key == note.key)
+                    return;
+                //snEditor.saveCaretScroll();
+            }
+
+            $("#notes div.noterow").removeClass("selectednote");
+            $("#" + note.key).addClass("selectednote");
+            snEditor.setNote(note);
+
+        } else {
+            snHelpers.untrashNote(note.key);
+        }
     }
 }
-/*
- * Appends/prepends/replaces a noterow div in the index pane.
- *
- * @param mode "delteAndPrepend", "append", "replace"
- * @param note must at least be a note from and index api call
- */
-function indexAddNote(mode, note){
+
+SNNotelist.prototype.slide = function(to) {
+    if ($("#index div.noterow:visible").length == 0)
+        $("#index div.noterow").each(function(i,e){$(e).show().delay(i*20).animate({left: 0},{complete: function() {}});});
+    else
+        snHelpers.getInView("#index div.noterow").each(function(i,e){$(e).delay(i*20).animate({left: 800},{complete: function() {$(".noterow").stop().hide()}});});
+}
+
+SNNotelist.prototype.getNote = function(key) {
+    return this.notes.filter(function(n) {return n.key == key})[0];
+}
+
+SNNotelist.prototype.request = function(useLS) {   
+    tick("requestNotes");
+    var that = this;
+
+    var req =               {action : "getnotes", deleted : 0};
+    req     = mergeobj(req, {tag : this.snIndex.snToolbar.snTagselect.indextag});
+    req     = mergeobj(req, {contentquery : $('#q').val()});
+    req     = mergeobj(req, {sort:localStorage.option_sortby, sortdirection:localStorage.option_sortbydirection});
+    if ((localStorage.option_hidewebnotes == undefined || localStorage.option_hidewebnotes == "true") && (req.tag == "" || req.tag == "#all#"))
+        req     = mergeobj(req, {notregex: extData.webnoteregstr});
+
+    //log("requestNotes: " + JSON.stringify(req));    
+    if (!useLS)
+        chrome.extension.sendRequest(req, function(notes) {
+            try {
+
+                that.fillWith(notes);                        
+
+            } catch (e) {
+                exceptionCaught(e);
+            }
+        });    
+    else 
+        this.fillWith(SimplenoteLS.getNotes(req));
+}
+
+SNNotelist.prototype.fillWith = function(notes) {
+    tock("buildNoteList");
+    
+    var addContent = true;
+    
+    this.notes = notes;
+    
+    if (extData.isTab || extData.currentView == "index")
+        $("#index").show();
+        
+    var note, noteshtmlary=[];
+
+    this.$ui.unbind("scroll");
+
+    if (notes.length > 0) {
+
+        for( var i = 0; i < notes.length; i ++ ) {
+            note = notes[i];                
+            noteshtmlary.push(this.noteRawHTML(note, (i<15 || addContent) && note.content != undefined));    
+            // need for scroll selected into view
+            if (snLastOpen.isKey(note.key))
+                addContent = false;
+        }
+
+        this.$ui.html(noteshtmlary.join(""));
+
+        tock("buildNoteList: notes html");
+
+        this.$ui.find("div.noterow").contextMenu(noteRowCMfn, {
+                                                      theme:'gloss',
+                                                      offsetX: 0,
+                                                      offsetY: 0,
+                                                      direction:'down',
+                                                      showSpeed: 10,
+                                                      onBeforeShow:function() {
+                                                          $(this.target).addClass("highlightednote");
+                                                      },
+                                                      hideSpeed:10,
+                                                      onBeforeHide:function() {                                                                      
+                                                          $(this.target).removeClass("highlightednote");
+                                                      },
+                                                      delegate: "div#notes",
+                                                      otherBodies: extData.isTab?function() {return snEditor.$CMbody()} :null,
+                                                      scrollRemove: "div#notes"
+                                              }).show();                                             
+
+        this.$ui.show();
+
+        tock("buildNoteList: notes show");
+
+        // bind timeago for time abbr                    
+        if (localStorage.option_showdate == "true")
+            $("#index abbr.notetime").timeago();
+
+        snHelpers.checkInView();
+    } else
+        this.$ui.html("<div id='nonotes'>" + chrome.i18n.getMessage("no_notes_to_show") + "</div>");
+
+    if (this.scrolltoselected)
+        snHelpers.scrollSelectedIntoView();
+
+    this.$ui.scroll(snHelpers.checkInView);
+
+    snEditor.hideIfNotInIndex();
+
+
+    // log stuff
+    extData.times.endfillindex= (new Date())-start;
+    if (!extData.sentTimeBeacon) {
+        log("requestNotes(async):sending time beacon");
+         _gaq.push(['_trackEvent', 'popup', 'ready', 'endfillindex',extData.times.endfillindex]);
+         extData.sentTimeBeacon = true;         
+        snHelpers.printTimes();    
+    }        
+    
+    tock("buildNoteList end");
+    
+    //this.snIndex.snToolbar.setHeight(65);
+
+    function noteRowCMfn(contextmenu) {
+
+        var notename = $("#" + $(contextmenu.target).attr("id") + "heading").text();
+        var istrash = $(contextmenu.target).hasClass("noterowdeleted");
+
+        var i = {};
+        if (!istrash) {
+            i[chrome.i18n.getMessage("trash_tooltip","")] = {
+                onclick: function() {
+                    _gaq.push(['_trackEvent', 'popup', 'cm', 'trash']);
+                    snHelpers.trashNote($(this).attr("id"));
+                },
+                icon: "/images/trash.png"
+            };
+            var j = {};
+            j[chrome.i18n.getMessage("finally_delete")] = {
+                onclick: function() {
+                    _gaq.push(['_trackEvent', 'popup', 'cm', 'finally_delete']);
+                    if (confirm("Permanently delete note '" + notename + "'?"))
+                        chrome.extension.sendRequest({action : "update", key : $(this).attr("id"), deleted: 1},
+                            function(note) {
+                                chrome.extension.sendRequest({action : "delete", key : note.key},
+                                    function() {
+                                        snEditor.hideIfNotInIndex(key);
+                                        snHelpers.checkInView();
+                                    });
+                            });
+                },
+                icon: "/images/delete.gif"
+            };
+            return [i,j];
+        } else {
+            i[chrome.i18n.getMessage("recover_from_trash")] = {
+                onclick: function() {
+                    _gaq.push(['_trackEvent', 'popup', 'cm', 'recover_trash']);
+                    snHelpers.untrashNote($(this).attr("id"));
+                },
+                icon: "/images/untrash.png"
+            };
+            var j = {};
+            j[chrome.i18n.getMessage("finally_delete")] = {
+                onclick: function() {
+                    _gaq.push(['_trackEvent', 'popup', 'cm', 'finally_delete']);
+                    if (confirm("Permanently delete note '" + notename + "'?"))
+                        chrome.extension.sendRequest({action : "delete", key : $(this).attr("id")},
+                            function() {
+                                snEditor.hideIfNotInIndex(key);
+                                snHelpers.checkInView();
+                            });
+                },
+                icon: "/images/delete.gif"
+            };
+            var k = {};
+            k[chrome.i18n.getMessage("empty_trash")] = {
+                onclick: function() {
+                    _gaq.push(['_trackEvent', 'popup', 'cm', 'empty_trash']);
+                    if (confirm("Empty trash?"))
+                        chrome.extension.sendRequest({action : "emptytrash"},
+                            function() {
+                                //requestTags(true);
+                            });
+                }
+            };
+            return [i,j,$.contextMenu.separator,k];
+        }
+
+    }
+    
+}
+
+SNNotelist.prototype.noteRawHTML = function(note, addcontent, show) {
+    
+    var note = new Note(note);
+    
+    var date, prefix, shareds = [];
+    var rowtitle = "", pintitle = "", sharetitle = "", headingtext = "", headinghtml = "", headingtitle = "", html = "", abstracthtml = "", url = "";
+    var rowstyles = show?[]:["display:none"], thisclasses = ["noterow"];
+        
+    addcontent &= (note.content != undefined);
+    
+    if (!addcontent) {
+         thisclasses.push("nocontent");
+         rowstyles.push("height: " + (20 + this.storage.option_abstractlines*14) + "px");
+    } else {
+        var lines = note.content.split("\n").filter(function(line) {
+            return ( line.trim().length > 0 && !line.match(extData.webnotereg))
+        });
+
+        // set actual heading
+        headingtext = lines[0] != undefined?lines[0].trim():" ";
+        headinghtml = htmlEncode(headingtext,100);
+
+        if (headingtext.length > 25 && note.deleted != 1)
+            headingtitle = headingtext;
+                    
+        // abstract
+        if (this.storage.option_abstractlines>=0)
+            abstracthtml = lines.slice(1,Math.min(lines.length,this.storage.option_abstractlines*1+1));
+        else // -1 ~ all
+            abstracthtml = lines;
+        // set actual abstract
+        
+        abstracthtml = htmlEncode(abstracthtml,100).join("<br/>");
+        
+        var wnm = note.content.match(extData.webnotereg);
+        if (wnm ) {
+            url = wnm[1];
+            abstracthtml = "[" + url + "]<br>" + abstracthtml;
+        }
+    }
+    // unread
+    if (note.systemtags.indexOf("unread")>0)
+         thisclasses.push("unread");
+    // tab selected
+    //if (this.extData.isTab && this.snEditor.note && this.snEditor.note.key == note.key) {
+    if (snLastOpen.isKey(note.key)) {
+        thisclasses.push("selectednote");
+    }
+    if (note.deleted == 1) {
+        thisclasses.push("noterowdeleted");            
+        rowtitle = " title='" + this.click_to_undelete + "'";
+    } else {
+        pintitle = " title='" + this.click_to_pinunpin + "'";
+    }
+    
+    if (note._score != undefined) {
+        //html = note._score + " - " + html;
+        if (note._score >= 1)
+            thisclasses.push("fullhit");
+        if (note._score < 1)
+            thisclasses.push("partialhit");
+    }
+
+    
+    var sortattrs = " modifydate='" + note.modifydate + "'";
+    sortattrs += " createdate='" + note.createdate + "'";
+    sortattrs += " notetitle='" + note.title() + "'";
+    sortattrs += " version='" + note.version + "'";    
+    sortattrs += " syncnum='" + note.syncnum + "'"; 
+    sortattrs += " pinned='" + note.isPinned() + "'"; 
+
+    // assemble noterow html string
+    html = "<div class='" + thisclasses.join(" ") + "' id='" + note.key  + "' style='" + rowstyles.join(";") + "'" + rowtitle + sortattrs + ">";
+    // #syncicon
+    if (note.isSyncNote())
+        html+=          "<div class='syncnote-icon statusicon active' title='" + this.syncnote_tooltip + "'></div>";
+    else
+        html+=          "<div class='syncnote-icon statusicon'></div>";
+    // #time abbr
+    if (this.storage.option_showdate == "true") {
+        if (this.storage.option_sortby == "createdate") {
+            date = convertDate(note.createdate);
+            prefix = this.created;
+        } else {
+            date = convertDate(note.modifydate);
+            prefix = this.modified;
+        }
+
+        html+=          "<abbr class='notetime' title='" + ISODateString(date) + "'>" + prefix + localeDateString(date) + "</abbr>";
+    }
+        // #pin
+        html+=          "<div class='pin-toggle statusicon-clickable" + (note.isPinned()?" active":"") + "'" + pintitle + "></div>";
+        // #published
+        if (note.publishkey) {
+            html+=      "<div class='published-toggle statusicon-clickable active' title='" + this.published_tooltip + "'></div>";
+        } else {
+            html+=      "<div class='published-toggle statusicon-clickable'></div>";
+        }
+        // #shared
+        if (note.systemtags.indexOf("shared") >= 0) {
+
+            for (var i=0;i<note.tags.length;i++) {
+                if (validateEmail(note.tags[i])) {
+                    shareds.push(note.tags[i]);
+                }
+            }     
+            if (shareds.length > 0)
+                sharetitle = this.sharer_tooltip + " " + shareds.join(", ");
+            else
+                sharetitle = this.sharee_tooltip;
+        }
+        
+        if (sharetitle)
+            html+=  "<div class='shared-toggle statusicon-clickable active' title='" + sharetitle + "'></div>";
+        else
+            html+=  "<div class='shared-toggle statusicon-clickable'></div>";
+        
+        
+        if (addcontent && url != "") {           
+            html += "<div class='webnote-icon statusicon-clickable active'" + (note.deleted == 0?" title='" + chrome.i18n.getMessage("webnote_icon",url) + "'":"") + "></div>";                
+        } else {
+            html += "<div class='webnote-icon statusicon-clickable'></div>";                
+        }
+    
+    // #heading
+    html+=              "<div class='noteheading'" + (headingtitle != ""?" title='" + headingtitle + "'":"") + "> " + headinghtml + "</div>";    
+    // #abstract
+    html+=              "<div class='abstract'>" + abstracthtml + "</div>";
+    
+    //html+=              "<div class='sortkey'></div>";
+
+    html+="</div>";       
+   
+    return html;
+    
+    // encode string or string array into html equivalent
+    function htmlEncode(s, maxchars)
+    {
+        if (!s)
+            return "";
+        if (!maxchars)
+            maxchars = 1000000;
+
+        if (s instanceof Array)
+            return s.map(function(s) {
+                return htmlSafe(s.substring(0,maxchars)).replace(/\n/g,"<br>").replace(/\s/g,"&nbsp;");
+            });
+        else
+            return htmlSafe(s.substring(0,maxchars)).replace(/\n/g,"<br>").replace(/\s/g,"&nbsp;");
+    }
+
+    // make string html safe
+    function htmlSafe(s) {
+        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    //  ---------------------------------------
+    function ISODateString(d) {
+        return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+ pad(d.getUTCDate())+'T'+ pad(d.getUTCHours())+':'+ pad(d.getUTCMinutes())+':'+ pad(d.getUTCSeconds())+'Z'
+    }
+    //  ---------------------------------------
+    function localeDateString(d) {
+        var s = d.toLocaleString();
+        return s.substring(0, s.indexOf("GMT")-1);
+    }
+}
+
+SNNotelist.prototype._sortBy = function(what, direction) {
+    tick();
+    if(direction == undefined) direction = 1;    
+    
+//    $("#notes div.noterow").each(function(i,e) {
+//        $("div.sortkey",e).html($(e).attr(what));        
+//    })
+    var comparator;
+    
+    switch(what) {                
+        case "notetitle":
+            comparator = function($a,$b) {                
+                return $b.attr(what) < $a.attr(what)?direction:-1*direction;
+            };
+            break;
+        default:
+            comparator = function($a,$b) {                
+                return ($b.attr(what) - $a.attr(what))*direction;
+            };
+            break;
+    }
+    
     
     var $notes = $("#notes");
-    
-    try {
-        var date, prefix, shareds = [], html =  "";
-        
-        var thisclass = "noterow nocontent";
-        // unread
-        if (note.systemtags.indexOf("unread")>0)
-             thisclass += " unread";
+    var $last = null;        
+    $("#notes div.noterow")
+                .sort(function(a,b) {
+                    var $a=$(a), $b=$(b);
+                    var d = ($b.attr("pinned")=="true"?1:0) - ($a.attr("pinned")=="true"?1:0);
 
-        // tab selected
-        if (extData.isTab && snEditor.note && snEditor.note.key == note.key) {
-            thisclass += " selectednote";
-        }
-        if (note.deleted == 1) {
-            thisclass += " noterowdeleted";
-        }
-        
-        // assemble noterow html string
-        if (mode!= "replace")
-            html = "<div class='" + thisclass + "' id='" + note.key  + "' style='display:none'>";
-        // #syncicon
-        html+=          "<div id='" + note.key + "syncicon' class='syncicon statusicon' title='" + chrome.i18n.getMessage("syncnote_tooltip") + "' " + (note._syncNote?"":"style='display:none;'") + ">&nbsp;</div>";
-        // #time abbr
-        if (localStorage.option_showdate == "true") {
-            if (localStorage.option_sortby == "createdate") {
-                date = convertDate(note.createdate);
-                prefix = chrome.i18n.getMessage("created");
-            } else {
-                date = convertDate(note.modifydate);
-                prefix = chrome.i18n.getMessage("modified");;
-            }
-
-            html+=          "<abbr id='" + note.key + "time' class='notetime' title='" + ISODateString(date) + "'>" + prefix + localeDateString(date) + "</abbr>";
-        }
-            // #pin
-            html+=          "<div id='" + note.key + "pin' class='" + (note.systemtags.indexOf("pinned")>=0?"pinned":"unpinned") + " statusicon-clickable'>&nbsp;</div>";
-            // #published
-            if (note.publishkey != undefined)
-                html+=      "<div id='" + note.key + "published' title='" + chrome.i18n.getMessage("published_tooltip") + "' class='published statusicon-clickable'>&nbsp;</div>";
-            // #shared
-            if (note.systemtags.indexOf("shared") >= 0) {
-
-                for (var i=0;i<note.tags.length;i++) {
-                    if (validateEmail(note.tags[i])) {
-                        shareds.push(note.tags[i]);
-                    }
-                }
-                if (shareds.length > 0)
-                    html+=  "<div id='" + note.key + "shared' class='shared statusicon-clickable' title='" + chrome.i18n.getMessage("sharer_tooltip") + " " + shareds.join(", ") + "'>&nbsp;</div>";
-                else
-                    html+=  "<div id='" + note.key + "shared' class='shared statusicon-clickable' title='" + chrome.i18n.getMessage("sharee_tooltip") + "'>&nbsp;</div>";
-            }
-
-
-
-        // #heading
-        html+=              "<div id='" + note.key + "heading' class='noteheading'></div>";
-        // #abstract
-        html+=              "<div id='" + note.key + "abstract' class='abstract'>&nbsp;<br>&nbsp;</div>";
-
-        if (mode!="replace")
-            html+="</div>";
-
-        // insert the html string into document
-        if (mode=="delteAndPrepend") {
-            $notes.find('#' + note.key).remove();
-            $notes.prepend(html);
-        } else if (mode=="append") {
-            $notes.append(html);
-        } else if (mode=="replace")
-            $notes.find('#' + note.key).html(html);
-
-        // get ui elements into variables
-        var $noterow = $notes.find('#' + note.key);
-    //    var $noteheading = $('div.noteheading#' + note.key + "heading");
-        if (mode != "append") {
-            $notes.find("#" + note.key + "time").timeago();            
-        }
-        var $notepin = $notes.find("#" + note.key + "pin");
-    //    var $notesync = $("div#" + note.key + "syncicon");
-
-//        if (localStorage.option_sortby == "createdate") {
-//            $noterow.attr("sortkey",note.createdate);
-//        } else if (localStorage.option_sortby == "modifydate") {
-//            $noterow.attr("sortkey",note.modifydate);
-//        } else
-//            $noterow.attr("sortkey",note.content?note.content.trim().substring(0,30).toLowerCase():"");
-
-//        $noterow.attr("pinned",note.systemtags.indexOf("pinned")>=0?"true":"false");
-//        $noterow.attr("shared",note.systemtags.indexOf("shared")>=0?"true":"false");
-
-        // deleted note
-        if (note.deleted == 1) {
-            $noterow.attr("title", chrome.i18n.getMessage("click_to_undelete"));
-            
-        } else {
-
-            $notepin.attr("title",chrome.i18n.getMessage("click_to_pinunpin"));
-
-            // bind pinned klick
-            $notepin.unbind();
-            $notepin.bind("click",{key: note.key, systemtags: note.systemtags},function(event) {
-                    if (event.which == 1) {
-                        var key = event.data.key;
-                        var systemtags = event.data.systemtags;
-
-                        event.stopPropagation();
-
-                        if ($(this).hasClass("pinned")) {
-                            note.systemtags.splice(systemtags.indexOf("pinned"),1);
-                        } else {
-                            note.systemtags.push("pinned");
-                        }
-                        chrome.extension.sendRequest({action:"update", key:key, systemtags:systemtags});
-                    }
-                });
-
-            // bind published click
-            if (note.publishkey) {
-                $("#"+note.key+"published").unbind();
-                $("#"+note.key+"published").bind("click","https://simple-note.appspot.com/publish/"+note.publishkey,snHelpers.genericUrlOpenHandler);
-            }
-            // bind published click
-            if (note.systemtags.indexOf("shared") >= 0) {
-                $("#"+note.key+"shared").unbind();
-                $("#"+note.key+"shared").bind("click","https://simple-note.appspot.com/#note="+note.key,snHelpers.genericUrlOpenHandler);
-            }
-        }
-        
-        $noterow.show();
-        $noterow.css("height", (20 + localStorage.option_abstractlines*14) + "px")
-    } catch (e) {
-        exceptionCaught(e);
-    }
-    // tooltips    
-}
-
-/*
- *  Fills a noterow div from the note.content. Callback from checkInView.
- *
- *  @param elementOrNote jquery object div.noterow#key or note object with .content
- */
-function indexFillNote(elementOrNote) {
-
-    if (elementOrNote.content != undefined) {//note
-        indexFillNoteReqComplete(elementOrNote);
-    } else {
-        var key = elementOrNote.attr("id");
-
-        // reflowing triggers scrolls
-        if (elementOrNote.attr("requested") == "true")
-            return;        
-
-        chrome.extension.sendRequest({action : "note", key :key}, indexFillNoteReqComplete);
-
-        elementOrNote.attr("requested","true");
-    }
-}
-/*
- */
-function indexFillNoteReqComplete(note) {
-        try {
-            var $noterow = $('#' + note.key);
-            // check new inview, might have changed due to reflow
-            $noterow.removeClass('nocontent');            
-            var $noteheading = $('#' + note.key + "heading");
-            var $noteabstract = $('#' + note.key + "abstract");
-
-            var lines = note.content.split("\n").filter(function(line) {
-                return ( line.trim().length > 0 && !line.match(extData.webnotereg))
-                });
-
-            // set actual heading
-            var headingtext = lines[0] != undefined?lines[0].trim():" ";
-            var heading = htmlEncode(headingtext,100);
-            if (note.score != undefined) {
-                //html = note.score + " - " + html;
-                if (note.score >= 1)
-                    $noterow.addClass("fullhit")
-                if (note.score < 1)
-                    $noterow.addClass("partialhit")
-            }
-            $noteheading.html(heading); // dont need more than 100 chars
-            if (headingtext.length > 25)
-                $noteheading.attr("title",headingtext);
-
-            // abstract
-            var abstractlines;
-            if (localStorage.option_abstractlines>=0)
-                abstractlines = lines.slice(1,Math.min(lines.length,localStorage.option_abstractlines*1+1));
-            else // -1 ~ all
-                abstractlines = lines;
-            // set actual abstract
-            $noteabstract.html(htmlEncode(abstractlines,100).join("<br/>"));
-
-            $noterow.unbind("click");
-
-            // add click binding
-            if (note.deleted == 0) {
-
-                $noterow.bind("click", note, function(event) {
+                    if (d==0)
+                        return comparator($a,$b)
+                    else
+                        return d;      
                     
-                    if (event.which == 1) {
-                        if (extData.isTab && snEditor.note) {
-                            if (snEditor.note.key == event.data.key)
-                                return;
-                            snEditor.saveCaretScroll();
-                        }
-
-                        $("#notes div.noterow").removeClass("selectednote");
-                        $("#" + event.data.key).addClass("selectednote");
-                        snEditor.setNote(event.data);
+                })
+                .each(function(i){                    
+                    // at this point the array is sorted, so we can just detach each one from wherever it is, and add it after the last
+                    var node = $(this);        
+                    if ($last) {
+                        $last.after(node);
+                    } else {
+                        $notes.prepend(node);
                     }
+                    $last = node;
                 });
-
-            } else {
-                $noterow.attr("title", chrome.i18n.getMessage("click_to_undelete"));
-                $noterow.bind("click",note.key,function(event) {
-                    noteOps.untrashNote(event.data);
-                });
-            }
-
-            // webnote icon
-            var wnm = note.content.match(extData.webnotereg);
-            if (wnm && $("#" + note.key + "webnoteicon").length == 0) {
-                var url = wnm[1];
-                $("<div id='" + note.key + "webnoteicon' class='webnoteicon statusicon-clickable'>&nbsp;</div>").insertBefore($noteheading);
-                $noteabstract.prepend("[" + url + "]<br>");
-                if (note.deleted == 0) {
-                    $("#" + note.key + "webnoteicon").attr("title",chrome.i18n.getMessage("webnote_icon",url));
-                    $("#" + note.key + "webnoteicon").bind("click",url,snHelpers.genericUrlOpenHandler);
-                }
-            }
-
-            $noterow.css("height","");
-            snHelpers.checkInView();
-            if ($noterow.index()<=$("#notes div.selectednote").index())
-                snHelpers.scrollSelectedIntoView();
-
-            //tooltip($("[title]",$noterow));
-            
-        } catch (e) {
-            exceptionCaught(e);
-        }
+ 
+ 
+    snHelpers.checkInView();
+    tock("sorted");
 }
 
-// encode string or string array into html equivalent
-function htmlEncode(s, maxchars)
-{
-    if (!s)
-        return "";
-    if (!maxchars)
-        maxchars = 1000000;
-
-    if (s instanceof Array)
-        return s.map(function(s) {
-            return htmlSafe(s.substring(0,maxchars)).replace(/\n/g,"<br>").replace(/\s/g,"&nbsp;");
-        });
-    else
-        return htmlSafe(s.substring(0,maxchars)).replace(/\n/g,"<br>").replace(/\s/g,"&nbsp;");
+SNNotelist.prototype.setSort = function(what, dir) {
+    if (this.sort == what)
+        return;
+    
+    this.sort = what;
+    this.sort_dir = dir;
+    this.reSort();
+}
+SNNotelist.prototype.reSort = function() {
+    this._sortBy(this.what,this.dir);
 }
 
-// make string html safe
-function htmlSafe(s) {
-    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-//  ---------------------------------------
-function ISODateString(d) {
-    return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+ pad(d.getUTCDate())+'T'+ pad(d.getUTCHours())+':'+ pad(d.getUTCMinutes())+':'+ pad(d.getUTCSeconds())+'Z'
-}
-//  ---------------------------------------
-function localeDateString(d) {
-    var s = d.toLocaleString();
-    return s.substring(0, s.indexOf("GMT")-1);
-}
 //  ---------------------------------------
 function slideEditor(callback, duration) {
     log("slideEditor, duration " + duration);
@@ -1293,7 +1345,7 @@ function slideIndex(callback, duration) {
     if (duration == undefined)
         duration = extData.slideDuration;
 
-    localStorage.lastopennote_open = "false";
+    snLastOpen.dontOpen();
     snEditor.clearDirty();
     snEditor.saveCaretScroll();
 
@@ -1332,7 +1384,7 @@ function SNEditor(onLoad) {
                     indentUnit: 4,
                     enterMode: "keep",
                     electricChars : false,
-                    addscripts : ["/javascripts/lib/sscr.js","/javascripts/lib/middlemouse.js"],
+                    //addscripts : ["/javascripts/lib/sscr.js","/javascripts/lib/middlemouse.js"],
                     onLoad: onLoad?onLoad:function() {}
                 });
     
@@ -1452,7 +1504,7 @@ SNEditor.prototype.initialize = function() {
         });
 
         // fix for home not scrolling all to the left
-        $editbox.keydown(shorcuts);
+        $editbox.keydown(shortcutListener);
         $editbox.bind("keydown keyup",function(event) {
             //alert(event.keyCode)
             switch(event.keyCode) {
@@ -1468,7 +1520,7 @@ SNEditor.prototype.initialize = function() {
                     }
                     break;
                 case 37: //left key
-                    pos = that.codeMirror.cursorPosition(true);
+                    var pos = that.codeMirror.cursorPosition(true);
                     if (pos.character == 0)
                         $editbox.scrollLeft(0);
                     break;
@@ -1988,14 +2040,15 @@ SNEditor.prototype.setNote = function(note, options) {
         if (!extData.isTab) {
             $('#popout').show();
         }
-
-        localStorage.lastopennote_key = note.key;
-        localStorage.lastopennote_open = "true";
+        
+        snLastOpen.openTo(note.key);
+        
         this.needCMRefresh("lastopen");
     }
 
     // set content
-    that.codeMirror.setParser("SimpleParser", {checklist: that.note.tags.indexOf("Checklist") >= 0 ? ["-","*"] : false});
+    //that.codeMirror.setParser("SimpleParser", {checklist: that.note.tags.indexOf("Checklist") >= 0 ? ["-","*"] : false});
+    that.codeMirror.setParser("SimpleParser", {headings: [], checklist: that.note.tags.indexOf("Checklist") >= 0 ? ["-","*"] : false, wikilinks : true});
     that.codeMirror.setCode(inputcontent);
 
     snHelpers.getHeadings(false,function(headings) {
@@ -2250,7 +2303,7 @@ SNEditor.prototype.trashNote = function() {
         return;
     log("SNEditor.trashNote");
 
-    noteOps.trashNote(this.note.key);
+    snHelpers.trashNote(this.note.key);
 }
 
 SNEditor.prototype.saveTimerInit = function() {
@@ -2536,9 +2589,26 @@ var snHelpers = {
     // from inview.js
     checkInView: function() {
         //tick();
-        var elements = $('#notes div.nocontent').get(), elementsLength, i = 0, viewportSize, viewportOffset;
+        var $inView = snHelpers.getInView("#notes div.nocontent");
         
-        elementsLength = elements.length;
+        $inView.each(function(i,e) {
+            $(e).replaceWith(snIndex.snNotelist.noteRawHTML(snIndex.snNotelist.getNote(e.id), true, true));
+            if (localStorage.option_showdate == "true")
+                $("#" + e.id + " abbr.notetime").timeago();
+        });
+        
+        
+
+        //tock("checkinview");
+    },
+    
+    //  ---------------------------------------
+    // from inview.js
+    getInView: function(sel) {
+        //tick();
+        var elements = $(sel).get(), i = 0, viewportSize, viewportOffset;        
+        var elementsLength = elements.length;
+        var res = [];
 
         if (elementsLength) {
             viewportSize   = snHelpers.getViewportSize();
@@ -2571,17 +2641,18 @@ var snHelpers = {
     //            console.log(elementOffset);
 
                 if (inview) {
-                    indexFillNote($element);
+                    res.push($element.get(0));
                 }
             }
         }
         //tock("checkinview");
+        return $(res);
     },
 
     scrollSelectedIntoView: function() {
         var $noterow = $("#notes div.selectednote");
-        if ($noterow.length == 1 && this.noteRowInIndex($noterow.attr("id"))) {
-            var $notes = $("#notes");
+        if ($noterow.length == 1) {
+            var $notes = $noterow.parent("#notes");
 
             var relativeOffset = $noterow.offset().top - $notes.offset().top + $notes.scrollTop();
             var viewportHeight = $notes.innerHeight() - cssprop($notes,"margin-bottom");
@@ -2594,17 +2665,10 @@ var snHelpers = {
             if (isAbove || isBelow) {
                 var scrollTo = relativeOffset - 0.5*$notes.height() + 0.5*$noterow.height();
                 //log("scrollSelectedIntoView:" + scrollTo )
-                $("#notes").scrollTop(scrollTo);
+                $notes.scrollTop(scrollTo);
             }
         }
 
-    },
-
-    genericUrlOpenHandler: function(event) {
-        if (event.which == 1) {
-            event.stopPropagation();
-            openURLinTab(event.data, event.ctrlKey || event.altKey );
-        }
     },
 
     printTimes: function() {
@@ -2621,8 +2685,23 @@ var snHelpers = {
         
     noteRowInIndex: function(key) {
         return $('#' + key).length > 0;
-    }
-    
+    },
+        
+    trashNote: function(key) {
+        chrome.extension.sendRequest({action : "update", key : key, deleted: 1},
+            function() {
+                snEditor.hideIfNotInIndex();
+                snHelpers.checkInView();
+            });
+    },
+
+    untrashNote: function(key) {
+        chrome.extension.sendRequest({action : "update", key : key, deleted : 0},
+            function() {
+                snEditor.hideIfNotInIndex();
+                snHelpers.checkInView();
+            });
+    }    
 }
 
 $(document).ready(readyListener);
@@ -2630,7 +2709,7 @@ $(document).ready(readyListener);
 //$(window).load(readyListener);
 $(window).resize(snHelpers.checkInView)
 addEventListener("unload", unloadListener, true);
-$(document).keydown(shorcuts);
+$(document).keydown(shortcutListener);
 
 //}
 //

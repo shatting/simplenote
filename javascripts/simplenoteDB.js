@@ -129,12 +129,16 @@ var SimplenoteDB = {
                     SimplenoteLS.addNote(note);
                     this._indexKeysChanged.hadchanges = true;
                     this._indexKeysChanged.added.push(note.key);
+                    this.getNote(note.key);
                 } else {
                     thisHadChanges = SimplenoteLS.updateNote(note,"index");
                     if (thisHadChanges.hadChanges) {
                         this._indexKeysChanged.hadchanges = true;
-                        this._indexKeysChanged.changed.push(note.key);
+                        this._indexKeysChanged.changed.push(note.key);                        
                     }
+                    var snote = SimplenoteLS.getNote(note.key);
+                    if (snote != undefined && (snote.content == undefined || thisHadChanges.changed.indexOf("version") > -1) )
+                        this.getNote(note.key);
                 }
             }
 
@@ -265,6 +269,9 @@ var SimplenoteDB = {
                 success :       function(note) {
                     that.offline(false);
                     //SimplenoteLS.updateNote(SimplenoteDB._decryptNote(note),"getnote");
+                    if (!SimplenoteLS.haveNote(note.key))
+                        SimplenoteLS.addNote(note);
+                    
                     SimplenoteLS.updateNote(note,"getnote");
                     if (callback)
                         callback(note);
@@ -535,23 +542,27 @@ var SimplenoteDB = {
         }
     },
 
-    fillContents: function(response) {
+    fillContents: function(response, options) {
         var keys = SimplenoteLS.getKeys();        
         var note;
         var got = new Array(keys.length);
         this.log("fillContents");        
-
+        
+        if (!options) options = {};            
+        
         // push local changes
         $.each(keys, function(i,key) {
             note = SimplenoteLS.getNote(key);
-            if (note.deleted == 0 && note.content == undefined ) {
+            if (note && note.deleted == 0 && note.content == undefined ) {
                 note = SimplenoteDB.getNote(key);
 
                 if (note != undefined) {
                     got[i] = true;
                 }
-            } else {
+            } else if (note) {
                 got[i] = true;
+            } else {
+                
             }
         });
         if (response)

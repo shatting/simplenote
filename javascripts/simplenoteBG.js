@@ -88,7 +88,7 @@ var SimplenoteBG = {
                         sendResponse(successObj);
                 });
             } else if (request.action == "fillcontents") {
-                SimplenoteDB.fillContents(sendResponse);
+                SimplenoteDB.fillContents(sendResponse, request.options);
             } else if (request.action === "login") {
 
                 callbacks = {
@@ -170,8 +170,7 @@ var SimplenoteBG = {
 
                 if (this.saveNote.key && this.saveNote.key != "")
                     SimplenoteDB.updateNote(this.saveNote, function(note) {
-                        localStorage.lastopennote_key = note.key;
-                        localStorage.lastopennote_open = "true";
+                        lastOpen.openTo(note.key);
                         SimplenoteBG.needCMRefresh = true;
                         SimplenoteBG.saveNote = undefined;
                         SimplenoteBG.checkRefreshs();
@@ -179,8 +178,7 @@ var SimplenoteBG = {
                     });
                 else
                     SimplenoteDB.createNote(this.saveNote, function(note) {
-                        localStorage.lastopennote_key = note.key;
-                        localStorage.lastopennote_open = "true";
+                        lastOpen.openTo(note.key);
                         SimplenoteBG.needCMRefresh = true;
                         SimplenoteBG.saveNote = undefined;
                         SimplenoteBG.checkRefreshs();

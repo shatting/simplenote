@@ -253,7 +253,7 @@ var SimplenoteCM = {
             this.cascading = localStorage.option_contextmenu_cascading == "true";
             this.cascading_pinned = localStorage.option_contextmenu_cascading_pinned == "true";
 
-            var title, lastopen_key = localStorage.lastopennote_key;
+            var title, lastopen_key = snLastOpen.key();
 
             new CMitem({title:chrome.i18n.getMessage("cm_new_webnote"), contexts:["all"], onclick: function(info, tab) {
                 SimplenoteBG.handleRequest({action: "webnotes", request: {action: "new"}});
@@ -369,7 +369,7 @@ var SimplenoteCM = {
         try {
             this.log("updateLastOpen()");
 
-            if (!localStorage.lastopennote_key) {
+            if (!snLastOpen.key() || snLastOpen.key() == "") {
                 if (this.append_root)
                     this.append_root.remove();
                 else
@@ -379,7 +379,7 @@ var SimplenoteCM = {
                 return;
             }
 
-            var title = getNoteHeading(localStorage.lastopennote_key,25);
+            var title = getNoteHeading(snLastOpen.key(),25);
             if (!title)
                 return;
 

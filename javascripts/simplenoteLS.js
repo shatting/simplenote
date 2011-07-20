@@ -26,10 +26,7 @@ var SimplenoteLS = {
         if (!note.key)
             return note;
         
-        if (this.getSyncKeys().indexOf(note.key) >= 0)
-            note._syncNote = true;
-        else
-            delete note._syncNote;
+        note._syncNote = this.getSyncKeys().indexOf(note.key) >= 0;             
         
         return note;
     },
@@ -247,12 +244,12 @@ var SimplenoteLS = {
                 if (note.content == undefined)
                     add = false;
                 else {
-                    note.score = 0;
+                    note._score = 0;
                     for (var j=0; j<words.length; j++)
-                        note.score += note.content.score(words[j]);
+                        note._score += note.content.score(words[j]);
                     for (var j=0; j<wordexps.length; j++)
-                        note.score += note.content.match(wordexps[j]) != undefined ? 1:0;
-                    add &= note.score > 0;
+                        note._score += note.content.match(wordexps[j]) != undefined ? 1:0;
+                    add &= note._score > 0;
                 }
             }
 
@@ -279,9 +276,9 @@ var SimplenoteLS = {
 
         if (options.contentquery && options.contentquery !="") {
             notes.sort(function(note1,note2) {
-                return note2.score - note1.score;
+                return note2._score - note1._score;
             });
-            //notes = notes.map(function(note) { delete note.score; return note;});
+            //notes = notes.map(function(note) { delete note._score; return note;});
         } else if (options.sort == undefined || options.sort == "modifydate")
             notes.sort(function(note1,note2) {
                 return options.sortdirection*(note2.modifydate-note1.modifydate);

@@ -16,9 +16,10 @@ var extData = {
         LS          : true,
         API         : true,
         CM          : true,
-        Timestamp   : true,
+        Timestamp   : false,
         GA          : false,
-        alertExc    : true
+        alertExc    : true,
+        tictoc      : true
     },
     
     chromeVersion : undefined,
@@ -54,40 +55,6 @@ function logGeneral(s,prefix,target) {
 //    console.log(note);
 //}
 
-//function note2str(note, content) {
-//    var s = "";
-///*
-// *content: "asdfgghhhh↵↵fgghgg"
-//  createdate: "1302427972.910837"
-//deleted: 0
-//key: "agtzaW1wbGUtbm90ZXINCxIETm90ZRi-89kHDA"
-//minversion: 1
-//modifydate: "1302427972.910837"
-//syncnum: 6
-//systemtags: Array[0]
-//tags: Array[0]
-//version: 6
-//__proto__: Object*/
-//    s += "d:"+note.deleted;
-//    s += " s:"+note.syncnum;
-//    s += " v:"+note.version;
-//    s += " t:";
-//    if (note.tags)
-//        $.each(note.tags,function(i,e) {s+=e + " ";});
-//    s += " st:";
-//    if (note.systemtags)
-//        $.each(note.systemtags,function(i,e) {s+=e + " ";});
-//    s += " m:" + dateAgo(note.modifydate);
-//    s += " c:" + dateAgo(note.createdate);
-//    s += " <br> k:" + note.key;
-//    if (content) {
-//        if (note.content)
-//            s += "\n" + note.content;
-//        else
-//            s += "\n[note has no content]";
-//    }
-//    return s;
-//}
 
 function convertDate(serverDate) {
     return new Date(serverDate*1000);
@@ -231,12 +198,24 @@ if (jQuery) {
     jQuery.expr[':'].focus = function( elem ) {return elem === document.activeElement && ( elem.type || elem.href );};
 }
 
+// order matters
 function arrayEqual(arr1,arr2) {
     if (arr1.length != arr2.length)
         return false;
 
     for (var i in arr1)
         if (arr1[i]!=arr2[i])
+            return false;
+
+    return true;
+}
+// order doesnt matter
+function arraySame(arr1,arr2) {
+    if (arr1.length != arr2.length)
+        return false;
+
+    for (var i in arr1)
+        if (arr2.indexOf(arr1[i]) == -1)
             return false;
 
     return true;
@@ -390,13 +369,24 @@ function cssprop(e, id) {
 //  };
 //})(jQuery);
 
-var ticktock;
-function tick() {
-    ticktock = (new Date()).getTime();
+var ticktock, last;
+function tick(s) {    
+    
+    if (extData.debugFlags.tictoc) {                
+        ticktock = (new Date()).getTime();
+        last = ticktock;
+        if (s)
+            console.log("[0] %s",s)
+    }
 }
 
 function tock(s) {
-    console.log("%s: %i",s,((new Date()).getTime()) - ticktock);
+    if (extData.debugFlags.tictoc) {
+        var now = ((new Date()).getTime());
+        console.log( "[%i] %ims until %s", now - ticktock, now - last, s);
+        last = now;
+    }
+        
 }
 
 function headings(notes,full) {
@@ -419,9 +409,9 @@ function headings(notes,full) {
     });
 }
 
-function noteTitle(note) {
-    return note.content.split("\n").filter(function(l) {return l!= "";})[0].trim();
-}
+//function noteTitle(note) {
+//    return note.content.split("\n").filter(function(l) {return l!= "";})[0].trim();
+//}
 
 function getCBval(sel) {
     return $(sel).attr("checked") == "checked";
@@ -533,3 +523,267 @@ _gaq.push(['_setCustomVar',
 _gaq.push(["_setVar",navigator.appVersion.replace(/\./g,",").replace(/ /g,"_")]);
 
 _gaq.push(['_trackPageview']);
+
+
+var NoteFactory = function(key, callback) {
+    chrome.extension.sendRequest({action:"note", key:key},callback);                
+}
+
+function Note(note) {
+    if (!note || !note.key)
+        throw new Error("cannot create Note object, input missing")
+    
+    for (var f in note)
+        this[f] = note[f];
+}
+
+Note.prototype.stripCustomFields = function() {
+    for (var f in this)
+        if (/^_/.test(f))
+            delete this[f];
+    
+    return this;
+}
+
+Note.prototype.isCreatedNote = function() {
+    return this.key.match(/^created/) != null;
+}
+
+Note.prototype.isDeleted = function() {
+    return this.deleted == 1;
+}
+
+Note.prototype.title = function() {    
+    return this.content.split("\n").filter(function(l) {return l!= "";})[0].trim();
+}
+
+Note.prototype.isContent = function() {
+    return this.content !== undefined;
+}
+
+Note.prototype.isWebnote = function() {
+    if (!this.isContent())
+        return undefined;
+        
+    return this.content.match(extData.webnotereg) != null;
+}
+
+Note.prototype.isLastOpen = function() {
+    return localStorage.lastopennote_key == this.key;
+}
+
+Note.prototype.isSyncNote= function() {        
+    return this._syncNote == true;
+}
+
+Note.prototype.setSyncNote= function(to) {        
+    this._syncNote = to;
+}
+
+// SYSTEMTAGS
+Note.prototype.isSystemtag = function(tag) {
+    return this.systemtags.indexOf(tag) > -1;
+}
+Note.prototype.addSystemTag = function(tag) {
+    if (!this.isSystemTag(tag))
+        this.systemtags.push(tag);        
+}
+Note.prototype.removeSystemTag = function(tag) {
+    if (this.isSystemTag(tag))
+        this.systemtags.splice(this.systemtags.indexOf(tag),1);
+}
+Note.prototype.isPinned = function() {
+    return this.isSystemtag("pinned");
+}
+Note.prototype.isPublished = function() {
+    return this.isSystemtag("published");
+}
+Note.prototype.isShared = function() {
+    return this.isSystemtag("shared");
+}
+Note.prototype.isMarkdown = function() {
+    return this.isSystemtag("markdown");
+}
+
+// TAGS
+Note.prototype.isTag = function(tag) {
+    return this.tags.indexOf(tag) > -1;
+}
+Note.prototype.addTag = function(tag) {
+    if (!this.isTag(tag))
+        this.tags.push(tag);        
+}
+Note.prototype.removeTag = function(tag) {
+    if (this.isTag(tag))
+        this.tags.splice(this.tags.indexOf(tag),1);
+}
+
+Note.prototype.tagsEqual = function(tagsOrNote) {
+    if (tagsOrNote.key != undefined)
+        return arrayEqual(this.tags,tagsOrNote.tags);
+    else
+        return arrayEqual(this.tags,tagsOrNote);
+}
+
+Note.prototype.tagsSame = function(tagsOrNote) {
+    if (tagsOrNote.key != undefined)
+        return arraySame(this.tags,tagsOrNote.tags);
+    else
+        return arraySame(this.tags,tagsOrNote);
+}
+
+Note.prototype.deltaTo = function(toNote) {
+    var res = {};
+    for (var f in toNote)
+        if (this[f] === undefined ) {
+            res[f] = this[f];
+        } else if ((this[f] instanceof Array) && !arrayEqual(this[f],toNote[f])) {
+            res[f] = this[f];
+        } else if (!(this[f] instanceof Array) && this[f] != toNote[f]) {
+            res[f] = this[f];
+        }
+    return res;
+}
+
+// POPUP specific
+Note.prototype.$row = function() {
+    return $('#' + this.key);
+}
+Note.prototype.$pin = function() {
+    return $('#' + this.key + " .pin-toggle");
+}
+Note.prototype.$published = function() {
+    return $('#' + this.key + " .published-toggle");
+}
+Note.prototype.$shared = function() {
+    return $('#' + this.key + " .shared-toggle");
+}
+Note.prototype.$syncnote = function() {
+    return $('#' + this.key + " .syncnote-icon");
+}
+Note.prototype.$time = function() {
+    return $('#' + this.key + " .notetime");
+}
+
+Note.prototype.$webnote = function() {
+    return $('#' + this.key + " .webnote-icon");
+}
+Note.prototype.$heading = function() {
+    return $('#' + this.key + "heading");
+}
+Note.prototype.$abstract = function() {
+    return $('#' + this.key + "abstract");
+}
+
+
+Note.prototype.$isIndexNote = function() {
+    return this.$row().length > 0;
+}
+
+Note.prototype.$remove = function() {
+    this.$row().attr("deleteanimation","true");
+    this.$row().hide("slow", function() {$(this).remove();});
+}
+
+Note.prototype.$update = function() {
+    var $row = this.$row();
+    
+    if (this.$isIndexNote()) {
+        
+        this.$pin().toggleClass("active", this.isPinned());
+        this.$published().toggleClass("active", this.isPublished());
+        this.$shared().toggleClass("active", this.isShared());
+        this.$syncnote().toggleClass("active", this.isSyncNote());
+        this.$webnote().toggleClass("active", this.isWebnote());        
+    }
+
+    if (this.$isEditorNote()) {
+        snEditor.setPintoggle(this.isPinned());
+        snEditor.setMarkdownToggle(this.isMarkdown());        
+    }
+}
+
+Note.prototype.$isEditorNote = function() {
+    return snEditor && snEditor.note && snEditor.note.key == this.key
+}
+
+Note.prototype.toString = function(content) {    
+    var s = "";
+/*
+ *content: "asdfgghhhh↵↵fgghgg"
+  createdate: "1302427972.910837"
+deleted: 0
+key: "agtzaW1wbGUtbm90ZXINCxIETm90ZRi-89kHDA"
+minversion: 1
+modifydate: "1302427972.910837"
+syncnum: 6
+systemtags: Array[0]
+tags: Array[0]
+version: 6
+__proto__: Object*/
+    s += "d:"+this.deleted;
+    s += " s:"+this.syncnum;
+    s += " v:"+this.version;
+    s += " t:";
+    if (this.tags)
+        $.each(this.tags,function(i,e) {s+=e + " ";});
+    s += " st:";
+    if (this.systemtags)
+        $.each(this.systemtags,function(i,e) {s+=e + " ";});
+    s += " m:" + dateAgo(this.modifydate);
+    s += " c:" + dateAgo(this.createdate);
+    s += " <br> k:" + this.key;
+    
+    if (!content)
+        return s;
+    
+    if (this.content)
+        s += "\n" + this.content;
+    else
+        s += "\n[note has no content]";
+    return s;
+}
+
+function clone(obj) {
+    // A clone of an object is an empty object 
+            // with a prototype reference to the original.
+
+    // a private constructor, used only by this one clone.
+    function Clone() { } 
+    Clone.prototype = obj;
+    var c = new Clone();
+            c.constructor = Clone;
+            return c;
+}
+
+var snLastOpen = {
+    noteDeleted : function(key) {
+        if (localStorage.lastopennote_key == key)
+            localStorage.lastopennote_key = "";
+    },
+    
+    isKey : function(key) {
+        return localStorage.lastopennote_key == key;
+    },
+    
+    key : function() {
+        return localStorage.lastopennote_key;
+    },
+    
+    openTo : function(key) {
+        localStorage.lastopennote_key = key;
+        localStorage.lastopennote_open = "true";
+    },
+    
+    dontOpen : function() {
+        localStorage.lastopennote_open = "false";
+    },
+    
+    isOpenTo : function(key) {
+        return this.isOpen() && this.isOpenTo(key);
+    },
+    
+    isOpen : function() {
+        return localStorage.lastopennote_key != undefined && localStorage.lastopennote_key != "" && localStorage.lastopennote_open == "true" && localStorage.option_opentonote == "true";
+    }
+}
