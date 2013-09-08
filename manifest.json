@@ -5,7 +5,7 @@
   "description": "__MSG_description__",
   "default_locale": "en",
   "icons": {
-    "96": "imanges/icon_96.png",
+    "96": "images/icon_96.png",
     "128": "images/icon_128.png",
     "16": "images/icon_16.png",
     "19": "images/icon_24.png",
