@@ -1,3 +1,7 @@
+**NOTE:** This is a fork of of the original Syncpad extension. It seems that the original developer is no longer mantaining the project. This fork should fix all of the bugs in the original version related to installing the extension. There may be other bugs introduced by my fix, or hidden bugs that I have not encountered yet. You can report these bugs on the issues page, but there is no guarantee I will fix them as this is not my extension.
+
+I will not be adding this extension to the Chrome Store since it's not my own work. To install, download the files from Git or download the zip and extract it. Then follow these instructions: https://developer.chrome.com/extensions/getstarted#unpacked
+
 CHANGELOG
 ===============
 2.0 _[July 15]_
@@ -5,28 +9,28 @@ CHANGELOG
 - **markdown**: preview + toggle
 
     _implemented_: local preview and server preview and toggle. the local preview does not support the _Markdown Extra_ extensions. the preview is maximizable by clicking on it. here is a good [markdown syntax guide](http://www.floatnotes.org/documentation/markdown-quickreference).
-  
+
     _planned_: editor support
-  
+
 - **wikilinks**: clickable note links in notes.
-    
+
     _implemented_: create a link to a note by typing `#notetitle`.
-    
+
     _planned_: autocomplete
 
-- **checklists**: clickable checkboxes in notes. 
+- **checklists**: clickable checkboxes in notes.
 
     _implemented_: notes tagged `Checklist` will show checkboxes. an unchecked item
     is a line having a dash followed by a space (`'- '`) as first non-space characters.
-    
+
     > `- unchecked item`
-        
+
     a checked item has a asterisk followed by a space (`'* '`) as first non-space characters.
-    
+
     > `* checked item`
-    
+
     _planned_: support for other 3rd party checklist notation (listary, jadenote, ...)
-    
+
 - some redesign, most notably the tab mode
 - lots of small fixes
 
@@ -74,7 +78,7 @@ CHANGELOG
 - added support for the new Webnotes plugin (see features list for a link)
 - code refactoring
 
-1.7.1.3 [June 3] 
+1.7.1.3 [June 3]
 ----------------
 - bugfixes
 
