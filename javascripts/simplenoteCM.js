@@ -271,7 +271,7 @@ var SimplenoteCM = {
                         }}, this.create_root);
             new CMitem({title:this.getCMtitle("cm_create_note","cm_using_page_url"), contexts:["page"], onclick: function(info, tab){
                             _gaq.push(['_trackEvent', 'ContextMenu', 'create_url']);
-                            SimplenoteCM.createNoteFromBG({content:info.pageUrl});
+                            SimplenoteCM.createNoteFromBG({content:tab.title + "\n\n" + info.pageUrl});
                         }}, this.create_root);
             new CMitem({title:this.getCMtitle("cm_create_note","cm_using_link_url"), contexts:["link"], onclick: function(info, tab){
                         _gaq.push(['_trackEvent', 'ContextMenu', 'create_link_url']);
